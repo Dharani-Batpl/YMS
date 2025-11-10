@@ -1,0 +1,594 @@
+﻿@using Microsoft.AspNetCore.Mvc.Rendering
+@{
+    //  Read JSON payload for grid from ViewData
+    var userConfigurationData = ViewData["UserConfigurationData"] ?? "[]";
+    // set layout
+    Layout = "_Layout";
+}
+
+
+<head>
+    <!--  Keep head empty as per request (no changes to assets/includes) -->
+</head>
+<style>
+
+
+
+</style>
+
+<div class="container">
+    <!--  Page title header -->
+@*     <div id="pageTitle" class="col-12 text-center py-1 mb-3">
+        <h6 class="mb-0 fw-bold text-uppercase tracking-wide">User Configuration</h6>
+    </div> *@
+
+     <div class="col-12 text-center py-1 mb-3" style="background: #242424; color: white;">
+        <h6 class="mb-0 fw-bold text-uppercase tracking-wide">User Configuration</h6>
+    </div>
+
+
+    <!--  Toolbar row with search + action buttons -->
+    <div class="row align-items-center mb-3">
+        <!--  Spacer on small devices -->
+        <div class="w-100 d-md-none"></div>
+
+        <!--  Right-aligned tools on md+ -->
+        <div class="col-12 col-md d-flex justify-content-md-end align-items-center gap-2 flex-wrap">
+            <!--  Global search input -->
+            <input type="search"
+                   id="searchField"
+                   class="form-control form-control-sm"
+                   placeholder="Search..."
+                   style="max-width: 280px; min-width: 150px;" />
+
+            <!--  Action buttons group (Add/Edit/Delete/Download/Upload/Template) -->
+            <div class="btn-group flex-wrap" role="group" aria-label="Icon button group" style="flex-wrap: wrap;">
+                <!--  Add row -->
+                <button id="add-btn" type="button" class="btn btn-primary-professional btn-sm px-3"
+                        title="Add" data-bs-toggle="tooltip" data-bs-placement="top" aria-label="Add">
+                    <span class="material-icons" aria-hidden="true">add</span>
+                </button>
+
+                <!--  Edit selected row -->
+                <button id="edit-btn" type="button" class="btn btn-primary-professional btn-sm px-3"
+                        title="Edit" data-bs-toggle="tooltip" data-bs-placement="top" aria-label="Edit">
+                    <span class="material-icons" aria-hidden="true">edit</span>
+                </button>
+
+                <!--  Delete selected row -->
+                <button id="delete-btn" type="button" class="btn btn-primary-professional btn-sm px-3"
+                        title="Delete" data-bs-toggle="tooltip" data-bs-placement="top" aria-label="Delete">
+                    <span class="material-icons" aria-hidden="true">delete</span>
+                </button>
+
+                <!--  Download CSV -->
+                <button id="download-btn" type="button" class="btn btn-primary-professional btn-sm px-3"
+                        title="Download" data-bs-toggle="tooltip" data-bs-placement="top" aria-label="Download">
+                    <span class="material-icons" aria-hidden="true">download</span>
+                </button>
+
+                <!--  Upload CSV -->
+                <button id="upload-btn" type="button" class="btn btn-primary-professional btn-sm px-3"
+                        title="Upload" data-bs-toggle="tooltip" data-bs-placement="top" aria-label="Upload">
+                    <span class="material-icons" aria-hidden="true">upload</span>
+                </button>
+
+                <!--  Download CSV template -->
+                <button id="download-template-btn" type="button" class="btn btn-primary-professional btn-sm px-3"
+                        title="Download Template" data-bs-toggle="tooltip" data-bs-placement="top" aria-label="Download Template">
+                    <span class="material-icons" aria-hidden="true">assignment_returned</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!--  Hidden file input for CSV upload -->
+    <input type="file" id="upload-file" style="display:none" accept=".csv" />
+
+    <!------- Hidden file input for CSV upload ------->
+    <form id="afForm" style="display:none" method="post">
+        @Html.AntiForgeryToken()
+        <input type="file" id="upload-file" style="display:none" accept=".csv,text/csv" />
+    </form>
+
+    <!--  Tabulator grid mount point -->
+    <div id="userConfigurationTable" class="tabulator-bootstrap5"></div>
+    <div id="recordCount" class="text-end mt-2 fw-semibold text-secondary"></div>
+</div>
+
+<!--  Add/Edit modal (single form reused for both modes) -->
+<div class="modal fade" id="addEditModal" tabindex="-1" aria-labelledby="addEditModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content">
+            <!--  Modal header -->
+            <div class="modal-header">
+                <h6 class="modal-title" id="addEditModalLabel">Add/Edit User</h6>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close" style="filter: invert(1);"></button>
+            </div>
+
+            <!--  Modal body with form fields -->
+            <div class="modal-body">
+                <form id="addEditForm">
+                    <!--  Hidden Id field -->
+                    <input type="hidden" id="User_id" name="User_id" />
+
+                    <div class="row g-3">
+                       
+
+                        <div class="col-md-6">
+                            <label for="Employee_id" class="form-label">Employee ID</label>
+                            <span class="text-danger"><strong>*</strong></span>
+                            <input type="text" class="form-control" id="Employee_id" name="Employee_id" maxlength="50" pattern="[A-Za-z0-9 ]+" title="Only letters, numbers, and spaces are allowed." required />
+                        </div>
+                        <!--  Department select + hidden name sync -->
+                        <div class="col-md-6">
+                            <label for="Department_id" class="form-label">Department</label>
+                            <span class="text-danger"><strong>*</strong></span>
+                            <select class="form-select" id="Department_id" name="Department_id"
+                                    asp-items="@(ViewBag.DepartmentList as IEnumerable<SelectListItem>)" required>
+                                <option value="" selected disabled>Select Department</option>
+                            </select>
+
+                        </div>
+                        <!--  First name -->
+                        <div class="col-md-6">
+                            <label for="First_name" class="form-label">First Name</label>
+                            <span class="text-danger"><strong>*</strong></span>
+                            <input type="text" class="form-control" id="First_name" name="First_name" maxlength="50" pattern="[A-Za-z ]+" title="Only letters, and spaces are allowed." required />
+                        </div>
+
+                        <!--  Last name -->
+                        <div class="col-md-6">
+                            <label for="Last_name" class="form-label">Last Name</label>
+                            <span class="text-danger"><strong>*</strong></span>
+                            <input type="text" class="form-control" id="Last_name" name="Last_name" maxlength="50" pattern="[A-Za-z ]+" title="Only letters, and spaces are allowed." required />
+                        </div>
+
+                      
+                        <!--  User Group select + hidden name sync -->
+                        <div class="col-md-6">
+                            <label for="User_group_id" class="form-label">User Group</label>
+                            <span class="text-danger"><strong>*</strong></span>
+                            <select class="form-select" id="User_group_id" name="User_group_id"
+                                    asp-items="@(ViewBag.UserGroupList as IEnumerable<SelectListItem>)" required>
+                                <option value="" selected disabled>Select User Group</option>
+                            </select>
+
+                        </div>
+
+
+                        <!--  Status select + hidden name sync -->
+                        <div class="col-md-6">
+                            <label for="Status_id" class="form-label">Status</label>
+                            <span class="text-danger"><strong>*</strong></span>
+                            <select class="form-select" id="Status_id" name="Status_id"
+                                    asp-items="@(ViewBag.StatusList as IEnumerable<SelectListItem>)" required>
+                                <option value="" selected disabled>Select Status</option>
+                            </select>
+
+                        </div>
+ 
+
+                        <!-- Password -->
+                        <div class="col-md-6 position-relative">
+                            <label for="Password" class="form-label">Password</label>
+                            <span class="text-danger"><strong>*</strong></span>
+                            <div class="input-group">
+                                <input type="password" class="form-control no-default-eye" id="Password" name="Password" maxlength="25"
+                                       pattern="^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z\d]).{8,}$"
+                                       title="Password must be at least 8 characters long, and include at least one uppercase letter, one lowercase letter, one number, and one special character."
+                                       required />
+                                <span class="input-group-text bg-transparent border-start-0" id="togglePassword" style="cursor:pointer;">
+                                    <span class="material-icons" id="eyeIconPassword">visibility_off</span>
+                                </span>
+                            </div>
+                        </div>
+
+                        <!-- Confirm Password -->
+                        <div class="col-md-6 position-relative">
+                            <label for="Confirm_Password" class="form-label">Confirm Password</label>
+                            <span class="text-danger"><strong>*</strong></span>
+                            <div class="input-group">
+                                <input type="password" class="form-control no-default-eye" id="Confirm_Password" name="Confirm_Password" maxlength="25" required />
+                                <span class="input-group-text bg-transparent border-start-0" id="toggleConfirmPassword" style="cursor:pointer;">
+                                    <span class="material-icons" id="eyeIconConfirm">visibility_off</span>
+                                </span>
+                            </div>
+                        </div>
+
+
+         
+                    </div>
+                </form>
+            </div>
+
+            <!--  Modal footer with actions -->
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary-professional" data-bs-dismiss="modal">Cancel</button>
+                <button type="submit" class="btn btn-primary-professional" id="modalSubmitBtn" form="addEditForm">Add</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+
+  
+
+    document.addEventListener("DOMContentLoaded", () => {
+         const passwordField = document.getElementById("Password");
+         const confirmPasswordField = document.getElementById("Confirm_Password");
+
+         const togglePassword = document.getElementById("togglePassword");
+         const toggleConfirmPassword = document.getElementById("toggleConfirmPassword");
+         const eyeIconPassword = document.getElementById("eyeIconPassword");
+         const eyeIconConfirm = document.getElementById("eyeIconConfirm");
+
+         // Default: hidden, eye icon off (visibility_off)
+         passwordField.type = "password";
+         confirmPasswordField.type = "password";
+         eyeIconPassword.textContent = "visibility_off";
+         eyeIconConfirm.textContent = "visibility_off";
+
+        // Toggle password field visibility
+         togglePassword.addEventListener("click", function () {
+             const isPassword = passwordField.type === "password";
+             passwordField.type = isPassword ? "text" : "password";
+             eyeIconPassword.textContent = isPassword ? "visibility" : "visibility_off";
+         });
+
+         toggleConfirmPassword.addEventListener("click", function () {
+             const isPassword = confirmPasswordField.type === "password";
+             confirmPasswordField.type = isPassword ? "text" : "password";
+             eyeIconConfirm.textContent = isPassword ? "visibility" : "visibility_off";
+         });
+
+
+
+
+
+
+        // Function to check if passwords match
+        function validateConfirmPassword() {
+            const password = passwordField.value;
+            const confirmPassword = confirmPasswordField.value;
+
+            if (password !== confirmPassword) {
+                confirmPasswordField.setCustomValidity("Passwords do not match.");
+            } else {
+                confirmPasswordField.setCustomValidity(""); // Reset custom validity message
+            }
+        }
+
+        // Event listener for Confirm Password field input
+        confirmPasswordField.addEventListener("input", validateConfirmPassword);
+
+      
+        // ==========================
+        // 🔹 Initialize reusable components
+        // ==========================
+        initTooltips(); // Bootstrap tooltips
+
+
+        const userConfigurationData = JSON.parse('@Html.Raw(userConfigurationData)');
+        let selectedRow = null;
+        let currentMode = "";
+
+        // ==========================
+        // 🔹 Initialize Tabulator
+        // ==========================
+        const dataTable = initializeTabulator("#userConfigurationTable", userConfigurationData, generateTabulatorColumns(userConfigurationData),
+            (data) => selectedRow = data[0] || null
+        );
+
+        // Command: Live search (visible columns only) for parent table
+        document.getElementById("searchField").addEventListener("input", function () {
+            var searchTerm = this.value.toLowerCase();
+
+            // Command: Collect visible fields
+            var visibleColumns = dataTable.getColumns()
+                                      .filter(col => col.isVisible())
+                                      .map(col => col.getField());
+
+            // Command: Apply per-row predicate filter
+            dataTable.setFilter(function (data) {
+                return visibleColumns.some(field => {
+                    var value = data[field];
+                    return value != null && value.toString().toLowerCase().includes(searchTerm);
+                });
+            });
+        });
+        // Record count for filtered data
+        dataTable.on("dataFiltered", function(filters, rows) {
+              updateRecordCount(dataTable, rows, "User_id");  // Pass the field name
+        });
+
+        // Record count for loaded data
+        dataTable.on("dataLoaded", function(data) {
+              updateRecordCount(dataTable, data, "User_id");  // Pass the field name
+        });
+
+      dataTable.on("tableBuilt", function() {
+            // List of columns to hide
+            const hideFields = [
+                "User_id",
+                "Password",
+                "Contact_number",
+                "Country_code",
+                "Email",
+                "Department_id",
+                "User_group_id",
+                "Status_id",
+                //"Created_by",
+                "Updated_by",
+                "Is_deleted",
+                "Created_at",
+                "Updated_at",
+                "Version",
+                "AdditionalProperties"
+            ];
+
+            // Define new column names for renaming
+            const columnRenameMap = {
+                "Employee_id": "Employee ID"
+                // "Status_name":"Status"
+            };
+
+            // Hide columns
+            hideFields.forEach(field => {
+                dataTable.hideColumn(field);  // Tabulator's method to hide columns
+            });
+
+            // Rename specified columns based on the columnRenameMap
+            Object.keys(columnRenameMap).forEach(field => {
+                const column = dataTable.getColumn(field);  // Tabulator's method to get column by field name
+
+                if (column) {
+                    column.updateDefinition({
+                        title: columnRenameMap[field]  // Update the column title (header)
+                    });
+                } else {
+                    console.log(`Column '${field}' not found.`);
+                }
+            });
+        });
+
+
+        const addEditModalEl = document.getElementById('addEditModal');
+        const addEditModal = new bootstrap.Modal(addEditModalEl);
+        const form = document.getElementById("addEditForm");
+
+        // ==========================
+        // 🔹 Add Button
+        // ==========================
+        document.getElementById("add-btn").addEventListener("click", () => {
+            currentMode = "Add";
+            form.reset();
+            document.getElementById("addEditModalLabel").textContent = "Add User";
+            document.getElementById("modalSubmitBtn").textContent = "Add";
+             document.getElementById("User_id").value=0;
+            addEditModal.show();
+        });
+
+        // ==========================
+        // 🔹 Edit Button
+        // ==========================
+        document.getElementById("edit-btn").addEventListener("click", () => {
+          const selectedRow = dataTable.getSelectedData()?.[0];
+            if (!selectedRow) {
+                return showAppAlert({ icon: 'warning', title: 'No Selection', text: 'Please select a row to edit.' });
+            }
+
+            currentMode = "Edit";
+            document.getElementById("addEditModalLabel").textContent = "Edit User";
+            document.getElementById("modalSubmitBtn").textContent = "Update";
+
+            // Populate modal form fields dynamically
+            Object.keys(selectedRow).forEach(field => {
+                const el = document.getElementById(field);
+                if (el) {
+                    if (el.type === "datetime-local" && selectedRow[field]) {
+                        el.value = new Date(selectedRow[field]).toISOString().slice(0,16);
+                    } else {
+                        el.value = selectedRow[field] ?? "";
+                    }
+                }
+            });
+
+            addEditModal.show();
+        });
+
+        // ==========================
+        // 🔹 Delete Button
+        // ==========================
+
+        document.getElementById("delete-btn").addEventListener("click", async () => {
+            const selectedRow = dataTable.getSelectedData()?.[0];
+            if (!selectedRow) {
+                return showAppAlert({ icon: "warning", title: "No Selection", text: "Please select a row to delete." });
+            }
+
+            const userid = selectedRow.User_id;
+
+            const confirm = await showAppAlert({
+                type: "confirm",
+                icon: "question",
+                title: "Delete Confirmation",
+                text: "Are you sure you want to delete this record?"
+            });
+
+            if (!confirm.isConfirmed) return;
+
+            const success = await deleteRecord("/UserConfiguration/Delete", { User_id: userid }); // method defaults to PUT
+            if (success) {
+                // redirect or refresh your table
+                setTimeout(() => { window.location.href = "/UserConfiguration/Index"; }, 900);
+                // or: dataTable.replaceData();
+            }
+        });
+
+
+        // ==========================
+        // 🔹 Form Submit (Add/Edit)
+        // ==========================
+        form.addEventListener("submit", async (e) => {
+
+            e.preventDefault();
+            validateConfirmPassword()
+           // Validate password and confirm password before submitting
+
+            const formData = Object.fromEntries(new FormData(form).entries());
+
+            const fetchUrl = currentMode === "Add" ? "/UserConfiguration/Create" : "/UserConfiguration/Update";
+
+            const success = await saveRecord(fetchUrl, formData, currentMode, addEditModal, form);
+            if (success) {
+                setTimeout(() => {
+                    window.location.href = "/UserConfiguration/Index";
+                }, 900);
+            }
+        });
+
+
+        // ==========================
+        // 🔹 Download Template
+        // ==========================
+        document.getElementById("download-btn").addEventListener("click", function () {
+
+            let rowCount = dataTable.getDataCount ? dataTable.getDataCount() : dataTable.getData().length;
+
+            if (rowCount === 1) {
+                let firstRowData = dataTable.getData()[0]; 
+                let firstRowFieldValue = firstRowData ? firstRowData["User_id"] : null;
+                if (firstRowFieldValue === null || firstRowFieldValue === 0 || firstRowFieldValue === "") {
+                    rowCount = 0;
+                }
+            }
+            if (rowCount === 0) {
+                showAppAlert({
+                    icon: 'warning',
+                    title: 'No Data',
+                    text: 'No records found to download.'
+                });
+                return; // Stop further execution
+            }
+            downloadCsv(dataTable, "UserConfiguration.csv");
+        });
+
+        // ==========================
+        // 🔹 Download Template
+        // ==========================
+        document.getElementById("download-template-btn").addEventListener("click", () =>
+            downloadCsvTemplate(dataTable, "UserConfigurationTemplate")
+        );
+
+        // ==========================
+        // 🔹 Upload Excel
+        // ==========================
+        // Upload (CSV)
+        function getRequestVerificationToken() {
+            const tokenInput = document.querySelector('#afForm input[name="__RequestVerificationToken"]');
+            return tokenInput ? tokenInput.value : null;
+        }
+
+        document.getElementById("upload-btn").addEventListener("click", () => {
+            document.getElementById("upload-file").click();
+        });
+
+        document.getElementById("upload-file").addEventListener("change", function (event) {
+            const fileInput = event.target;
+            if (!fileInput.files || fileInput.files.length === 0) {
+                return showAppAlert({ icon: 'warning', title: 'No File', text: 'Please select a file to upload.' });
+            }
+            const file = fileInput.files[0];
+
+            const extOk = /\.csv$/i.test(file.name);
+            const type = (file.type || '').toLowerCase();
+            const typeOk = type.includes('csv') || type === 'application/vnd.ms-excel';
+            if (!extOk && !typeOk) {
+                showAppAlert({ icon: 'warning', title: 'Invalid File', text: 'Please select a .csv file.' });
+                fileInput.value = '';
+                return;
+            }
+
+            uploadFile('/UserConfiguration/Upload', file);
+        });
+
+        async function uploadFile(url, file) {
+            const formData = new FormData();
+            formData.append("file", file);
+            console.log(formData);
+            const csrfToken = getRequestVerificationToken();
+
+            try {
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: { 'RequestVerificationToken': csrfToken },
+                    body: formData
+                });
+                await handleUploadResponse(response);
+            } catch (error) {
+                showToast({ icon: "error", text: error.message || "Action failed" });
+            }
+        }
+
+
+
+    async function uploadFile(url, file) {
+        const formData = new FormData();
+        formData.append("file", file); // file is the new Blob
+        const csrfToken = getRequestVerificationToken();
+
+        try {
+            const response = await fetch(url, {
+                method: 'POST',
+                headers: { 'RequestVerificationToken': csrfToken },
+                body: formData
+            });
+            await handleUploadResponse(response);
+        } catch (error) {
+            showToast({ icon: "error", text: error.message || "Action failed" });
+        }
+    }
+
+
+       async function handleUploadResponse(response) {
+
+          if (response.ok) {
+            const result = await response.json();
+            // showAppAlert({ icon: 'success', title: result.title, text: result.message });
+              showAppAlert({ icon: result.status, title: result.title, text: result.message });
+              setTimeout(() => { window.location.href = "/UserConfiguration/Index"; }, 1500);
+            if (result.invalidRecords) downloadInvalidRecords(result.invalidRecords);
+
+            if (result.status === "success") {
+              setTimeout(() => { window.location.href = "/UserConfiguration/Index"; }, 900);
+            }
+          } else {
+            let title = "Upload Failed", text = "An unexpected error occurred.";
+            try {
+              const err = await response.json();
+              title = err.title || title;
+              text = err.message || text;
+              if (err.status === "error") {
+                setTimeout(() => { window.location.href = "/UserConfiguration/Index"; }, 1500);
+              }
+            } catch (_) { /* ignore JSON parse errors */ }
+            showAppAlert({ icon: 'error', title, text });
+            setTimeout(() => { window.location.href = "/UserConfiguration/Index"; }, 1500);
+          }
+          setTimeout(() => { window.location.href = "/UserConfiguration/Index"; }, 900);
+        }
+
+        function downloadInvalidRecords(fileData) {
+            const csvData = atob(fileData);
+            const blob = new Blob([csvData], { type: 'text/csv' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = 'invalid_records.csv';
+            link.click();
+        }
+
+    });
+</script>
+

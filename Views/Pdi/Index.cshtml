@@ -1,0 +1,748 @@
+﻿@{
+    var pdiData = ViewData["PdiData"] ?? "[]";
+    Layout = "_Layout";
+}
+
+<head>
+    <link href="~/css/site.css" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+</head>
+<style>
+    body {
+        font-family: 'Roboto', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    }
+    
+    .btn-toolbar {
+        justify-content: flex-end;
+    }
+
+    .btn-toolbar .btn {
+        margin-left: 0.5rem;
+    }
+
+    .btn-primary-professional {
+        background-color: #b31225;
+        border-color: #ffffff;
+        color: #fff;
+    }
+
+    .btn-primary-professional:hover,
+    .btn-primary-professional:focus,
+    .btn-primary-professional:active,
+    .btn-primary-professional.active,
+    .btn-primary-professional:focus-visible {
+        background-color: #d3364a !important;
+        border-color: #ffffff !important;
+        color: #fff !important;
+        box-shadow: 0 2px 12px rgba(211, 54, 74, 0.5);
+    }
+
+    .tooltip-inner {
+        background-color: #ffffff !important;
+        color: #d3364a !important;
+        font-weight: 600;
+    }
+
+    .bs-tooltip-top .tooltip-arrow::before,
+    .bs-tooltip-auto[data-popper-placement^="top"] .tooltip-arrow::before {
+        border-top-color: #ffffff !important;
+    }
+
+    .bs-tooltip-end .tooltip-arrow::before,
+    .bs-tooltip-auto[data-popper-placement^="right"] .tooltip-arrow::before {
+        border-right-color: #ffffff !important;
+    }
+
+    .bs-tooltip-bottom .tooltip-arrow::before,
+    .bs-tooltip-auto[data-popper-placement^="bottom"] .tooltip-arrow::before {
+        border-bottom-color: #ffffff !important;
+    }
+
+    .bs-tooltip-start .tooltip-arrow::before,
+    .bs-tooltip-auto[data-popper-placement^="left"] .tooltip-arrow::before {
+        border-left-color: #ffffff !important;
+    }
+
+    /* New Modern Card Design */
+    .order-card {
+        cursor: pointer;
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+        margin-bottom: 1.5rem;
+    }
+
+    .order-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 8px 16px rgba(0,0,0,0.15) !important;
+    }
+
+    .modern-card {
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        padding: 0;
+        overflow: hidden;
+        border: none;
+        transition: all 0.3s ease;
+    }
+
+    .modern-card:hover {
+        box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+    }
+
+    .card-header-modern {
+        padding: 1.25rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        border-bottom: 1px solid #f0f0f0;
+    }
+
+    .order-number {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: #000;
+        margin: 0;
+    }
+
+    .status-badge {
+        padding: 0.375rem 1rem;
+        border-radius: 20px;
+        font-size: 0.875rem;
+        font-weight: 600;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.375rem;
+    }
+
+    .status-delivered {
+        background-color: #28a745;
+        color: white;
+    }
+
+    .status-in-progress {
+        background-color: #ff9800;
+        color: white;
+    }
+
+    .status-overdue {
+        background-color: #dc3545;
+        color: white;
+    }
+
+    .status-to-assign {
+        background-color: #6c757d;
+        color: white;
+    }
+
+    .status-icon {
+        font-size: 1rem;
+    }
+
+    .date-time {
+        font-size: 0.875rem;
+        color: #6c757d;
+        display: flex;
+        align-items: center;
+        gap: 0.25rem;
+        margin-top: 0.5rem;
+    }
+
+    .material-icons {
+        font-size: 1rem;
+    }
+
+    .card-body-modern {
+        padding: 1.25rem;
+    }
+
+    .metrics-row {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 1rem;
+    }
+
+    .metric-item {
+        flex: 1;
+    }
+
+    .metric-label {
+        font-size: 0.875rem;
+        color: #6c757d;
+        margin-bottom: 0.25rem;
+    }
+
+    .metric-value {
+        font-size: 1.25rem;
+        font-weight: 700;
+        color: #000;
+    }
+
+    .metric-value.green {
+        color: #28a745;
+    }
+
+    .variant-list {
+        font-size: 0.875rem;
+        color: #6c757d;
+        margin-bottom: 0.75rem;
+    }
+
+    .progress-container {
+        margin-bottom: 0.75rem;
+    }
+
+    .progress-bar-modern {
+        height: 8px;
+        background-color: #e9ecef;
+        border-radius: 4px;
+        overflow: hidden;
+    }
+
+    .progress-fill {
+        height: 100%;
+        background-color: #333;
+        transition: width 0.3s ease;
+    }
+
+    .progress-info {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-top: 0.25rem;
+    }
+
+    .progress-percentage {
+        font-size: 0.875rem;
+        color: #6c757d;
+        font-weight: 600;
+    }
+
+    .remaining-text {
+        font-size: 0.875rem;
+        color: #6c757d;
+    }
+
+    .footer-section {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding-top: 0.75rem;
+        border-top: 1px solid #f0f0f0;
+    }
+
+    .pdi-counts {
+        display: flex;
+        gap: 1rem;
+        align-items: center;
+    }
+
+    .pdi-count {
+        display: flex;
+        align-items: center;
+        gap: 0.25rem;
+        font-size: 0.875rem;
+        font-weight: 600;
+    }
+
+    .pdi-count.success {
+        color: #28a745;
+    }
+
+    .pdi-count.danger {
+        color: #dc3545;
+    }
+
+    .inspector-info {
+        display: flex;
+        align-items: center;
+        gap: 0.375rem;
+        font-size: 0.875rem;
+        color: #6c757d;
+    }
+
+    .filter-option {
+        transition: background-color 0.2s ease;
+    }
+
+    .filter-option:hover {
+        background-color: #6c757d !important;
+    }
+
+    .page-link {
+        transition: all 0.2s ease;
+    }
+
+    .page-link:hover {
+        transform: scale(1.05);
+    }
+
+    .dropdown-menu {
+        min-width: 200px;
+    }
+
+    .pdi-wrapper {
+        padding-left: 1rem;
+        padding-right: 1rem;
+    }
+
+    @@media (max-width: 768px) {
+        .order-card {
+            margin-bottom: 1rem;
+        }
+
+        #dispatch-orders-header .d-flex {
+            flex-direction: column;
+            align-items: flex-start !important;
+        }
+
+        #pagination-status {
+            text-align: left !important;
+            margin-top: 0.5rem;
+        }
+    }
+</style>
+<div class="container pdi-wrapper">
+    <div class="row g-0">
+        <div class="col-12">
+            <div id="dispatch-orders-header" class="p-3 mb-3 bg-secondary text-white" style="background: #242424 !important;
+            color: white;
+            border-radius: 0px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.2);">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h4 class="mb-1 fw-bold">Dispatch Order</h4>
+                    </div>
+                    <div id="pagination-status" class="text-end">
+                        <div>Showing <span id="showing-count">3</span> of <span id="total-count">12</span></div>
+                        <div>Page <span id="current-page">1</span> of <span id="total-pages">4</span></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mb-3 d-flex align-items-center">
+                <label class="form-label text-dark me-2 mb-0">Filter:</label>
+                <div class="dropdown">
+                    <button id="filter-dropdown-button" class="btn btn-secondary dropdown-toggle text-start" type="button" data-bs-toggle="dropdown">
+                        <span id="filter-display-text">All Orders (12)</span>
+                    </button>
+                    <ul id="filter-dropdown-menu" class="dropdown-menu text-start">
+                        <li>
+                            <a class="dropdown-item filter-option" href="#" data-filter="all">
+                                All Orders (<span id="all-count">12</span>)
+                            </a>
+                        </li>
+                        <li>
+                            <a class="dropdown-item filter-option" href="#" data-filter="no-allocation">
+                                No Allocation (<span id="no-allocation-count">2</span>)
+                            </a>
+                        </li>
+                        <li>
+                            <a class="dropdown-item filter-option" href="#" data-filter="ready-assign">
+                                Ready to Assign (<span id="ready-assign-count">3</span>)
+                            </a>
+                        </li>
+                        <li>
+                            <a class="dropdown-item filter-option" href="#" data-filter="assigned">
+                                Assigned (<span id="assigned-count">7</span>)
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            <div id="order-card-list" class="row g-3 mb-3">
+                <div class="col-md-4">
+                    <!-- Left column cards -->
+                </div>
+                <div class="col-md-4">
+                    <!-- Middle column cards -->
+                </div>
+                <div class="col-md-4">
+                    <!-- Right column cards -->
+                </div>
+            </div>
+
+            <div id="pagination-controls" class="d-flex justify-content-center"></div>
+        </div>
+    </div>
+</div>
+<script id="pdi-json" type="application/json">@Html.Raw(System.Text.Json.JsonSerializer.Serialize(ViewData["PdiData"]))</script>
+<script>
+    console.log('Script loaded at:', new Date().toISOString());
+    console.log('Page loaded successfully - VERSION 4 - Modern Card Design');
+</script>
+<script>
+    (function() {
+        console.log('=== PDI MODERN CARD SCRIPT STARTING ===');
+        const pageSize = 6;
+        const jsonEl = document.getElementById('pdi-json');
+        let data = [];
+        try {
+            data = jsonEl ? JSON.parse(jsonEl.textContent || '[]') : [];
+            console.log('Data parsed successfully:', data.length, 'items');
+        } catch (e) {
+            console.error('Error parsing data:', e);
+            data = [];
+        }
+
+        let currentPage = 1;
+
+        function toNumber(v) {
+            const n = Number(v);
+            return isNaN(n) ? 0 : n;
+        }
+
+        // Group data by DO number
+        function groupByDoNumber(items) {
+            const grouped = {};
+            items.forEach(item => {
+                const doNumber = item.Do_Number ?? item.do_number ?? item.Do_number ?? item.doNumber ?? '';
+                if (!grouped[doNumber]) {
+                    grouped[doNumber] = [];
+                }
+                grouped[doNumber].push(item);
+            });
+            return grouped;
+        }
+
+        // Aggregate data for each DO number
+        function aggregateDoData(groupedItems) {
+            const aggregated = [];
+            
+            Object.keys(groupedItems).forEach(doNumber => {
+                const items = groupedItems[doNumber];
+                const firstItem = items[0];
+                
+                // Normalize data fields
+                const normalize = (item) => ({
+                    delivery_status: item.Delivery_Status ?? item.delivery_status ?? item.Delivery_status ?? item.deliveryStatus ?? '',
+                    dispatch_date: item.Dispatch_Date ?? item.dispatch_date ?? item.Dispatch_date ?? item.dispatchDate ?? item.planned_dispatch_at ?? item.Planned_dispatch_at ?? item.plannedDispatchAt ?? '',
+                    quantity_ordered: toNumber(item.Quantity_Ordered ?? item.quantity_ordered ?? item.Quantity_ordered ?? item.quantityOrdered),
+                    allocated: toNumber(item.Allocated ?? item.allocated ?? item.Allocated ?? item.quantity_dispatched ?? item.Quantity_dispatched ?? item.quantityDispatched),
+                    variant_name: item.Variant_Name ?? item.variant_name ?? item.Variant_name ?? item.variantName ?? item.product_name ?? item.Product_name ?? item.productName ?? '',
+                    remaining: toNumber(item.Remaining ?? item.remaining ?? item.Remaining ?? (item.Quantity_Ordered - (item.Allocated ?? item.quantity_dispatched))),
+                    progress: toNumber(item.progress ?? item.Progress ?? 0),
+                    pdi_ok_count: toNumber(item.PDI_OK_Count ?? item.pdi_ok_count ?? item.Pdi_ok_count ?? item.pdiOkCount ?? item.qok ?? item.Qok ?? 0),
+                    pdi_not_ok_count: toNumber(item.PDI_NotOK_Count ?? item.pdi_not_ok_count ?? item.Pdi_not_ok_count ?? item.pdiNotOkCount ?? item.qnok ?? item.Qnok ?? 0),
+                    pdi_inspector: item.pdi_inspector ?? item.Pdi_inspector ?? item.pdiInspector ?? item.inspector ?? item.Inspector ?? ''
+                });
+
+                const normalizedItems = items.map(normalize);
+                
+                // Aggregate calculations
+                const sumQuantityOrdered = normalizedItems.reduce((sum, item) => sum + item.quantity_ordered, 0);
+                const sumAllocated = normalizedItems.reduce((sum, item) => sum + item.allocated, 0);
+                const sumRemaining = normalizedItems.reduce((sum, item) => sum + item.remaining, 0);
+                const avgProgress = normalizedItems.length > 0 
+                    ? normalizedItems.reduce((sum, item) => sum + item.progress, 0) / normalizedItems.length 
+                    : 0;
+                const sumPdiOk = normalizedItems.reduce((sum, item) => sum + item.pdi_ok_count, 0);
+                const sumPdiNotOk = normalizedItems.reduce((sum, item) => sum + item.pdi_not_ok_count, 0);
+                
+                // Get earliest dispatch date
+                const dispatchDates = normalizedItems.map(item => item.dispatch_date).filter(date => date);
+                const minDispatchDate = dispatchDates.length > 0 ? dispatchDates.reduce((min, date) => {
+                    const d1 = new Date(min);
+                    const d2 = new Date(date);
+                    return d1 < d2 ? min : date;
+                }) : '';
+                
+                // Get variants text
+                const variants = normalizedItems.map(item => `${item.variant_name}: ${item.quantity_ordered}`).join(', ');
+                
+                // Get first inspector name
+                const firstInspector = normalizedItems.find(item => item.pdi_inspector)?.pdi_inspector || '';
+                
+                aggregated.push({
+                    do_number: doNumber,
+                    delivery_status: firstItem.delivery_status ?? firstItem.Delivery_status ?? firstItem.deliveryStatus ?? '',
+                    dispatch_date: minDispatchDate,
+                    required: sumQuantityOrdered,
+                    allocated: sumAllocated,
+                    variants_text: variants,
+                    progress: avgProgress,
+                    remaining: sumRemaining,
+                    pdi_ok_count: sumPdiOk,
+                    pdi_not_ok_count: sumPdiNotOk,
+                    inspector: firstInspector,
+                    quantity_ordered: sumQuantityOrdered,
+                    quantity_dispatched: sumAllocated
+                });
+            });
+            
+            return aggregated;
+        }
+
+        const allItems = Array.isArray(data) ? aggregateDoData(groupByDoNumber(data)) : [];
+        let filtered = allItems.slice();
+        let currentFilter = 'all';
+
+        function applyFilter() {
+            switch ((currentFilter || 'all').toLowerCase()) {
+                case 'no-allocation':
+                    filtered = allItems.filter(x => Number(x.allocated || 0) === 0);
+                    break;
+                case 'ready-assign':
+                    filtered = allItems.filter(x => Number(x.allocated || 0) > 0 && Number(x.allocated) < Number(x.required || 0));
+                    break;
+                case 'assigned':
+                    filtered = allItems.filter(x => Number(x.allocated || 0) >= Number(x.required || 0));
+                    break;
+                case 'all':
+                default:
+                    filtered = allItems.slice();
+                    break;
+            }
+        }
+
+        function formatDate(value) {
+            if (!value) return '';
+            const d = new Date(value);
+            if (isNaN(d.getTime())) return value;
+            const opts = { month: 'short', day: '2-digit', hour: '2-digit', minute: '2-digit' };
+            const parts = d.toLocaleString(undefined, opts).replace(',', '').split(' ');
+            return `${parts[0]} ${parts[1]} ${parts[2]}`;
+        }
+
+        function getStatusBadge(status) {
+            const s = status.toLowerCase();
+            let icon = 'schedule';
+            let badgeClass = 'status-to-assign';
+            
+            if (s === 'delivered' || s === 'complete' || s === 'completed') {
+                icon = 'garage_check';
+                badgeClass = 'status-delivered';
+            } else if (s === 'overdue') {
+                icon = 'warning';
+                badgeClass = 'status-overdue';
+            } else if (s === 'in progress' || s === 'in_progress' || s === 'in-progress') {
+                icon = 'hourglass_bottom';
+                badgeClass = 'status-in-progress';
+            } else if (s === 'to assign' || s === 'to_assign' || s === 'to-assign') {
+                icon = 'hourglass_top';
+                badgeClass = 'status-to-assign';
+            }
+            
+            return { icon, badgeClass };
+        }
+
+        function updateHeaderCounts() {
+            const total = filtered.length;
+            const totalPages = Math.max(1, Math.ceil(total / pageSize));
+            const startIndex = (currentPage - 1) * pageSize;
+            const countOnPage = Math.min(pageSize, Math.max(0, total - startIndex));
+
+            document.getElementById('total-count').textContent = total;
+            document.getElementById('total-pages').textContent = totalPages;
+            document.getElementById('current-page').textContent = totalPages === 0 ? 0 : currentPage;
+            document.getElementById('showing-count').textContent = countOnPage;
+
+            const allCount = document.getElementById('all-count');
+            if (allCount) allCount.textContent = allItems.length;
+            const noAllocCount = document.getElementById('no-allocation-count');
+            if (noAllocCount) noAllocCount.textContent = allItems.filter(x => (Number(x.allocated||0) === 0)).length;
+            const readyAssignCount = document.getElementById('ready-assign-count');
+            if (readyAssignCount) readyAssignCount.textContent = allItems.filter(x => (Number(x.allocated||0) > 0 && Number(x.allocated) < Number(x.required||0))).length;
+            const assignedCount = document.getElementById('assigned-count');
+            if (assignedCount) assignedCount.textContent = allItems.filter(x => Number(x.allocated||0) >= Number(x.required||0)).length;
+
+            const filterDisplayText = document.getElementById('filter-display-text');
+            if (filterDisplayText) {
+                const labelMap = {
+                    'all': 'All Orders',
+                    'no-allocation': 'No Allocation',
+                    'ready-assign': 'Ready to Assign',
+                    'assigned': 'Assigned'
+                };
+                const label = labelMap[(currentFilter || 'all').toLowerCase()] || 'All Orders';
+                filterDisplayText.textContent = `${label} (${filtered.length})`;
+            }
+        }
+
+        function buildCard(item) {
+            const statusInfo = getStatusBadge(item.delivery_status);
+            
+            const col = document.createElement('div');
+            col.className = 'order-card';
+            col.dataset.orderId = item.do_number || '';
+
+            col.innerHTML = `
+                <div class="modern-card">
+                    <div class="card-header-modern">
+                        <h5 class="order-number">#${item.do_number || ''}</h5>
+                        <div class="text-end">
+                            <div class="status-badge ${statusInfo.badgeClass}">
+                                <i class="material-icons status-icon">${statusInfo.icon}</i>
+                                <span>${item.delivery_status || 'To Assign'}</span>
+                            </div>
+                            <div class="date-time">
+                                <i class="material-icons">schedule</i>
+                                <span>${formatDate(item.dispatch_date)}</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-body-modern">
+                        <div class="metrics-row">
+                            <div class="metric-item">
+                                <div class="metric-label">Required:</div>
+                                <div class="metric-value">${item.required || 0} Units</div>
+                            </div>
+                            <div class="metric-item text-end">
+                                <div class="metric-label">Allocated:</div>
+                                <div class="metric-value green">${item.allocated || 0} Units</div>
+                            </div>
+                        </div>
+                        <div class="variant-list">${item.variants_text || ''}</div>
+                        <div class="progress-container">
+                            <div class="progress-bar-modern">
+                                <div class="progress-fill" style="width: ${item.progress || 0}%"></div>
+                            </div>
+                            <div class="progress-info">
+                                <span class="progress-percentage">${Math.round(item.progress || 0)}%</span>
+                                <span class="remaining-text">${item.remaining || 0} remaining</span>
+                            </div>
+                        </div>
+                        <div class="footer-section">
+                            <div class="pdi-counts">
+                                <div class="pdi-count success">
+                                    <i class="material-icons" style="font-size: 1rem;">task_alt</i>
+                                    <span>${item.pdi_ok_count || 0}</span>
+                                </div>
+                                <div class="pdi-count danger">
+                                    <i class="material-icons" style="font-size: 1rem;">cancel</i>
+                                    <span>${item.pdi_not_ok_count || 0}</span>
+                                </div>
+                            </div>
+                            <div class="inspector-info">
+                                <span>${item.inspector || 'Inspector N/A'}</span>
+                                <i class="material-icons" style="font-size: 1.25rem;">person</i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            col.addEventListener('click', function() {
+                window.location.href = `/Pdi/DoDetails?doNumber=${encodeURIComponent(item.do_number || '')}`;
+            });
+
+            return col;
+        }
+
+        function renderCards() {
+            const list = document.getElementById('order-card-list');
+            if (!list) return;
+
+            const leftCol = list.querySelector('.col-md-4:first-child');
+            const middleCol = list.querySelector('.col-md-4:nth-child(2)');
+            const rightCol = list.querySelector('.col-md-4:last-child');
+            if (leftCol) leftCol.innerHTML = '';
+            if (middleCol) middleCol.innerHTML = '';
+            if (rightCol) rightCol.innerHTML = '';
+
+            const total = filtered.length;
+            const totalPages = Math.max(1, Math.ceil(total / pageSize));
+            currentPage = Math.min(Math.max(1, currentPage), totalPages);
+            const start = (currentPage - 1) * pageSize;
+            const pageItems = filtered.slice(start, start + pageSize);
+
+            pageItems.forEach((item, index) => {
+                const card = buildCard(item);
+                
+                if (index % 3 === 0) {
+                    leftCol.appendChild(card);
+                } else if (index % 3 === 1) {
+                    middleCol.appendChild(card);
+                } else {
+                    rightCol.appendChild(card);
+                }
+            });
+
+            updateHeaderCounts();
+            renderPagination(totalPages);
+        }
+
+        function renderPagination(totalPages) {
+            const container = document.getElementById('pagination-controls');
+            if (!container) return;
+            container.innerHTML = '';
+
+            const nav = document.createElement('nav');
+            const ul = document.createElement('ul');
+            ul.className = 'pagination flex-wrap';
+
+            const addPage = (label, page, disabled = false, active = false) => {
+                const li = document.createElement('li');
+                li.className = 'page-item' + (disabled ? ' disabled' : '') + (active ? ' active' : '');
+                const a = document.createElement('a');
+                a.className = 'page-link';
+                a.href = '#';
+                a.textContent = String(label);
+                if (!disabled) {
+                    a.addEventListener('click', function(e) {
+                        e.preventDefault();
+                        currentPage = page;
+                        renderCards();
+                    });
+                }
+                li.appendChild(a);
+                ul.appendChild(li);
+            };
+
+            const addEllipsis = () => {
+                const li = document.createElement('li');
+                li.className = 'page-item disabled';
+                const span = document.createElement('span');
+                span.className = 'page-link';
+                span.textContent = '…';
+                li.appendChild(span);
+                ul.appendChild(li);
+            };
+
+            const windowSize = 2;
+            const total = totalPages;
+
+            addPage('First', 1, currentPage === 1);
+            addPage('Previous', currentPage - 1, currentPage === 1);
+
+            const start = Math.max(2, currentPage - windowSize);
+            const end = Math.min(total - 1, currentPage + windowSize);
+
+            addPage(1, 1, false, currentPage === 1);
+
+            if (start > 2) addEllipsis();
+
+            for (let p = start; p <= end; p++) {
+                addPage(p, p, false, p === currentPage);
+            }
+
+            if (end < total - 1) addEllipsis();
+
+            if (total > 1) addPage(total, total, false, currentPage === total);
+
+            addPage('Next', currentPage + 1, currentPage === total);
+            addPage('Last', total, currentPage === total);
+
+            nav.appendChild(ul);
+            container.appendChild(nav);
+        }
+
+        const filterMenuLinks = document.querySelectorAll('#filter-dropdown-menu .filter-option');
+        filterMenuLinks.forEach(link => {
+            link.addEventListener('click', function(e) {
+                e.preventDefault();
+                const sel = this.getAttribute('data-filter') || 'all';
+                currentFilter = sel;
+                currentPage = 1;
+                applyFilter();
+                renderCards();
+            });
+        });
+
+        console.log('Initial data:', allItems);
+        console.log('Sample item:', allItems[0]);
+        applyFilter();
+        renderCards();
+        console.log('=== PDI MODERN CARD SCRIPT COMPLETED ===');
+    })();
+</script>

@@ -1,0 +1,204 @@
+﻿/* === Tabulator Base === */
+.tabulator-bootstrap5 {
+    border-radius: 0;
+    overflow: hidden;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Open Sans", "Helvetica Neue", sans-serif;
+}
+
+    /* === Header === */
+    .tabulator-bootstrap5 .tabulator-header {
+        background-color: #242424 !important;
+        color: #fff !important;
+        font-size: 14px !important;
+        line-height: 18px !important;
+        border-bottom: 3px solid #930b1d !important;
+    }
+
+    .tabulator-bootstrap5 .tabulator-col {
+        background-color: #242424 !important;
+        color: #fff !important;
+        border-right: 1px solid #273564 !important;
+    }
+
+        .tabulator-bootstrap5 .tabulator-col:last-child {
+            border-right: none !important;
+        }
+
+    /* === Rows === */
+    .tabulator-bootstrap5 .tabulator-row {
+        height: 18px !important;
+        font-size: 13px !important;
+        line-height: 16px !important;
+        border-bottom: 1px solid #dee2e6 !important;
+    }
+
+        .tabulator-bootstrap5 .tabulator-row:hover {
+            background-color: #333 !important;
+            color: #fff !important;
+        }
+
+.tabulator-row.tabulator-selected {
+    background-color: #adb5bd !important;
+    color: #fff !important;
+}
+
+/* === Header Borders === */
+.tabulator-bootstrap5 .tabulator-header .tabulator-col {
+    border-right: 1px solid #dee2e6 !important;
+    border-bottom: 2px solid #dee2e6 !important;
+}
+
+.tabulator-bootstrap5 .tabulator-header {
+    border: 1px solid #dee2e6 !important;
+    background-color: #f8f9fa !important;
+}
+
+    .tabulator-bootstrap5 .tabulator-header .tabulator-col-title {
+        font-weight: 600 !important;
+    }
+
+/* === Cells === */
+.tabulator-bootstrap5 .tabulator-cell {
+    border-right: 1px solid #dee2e6 !important;
+}
+
+/* === Footer (All content right-aligned, compact) === */
+.tabulator-bootstrap5 .tabulator-footer {
+    display: flex !important;
+    justify-content: flex-end !important;
+    align-items: center !important;
+    background-color: #f8fafc !important;
+    border-top: 1px solid #e2e8f0 !important;
+    padding: 4px 12px !important;
+    font-family: "Segoe UI", sans-serif !important;
+    font-size: 10px !important;
+    font-weight: 500 !important;
+    color: #333 !important;
+    gap: 8px !important;
+}
+
+    /* Page Size */
+    .tabulator-bootstrap5 .tabulator-footer label,
+    .tabulator-bootstrap5 .tabulator-footer .tabulator-page-size {
+        font-size: 10px !important;
+        line-height: 1.2 !important;
+        color: #333 !important;
+    }
+
+    .tabulator-bootstrap5 .tabulator-footer .tabulator-page-size {
+        border: 1px solid #cbd5e1 !important;
+        border-radius: 4px !important;
+        padding: 1px 4px !important;
+        height: 22px !important;
+        background-color: #fff !important;
+    }
+
+    /* Pagination */
+    .tabulator-bootstrap5 .tabulator-footer .tabulator-paginator {
+        display: flex !important;
+        align-items: center !important;
+        gap: 4px !important;
+    }
+
+    .tabulator-bootstrap5 .tabulator-footer .tabulator-page {
+        font-size: 10px !important;
+        padding: 2px 6px !important;
+        border-radius: 4px !important;
+        border: 1px solid #cbd5e1 !important;
+        background: #fff !important;
+        cursor: pointer !important;
+        transition: background-color 0.2s ease !important;
+    }
+
+        .tabulator-bootstrap5 .tabulator-footer .tabulator-page:hover {
+            background-color: #f3f4f6 !important;
+        }
+
+        .tabulator-bootstrap5 .tabulator-footer .tabulator-page.active {
+            background-color: #2563eb !important;
+            color: #fff !important;
+            border-color: #2563eb !important;
+        }
+
+    /* Total Records */
+    .tabulator-bootstrap5 .tabulator-footer .tabulator-page-counter {
+        font-size: 10px !important;
+        font-weight: 600 !important;
+        color: #333 !important;
+        white-space: nowrap !important;
+    }
+
+.footer-total-records {
+    font-size: 10px;
+    font-weight: 500;
+    color: #333;
+    padding: 4px 16px 8px 0; /* adds right spacing and breathing room */
+    white-space: nowrap;
+    text-align: right; /* right-aligns text within div */
+    display: block;
+}
+
+
+/* === Popup Buttons === */
+.btn-cancel-modern {
+    background-color: #fff;
+    color: #111;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    padding: 8px 18px;
+    font-size: 0.9rem;
+    font-weight: 500;
+    transition: all 0.2s ease;
+}
+
+    .btn-cancel-modern:hover {
+        background-color: #f3f4f6;
+        border-color: #c4c4c4;
+        color: #000;
+    }
+
+.btn-submit-modern {
+    background-color: #1f2937;
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    padding: 8px 20px;
+    font-size: 0.9rem;
+    font-weight: 500;
+    transition: background-color 0.2s ease, transform 0.1s ease;
+}
+
+    .btn-submit-modern:hover {
+        background-color: #111827;
+        transform: translateY(-1px);
+    }
+
+    .btn-submit-modern:active {
+        background-color: #000;
+        transform: translateY(0);
+    }
+
+/* === Ultra-thin Scrollbar === */
+::-webkit-scrollbar {
+    height: 1px;
+    width: 3px;
+}
+
+::-webkit-scrollbar-thumb {
+    background-color: #b5b5b5;
+    border-radius: 10px;
+}
+
+::-webkit-scrollbar-track {
+    background: #f9f9f9;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background-color: #888;
+}
+
+/* For Firefox */
+* {
+    scrollbar-width: thin;
+    scrollbar-color: #b5b5b5 #f9f9f9;
+}

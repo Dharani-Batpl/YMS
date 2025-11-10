@@ -1,0 +1,46 @@
+@model YardManagementApplication.Models.QualityOprnModel
+
+<tbody>
+    @foreach (var order in Model.AssignedOrders)
+    {
+        <tr>
+            <td><strong>@order.OrderNo</strong></td>
+            <td>
+                <span class="badge badge-light">@order.TotalVins</span>
+            </td>
+            <td>@order.Scanned</td>
+            <td>
+                @if (order.Ok > 0)
+                {
+                    <span class="badge badge-success">@order.Ok</span>
+                }
+                else
+                {
+                    <span class="text-muted">—</span>
+                }
+            </td>
+            <td>
+                @if (order.Nok > 0)
+                {
+                    <span class="badge badge-danger">@order.Nok</span>
+                }
+                else
+                {
+                    <span class="text-muted">—</span>
+                }
+            </td>
+            <td>
+                <div class="progress mb-1" style="height: 8px;">
+                    <div class="progress-bar @(order.Progress == 100 ? "bg-success" : "")" 
+                         style="width: @order.Progress%"></div>
+                </div>
+                <small class="text-muted">@order.Progress%</small>
+            </td>
+            <td>
+                <button class="inspect-btn" onclick="openInspectModal('@order.OrderNo')">
+                    INSPECT
+                </button>
+            </td>
+        </tr>
+    }
+</tbody>

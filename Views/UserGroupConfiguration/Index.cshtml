@@ -1,0 +1,816 @@
+﻿@using Microsoft.AspNetCore.Mvc.Rendering
+@{
+    //  Read JSON payload for grid from ViewData
+    var userGroupData = ViewData["UserGroupConfigurationData"] ?? "[]";
+    // set layout
+    Layout = "_Layout";
+}
+
+<head>
+    <!--  Keep head empty as per request (no changes to assets/includes) -->
+</head>
+
+
+<div class="container">
+    <!-- Page title header -->
+@*     <div id="pageTitle" class="col-12 text-center py-1 mb-3">
+        <h6 class="mb-0 fw-bold text-uppercase tracking-wide">User Group Configuration</h6>
+    </div> *@
+
+    <div class="col-12 text-center py-1 mb-3" style="background: #242424; color: white;">
+        <h6 class="mb-0 fw-bold text-uppercase tracking-wide">User Group Configuration</h6>
+    </div>
+
+    <!-- Toolbar row with search + actions -->
+    <div class="row align-items-center mb-3">
+        <!-- Spacer on small devices -->
+        <div class="w-100 d-md-none"></div>
+
+        <!-- Right-aligned tools on md+ -->
+        <div class="col-12 col-md d-flex justify-content-md-end align-items-center gap-2 flex-wrap">
+            <!-- Global search input (parent table) -->
+            <input type="search" id="searchField" class="form-control form-control-sm" placeholder="Search" style="max-width: 280px; min-width: 150px;" />
+
+            <!-- Action buttons (Add/Edit/Delete/Download/Upload/Template) -->
+            <div class="btn-group flex-wrap" role="group" aria-label="Icon button group" style="flex-wrap: wrap;">
+                <!-- Add row -->
+                <button id="add-btn" type="button" class="btn btn-primary-professional btn-sm px-3" title="Add" data-bs-toggle="tooltip" data-bs-placement="top" aria-label="Add">
+                    <span class="material-icons" aria-hidden="true">add</span>
+                </button>
+
+                <!-- Edit selected row -->
+                <button id="edit-btn" type="button" class="btn btn-primary-professional btn-sm px-3" title="Edit" data-bs-toggle="tooltip" data-bs-placement="top" aria-label="Edit">
+                    <span class="material-icons" aria-hidden="true">edit</span>
+                </button>
+
+                <!-- Delete selected row -->
+                <button id="delete-btn" type="button" class="btn btn-primary-professional btn-sm px-3" title="Delete" data-bs-toggle="tooltip" data-bs-placement="top" aria-label="Delete">
+                    <span class="material-icons" aria-hidden="true">delete</span>
+                </button>
+
+                <!-- Download CSV -->
+                <button id="download-btn" type="button" class="btn btn-primary-professional btn-sm px-3" title="Download" data-bs-toggle="tooltip" data-bs-placement="top" aria-label="Download">
+                    <span class="material-icons" aria-hidden="true">download</span>
+                </button>
+
+                <!--  Upload CSV -->
+                <button id="upload-btn" type="button" class="btn btn-primary-professional btn-sm px-3"
+                        title="Upload" data-bs-toggle="tooltip" data-bs-placement="top" aria-label="Upload">
+                    <span class="material-icons" aria-hidden="true">upload</span>
+                </button>
+
+                <!-- Download CSV template -->
+                <button id="download-template-btn" type="button" class="btn btn-primary-professional btn-sm px-3" title="Download Template" data-bs-toggle="tooltip" data-bs-placement="top" aria-label="Download Template" >
+                    <span class="material-icons" aria-hidden="true">assignment_returned</span>
+                </button>
+               
+             
+            </div>
+        </div>
+    </div>
+
+    <!-- Hidden file input (CSV) — note: duplicated id appears later per original; kept unchanged -->
+    <input type="file" id="upload-file" style="display:none" accept=".csv" />
+
+    <!-- ===== Split area with two panes below the toolbar (Parent + Child tables) ===== -->
+    <div class="row g-2">
+        <!-- Left/Top pane — Parent table -->
+        <div class="col-12">
+            <div class="card split-pane-card">
+                <div class="card-header card-header-compact">User Groups</div>
+                <div class="card-body card-body-compact">
+                    <!------- Parent Tabulator mount  + record count ------->
+                    <div id="userGroupTable" class="tabulator-bootstrap5"></div>
+                    <div id="recordCount" class="text-end mt-2 fw-semibold text-secondary"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right/Bottom pane — Child table -->
+        <div class="col-12">
+            <div class="card split-pane-card">
+                <div class="card-header card-header-compact">
+                    Assigned Screens &amp; Access Level <span class="text-muted" id="childTitle">(select a user group)</span>
+                </div>
+                <div class="card-body card-body-compact">
+                    <!------- Child Tabulator mount + record count ------->
+                    <div id="userGroupChildTable" class="tabulator-bootstrap5"></div>
+                    <div id="recordCount1" class="text-end mt-2 fw-semibold text-secondary"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add/Edit modal for User Group + screens -->
+<div class="modal fade" id="addEditModal" tabindex="-1" aria-labelledby="addEditModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content">
+            <!-- Modal header -->
+            <div class="modal-header">
+                <h6 class="modal-title" id="addEditModalLabel">Add/Edit User Group</h6>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close" style="filter: invert(1);"></button>
+            </div>
+
+            <!-- Modal body with form -->
+            <div class="modal-body">
+                <form id="addEditForm">
+                    <!-- Hidden group id -->
+                    <input type="hidden" id="User_group_id" name="User_group_id" />
+
+                    <div class="row g-3">
+                        <!-- Group name -->
+                        <div class="col-md-6">
+                            <label for="User_group_name" class="form-label">User Group Name</label>
+                            <span class="text-danger"><strong>*</strong></span>
+                            <input type="text" class="form-control" id="User_group_name" name="User_group_name" maxlength="50"
+                                   required
+                                   pattern="^[A-Za-z0-9 ]+$"
+                                   inputmode="text"
+                                   title="Only letters,space and numbers are allowed (no special characters)." />
+                        </div>
+
+                        <!-- Description -->
+                        <div class="col-md-6">
+                            <label for="Description" class="form-label">Description</label>
+                            <input type="text" class="form-control" id="Description" name="Description" maxlength="100"
+                                   pattern="^[A-Za-z0-9 ]+$"
+                                   inputmode="text"
+                                   title="Only letters,space and numbers are allowed (no special characters)." />
+                        </div>
+                    </div>
+
+                    <!-- Add/remove screen rows -->
+                    <div class="mt-3 d-flex align-items-center justify-content-between">
+                        <label class="mb-0 fw-semibold">Modules / Screens / Access Level</label>
+                        <button type="button" class="btn btn-outline-professional btn-sm" id="addScreenBtn">Add Screen</button>
+                    </div>
+
+                    <!-- Container for dynamic screen rows -->
+                    <div class="mt-3" id="screensContainer"></div>
+
+                    <!-- Hidden summary field (comma-separated module names) -->
+                    <input type="hidden" id="Assigned_modules" name="Assigned_modules" />
+                </form>
+            </div>
+
+            <!-- Modal footer actions -->
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary-professional" data-bs-dismiss="modal">Cancel</button>
+                <button type="submit" class="btn btn-primary-professional" id="modalSubmitBtn" form="addEditForm">Add</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Hidden file input for Upload (CSV/XLSX) — duplicate id preserved intentionally -->
+<input type="file" id="upload-file" class="d-none" accept=".csv,.xlsx" />
+
+<!-- Hidden option templates rendered from ViewBag (used by dynamic screen rows) -->
+<div id="tpl-module-options" class="d-none">
+    <option value="">Select Module</option>
+    @foreach (var m in (IEnumerable<SelectListItem>)ViewBag.modules ?? Enumerable.Empty<SelectListItem>())
+    {
+        <option value="@m.Value">@m.Text</option>
+    }
+</div>
+
+<div id="tpl-screen-options" class="d-none">
+    <option value="">Select Screen</option>
+    @foreach (var s in (IEnumerable<SelectListItem>)ViewBag.screens ?? Enumerable.Empty<SelectListItem>())
+    {
+        <option value="@s.Value">@s.Text</option>
+    }
+</div>
+
+<div id="tpl-permission-options" class="d-none">
+    <option value="">Select Access Level</option>
+    @foreach (var p in (IEnumerable<SelectListItem>)ViewBag.permission ?? Enumerable.Empty<SelectListItem>())
+    {
+        <option value="@p.Value">@p.Text</option>
+    }
+</div>
+
+<script>
+    document.addEventListener("DOMContentLoaded", () => {
+      // -----------------------------
+      // Bootstrapping & globals
+      // -----------------------------
+      initTooltips(); // your existing helper
+
+      const userGroupData = JSON.parse('@Html.Raw(userGroupData)');
+      let selectedRow = null;
+      let currentMode = "";
+
+      const addEditModalEl = document.getElementById('addEditModal');
+      const addEditModal = new bootstrap.Modal(addEditModalEl);
+      const form = document.getElementById("addEditForm");
+
+      // -----------------------------
+      // Utilities
+      // -----------------------------
+      function resetDropdown(el, placeholder = "Select Option") {
+        if (!el) return;
+        el.innerHTML = "";
+        const opt = document.createElement("option");
+        opt.value = "";
+        opt.textContent = placeholder;
+        el.appendChild(opt);
+      }
+
+      // Robust dropdown binder: accepts [{value,text}] OR [{id,name}] OR { screens: [...] }
+      function populateDropdown(el, data, selectedValue = null) {
+        if (!el) return;
+
+        const list = Array.isArray(data)
+          ? data
+          : (Array.isArray(data?.screens) ? data.screens : []);
+
+        if (!Array.isArray(list)) return;
+
+        // Keep the first option (placeholder) if present
+        const first = el.options?.[0] ? el.options[0] : null;
+        el.innerHTML = "";
+        if (first) el.appendChild(first);
+
+        list.forEach(item => {
+          const value = item.value ?? item.id ?? item.ID ?? item.Id ?? item.screenId ?? "";
+          const text  = item.text  ?? item.name ?? item.Name ?? item.screenName ?? String(value);
+
+          const opt = document.createElement("option");
+          opt.value = String(value);
+          opt.textContent = String(text);
+
+          if (selectedValue != null && String(selectedValue) === String(value)) {
+            opt.selected = true;
+          }
+          el.appendChild(opt);
+        });
+      }
+
+      // -----------------------------
+      // Child Tabulator (Screens) — init FIRST so callbacks can use it
+      // -----------------------------
+      function generateScreenColumns() {
+        return [
+          { title: "Module Name", field: "Module_name" },
+          { title: "Screen Name", field: "Screen_name" },
+          { title: "Access Level",  field: "Permission" }
+        ];
+      }
+
+      const childTable = initializeTabulatorFitColumns(
+        "#userGroupChildTable",
+         [],
+        generateScreenColumns(userGroupData),
+        (data) => {
+          selectedRow = data[0] || null;   
+        }
+      );
+
+      childTable.on("dataFiltered", function(filters, rows){
+        document.getElementById("recordCount1").innerText = "Total Records: " + rows.length;
+      });
+      childTable.on("dataLoaded", function(data){
+        document.getElementById("recordCount1").innerText = "Total Records: " + data.length;
+      });
+
+      
+
+      function renderChildFor(rowData) {
+        const titleEl = document.getElementById("childTitle");
+        const screens = Array.isArray(rowData?.Screens) ? rowData.Screens : [];
+        childTable.replaceData(screens);
+        titleEl.textContent = rowData ? `for "${rowData.User_group_name ?? ""}"` : "(select a user group)";
+      }
+
+      // -----------------------------
+      // Parent Tabulator
+      // -----------------------------
+      const dataTable = initializeTabulator(
+        "#userGroupTable",
+        userGroupData,
+        generateTabulatorColumns(userGroupData),
+        (data) => {
+          selectedRow = data[0] || null;
+          if (selectedRow && selectedRow.Screens) {
+            childTable.setData(selectedRow.Screens);
+          } else {
+            childTable.clearData();
+          }
+        }
+      );
+
+    
+
+      // Live search on parent
+      document.getElementById("searchField").addEventListener("input", function () {
+        const term = this.value.toLowerCase();
+        const visibleFields = dataTable.getColumns().filter(c => c.isVisible()).map(c => c.getField());
+        dataTable.setFilter(row => visibleFields.some(f => {
+          const v = row[f];
+          return v != null && v.toString().toLowerCase().includes(term);
+        }));
+      });
+
+      // Record count for filtered data
+     dataTable.on("dataFiltered", function(filters, rows) {
+           updateRecordCount(dataTable, rows, "User_group_id");  // Pass the field name >>replace with your table primary id column
+     });
+
+     // Record count for loaded data
+     dataTable.on("dataLoaded", function(data) {
+           updateRecordCount(dataTable, data, "User_group_id");  // Pass the field name >>replace with your table primary id column
+     });
+
+      dataTable.on("tableBuilt", function(){
+        const hideFields = [
+                "User_group_id",
+                "Department_id",
+                "Screens",
+                "Created_by",
+                "Updated_by",
+                "Is_deleted",
+                "Created_at",
+                "Updated_at",
+                "Version",
+                "AdditionalProperties"
+        ];
+
+        hideFields.forEach(field => dataTable.hideColumn(field));
+    });
+
+      // Selection → render child
+      dataTable.on("rowClick", function (e, row) {
+        dataTable.deselectRow();
+        row.select();
+      });
+      dataTable.on("rowSelectionChanged", function (data) {
+        const sel = data.length ? data[0] : null;
+        renderChildFor(sel);
+      });
+
+      // -----------------------------
+      // Add a dynamic screen row
+      // -----------------------------
+      window.addScreenRow = async function(values = { moduleId: "", screenId: "", permissionId: "" }) {
+        const idx = document.querySelectorAll('#screensContainer .screen-row').length + 1;
+        const moduleOpts = document.getElementById("tpl-module-options").innerHTML;
+        const screenOpts = document.getElementById("tpl-screen-options").innerHTML;
+        const permissionOpts = document.getElementById("tpl-permission-options").innerHTML;
+
+        const tpl = `
+          <div class="screen-row mb-2" data-row-index="${idx}">
+            <div class="row g-2 align-items-end">
+              <div class="col-md-4">
+                <label for="Module_id_${idx}" class="form-label">Module</label>
+                 <span class="text-danger"><strong>*</strong></span>
+                <select class="form-select" id="Module_id_${idx}" name="Module_id_${idx}" required>
+                  ${moduleOpts}
+                </select>
+              </div>
+              <div class="col-md-4">
+                <label for="Screen_id_${idx}" class="form-label">Screen</label>
+                <span class="text-danger"><strong>*</strong></span>
+                <select class="form-select" id="Screen_id_${idx}" name="Screen_id_${idx}" required>
+                  ${screenOpts}
+                </select>
+              </div>
+              <div class="col-md-3">
+                <label for="Permission_${idx}" class="form-label">Access Level</label>
+                <span class="text-danger"><strong>*</strong></span>
+                <select class="form-select" id="Permission_${idx}" name="Permission_${idx}" required>
+                  ${permissionOpts}
+                </select>
+              </div>
+              <div class="col-md-1 d-flex justify-content-center">
+               <button type="button" class="btn btn-sm btn-outline-danger mt-2 remove-screen" title="Remove" onclick="this.closest('.screen-row').remove()">
+               <i class="fas fa-trash-alt"></i></button>
+              </div>
+            </div>
+          </div>`;
+
+        const container = document.getElementById("screensContainer");
+        container.insertAdjacentHTML('beforeend', tpl);
+
+        const $mod = document.getElementById(`Module_id_${idx}`);
+        const $scr = document.getElementById(`Screen_id_${idx}`);
+        const $per = document.getElementById(`Permission_${idx}`);
+
+        if (values?.permissionId) $per.value = values.permissionId;
+
+        if (values?.moduleId) {
+          $mod.value = values.moduleId;
+          await bindScreensForModule($mod, $scr, values?.screenId ?? null);
+        } else if (values?.screenId) {
+          // Without a module we can't populate from server; leave value set if it's in the base options.
+          $scr.value = values.screenId;
+        }
+      };
+
+      // Add-row button
+      document.getElementById("addScreenBtn").addEventListener("click", () => addScreenRow());
+
+      // -----------------------------
+      // Module → Screen dependency
+      // -----------------------------
+      document.addEventListener("change", async (ev) => {
+        const target = ev.target;
+        if (!target.matches('select[id^="Module_id_"]')) return;
+
+        const idx = target.id.split("_").pop();
+        const $screen = document.getElementById(`Screen_id_${idx}`);
+
+        await bindScreensForModule(target, $screen, null);
+      });
+
+      async function bindScreensForModule(moduleSelectEl, screenSelectEl, screenToSelect = null) {
+        resetDropdown(screenSelectEl, "Select Screen");
+        const moduleId = moduleSelectEl?.value;
+        if (!moduleId) return;
+
+        try {
+          const res = await fetch(`/UserGroupConfiguration/GetScreensByModule?moduleId=${encodeURIComponent(moduleId)}`, { method: "GET" });
+          if (!res.ok) throw new Error("Failed to load screens");
+
+          // The endpoint returns: { "screens": [ { "id": 14, "name": "Employee Management" } ] }
+          const json = await res.json();
+          populateDropdown(screenSelectEl, json, screenToSelect);
+        } catch (err) {
+          console.error(err);
+          showAppAlert?.({ icon: "error", title: "Error", text: "Unable to load screens for the selected module." });
+        }
+      }
+           // -----------------------------
+        // Add event listener for checking duplicate on change
+        // -----------------------------
+        const screensContainer = document.getElementById('screensContainer');
+
+        // Attach the event listener to the container so that it's applied to dynamically added rows
+        screensContainer.addEventListener('change', function (event) {
+          const target = event.target;
+          if (target.matches('select[id^="Module_id_"], select[id^="Screen_id_"]')) {
+            checkForDuplicates();
+          }
+        });
+
+        // Function to check for duplicate combinations of Module and Screen
+        function checkForDuplicates() {
+          const selectedPairs = Array.from(document.querySelectorAll('.screen-row')).map(row => {
+            const moduleSelect = row.querySelector('select[id^="Module_id_"]');
+            const screenSelect = row.querySelector('select[id^="Screen_id_"]');
+            return {
+              module: moduleSelect ? moduleSelect.value : "",
+              screen: screenSelect ? screenSelect.value : "",
+              row: row // Keep reference to the row for resetting later
+            };
+          });
+
+          // Check for duplicate Module and Screen pairs
+          const duplicatePairs = selectedPairs.reduce((acc, pair, index, self) => {
+            // Find the first occurrence of the combination
+            const duplicateIndex = self.findIndex(p => p.module === pair.module && p.screen === pair.screen);
+
+            if (duplicateIndex !== index) { // If it's not the first occurrence, it's a duplicate
+              acc.push(pair); // Store the subsequent duplicate pairs
+            }
+            return acc;
+          }, []);
+
+          // Reset the selected values for the subsequent duplicate pairs
+          duplicatePairs.forEach(pair => {
+            const moduleSelect = pair.row.querySelector('select[id^="Module_id_"]');
+            const screenSelect = pair.row.querySelector('select[id^="Screen_id_"]');
+
+            // Reset the Module and Screen selections
+            const moduleName = moduleSelect.options[moduleSelect.selectedIndex]?.text || 'Module';
+            const screenName = screenSelect.options[screenSelect.selectedIndex]?.text || 'Screen';
+
+            moduleSelect.value = ''; // Reset the Module selection
+            screenSelect.value = ''; // Reset the Screen selection
+
+            // Show alert with the Module and Screen combination that was reset
+            showAppAlert({
+              icon: "warning",
+              title: "Duplicate Selection",
+              text: `The combination of Module "${moduleName}" and Screen "${screenName}" has already been selected. This combination has been reset.`,
+            });
+          });
+        }
+
+
+      // -----------------------------
+      // Main toolbar actions
+      // -----------------------------
+      // Add
+      document.getElementById("add-btn").addEventListener("click", () => {
+        currentMode = "Add";
+        form.reset();
+        document.getElementById("addEditModalLabel").textContent = "User Group Configuration";
+        document.getElementById("modalSubmitBtn").textContent = "Add";
+        document.getElementById("User_group_id").value = 0;
+        document.getElementById("screensContainer").innerHTML = "";
+        addEditModal.show();
+      });
+
+      // Edit
+      document.getElementById("edit-btn").addEventListener("click", async () => {
+        const row = dataTable.getSelectedData()?.[0];
+        if (!row) {
+          return showAppAlert({ icon: 'warning', title: 'No Selection', text: 'Please select a row to edit.' });
+        }
+
+        currentMode = "Edit";
+        document.getElementById("addEditModalLabel").textContent = "Edit User Group";
+        document.getElementById("modalSubmitBtn").textContent = "Update";
+        form.reset();
+        document.getElementById("screensContainer").innerHTML = "";
+
+        // Map top-level fields by id
+        Object.keys(row).forEach(field => {
+          const el = document.getElementById(field);
+          if (!el) return;
+          if (el.type === "datetime-local" && row[field]) {
+            el.value = new Date(row[field]).toISOString().slice(0,16);
+          } else {
+            el.value = row[field] ?? "";
+          }
+        });
+
+        // Screens
+        const screens = Array.isArray(row.Screens) ? row.Screens : [];
+        if (screens.length) {
+          for (const s of screens) {
+            await addScreenRow({
+              moduleId: s.Module_id ?? '',
+              screenId: s.Screen_id ?? '',
+              permissionId: s.Permission_id ?? '' // expects your option values
+            });
+          }
+        }
+
+        addEditModal.show();
+      });
+
+      // Delete
+      document.getElementById("delete-btn").addEventListener("click", async () => {
+        const row = dataTable.getSelectedData()?.[0];
+        if (!row) {
+          return showAppAlert({ icon: "warning", title: "No Selection", text: "Please select a row to delete." });
+        }
+
+        const confirm = await showAppAlert({
+          type: "confirm",
+          icon: "question",
+          title: "Delete Confirmation",
+          text: "Are you sure you want to delete this record?"
+        });
+        if (!confirm.isConfirmed) return;
+
+        const ok = await deleteRecord("/UserGroupConfiguration/Delete", { User_group_id: row.User_group_id });
+        if (ok) {
+          setTimeout(() => { window.location.href = "/UserGroupConfiguration/Index"; }, 900);
+        }
+      });
+
+      // -----------------------------
+      // Collect + Submit
+      // -----------------------------
+      function collectScreensFromForm() {
+        const rows = [...document.querySelectorAll('#screensContainer .screen-row')];
+        return rows.map(r => {
+          const modSel = r.querySelector('select[id^="Module_id_"]');
+          const scrSel = r.querySelector('select[id^="Screen_id_"]');
+          const perSel = r.querySelector('select[id^="Permission_"]');
+
+          const Module_id     = modSel?.value ? parseInt(modSel.value, 10) : 0;
+          const Module_name   = modSel?.options[modSel.selectedIndex]?.text?.trim() || "";
+
+          const Screen_id     = scrSel?.value ? parseInt(scrSel.value, 10) : 0;
+          const Screen_name   = scrSel?.options[scrSel.selectedIndex]?.text?.trim() || "";
+
+          const Permission_id = perSel?.value ? parseInt(perSel.value, 10) : 0;
+          const Permission    = perSel?.options[perSel.selectedIndex]?.text?.trim() || "";
+
+          return { Module_id, Module_name, Screen_id, Screen_name, Permission_id, Permission };
+        }).filter(x => x.Module_id || x.Screen_id || x.Permission_id);
+      }
+
+      function buildAssignedModulesSummary() {
+        const screens = collectScreensFromForm();
+        const modules = screens.map(s => s.Module_name).filter(Boolean);
+        document.getElementById("Assigned_modules").value = modules.join(", ");
+        return screens;
+      }
+
+      form.addEventListener("submit", async (e) => {
+      
+       
+
+        e.preventDefault();
+
+        const screens = buildAssignedModulesSummary();
+        const formData = Object.fromEntries(new FormData(form).entries());
+        formData.Screens = screens;
+
+        const fetchUrl = currentMode === "Add" ? "/UserGroupConfiguration/Create" : "/UserGroupConfiguration/Update";
+        const ok = await saveRecord(fetchUrl, formData, currentMode, addEditModal, form);
+        if (ok) {
+          setTimeout(() => { window.location.href = "/UserGroupConfiguration/Index"; }, 900);
+        }
+      });
+
+      // -----------------------------
+      // Download / Upload
+      // -----------------------------
+      // document.getElementById("download-btn").addEventListener("click", () => {
+      //      let rowCount = dataTable.getDataCount ? dataTable.getDataCount() : dataTable.getData().length;
+
+      //        if (rowCount === 1) {
+      //            let firstRowData = dataTable.getData()[0];
+      //            let firstRowFieldValue = firstRowData ? firstRowData["User_group_id"] : null;
+      //            if (firstRowFieldValue === null || firstRowFieldValue === 0 || firstRowFieldValue === "") {
+      //                rowCount = 0;
+      //            }
+      //        }
+      //        if (rowCount === 0) {
+      //            showAppAlert({
+      //                icon: 'warning',
+      //                title: 'No Data',
+      //                text: 'No records found to download.'
+      //            });
+      //            return; // Stop further execution
+      //        }
+      //   downloadCsv(dataTable, "UserGroupConfiguration.csv");
+      // });
+
+          function csvCell(v) {
+          const s = (v ?? "").toString().replace(/"/g, '""');
+          return `"${s}"`;
+        }
+        function downloadCsvText(filename, text) {
+          // BOM so Excel opens UTF-8 correctly
+          const blob = new Blob(["\uFEFF" + text], { type: "text/csv;charset=utf-8;" });
+          const a = document.createElement("a");
+          a.href = URL.createObjectURL(blob);
+          a.download = filename;
+          a.click();
+          URL.revokeObjectURL(a.href);
+        }
+
+     document.getElementById("download-btn").addEventListener("click", function () {
+             let rowCount = dataTable.getDataCount ? dataTable.getDataCount() : dataTable.getData().length;
+
+             if (rowCount === 1) {
+                 let firstRowData = dataTable.getData()[0];
+                 let firstRowFieldValue = firstRowData ? firstRowData["User_group_id"] : null;
+                 if (firstRowFieldValue === null || firstRowFieldValue === 0 || firstRowFieldValue === "") {
+                     rowCount = 0;
+                 }
+             }
+             if (rowCount === 0) {
+                 showAppAlert({
+                     icon: 'warning',
+                     title: 'No Data',
+                     text: 'No records found to download.'
+                 });
+                 return; // Stop further execution
+             }
+
+                // 1) Guard: any data?
+          const all = dataTable.getData ? dataTable.getData() : [];
+
+
+          // 2) Flatten: group -> (zero or many) screens
+          const flattened = [];
+          all.forEach(g => {
+            const groupName = g.User_group_name ?? g.user_group_name ?? "";
+            const desc      = g.Description      ?? g.description      ?? "";
+            const screens   = Array.isArray(g.Screens ?? g.screens) ? (g.Screens ?? g.screens) : [];
+
+            if (screens.length === 0) {
+              // Group with no screens -> one row with blanks
+              flattened.push({
+                UserGroupName: groupName,
+                Description: desc,
+                Module: "",
+                Screen: "",
+                AccessLevel: ""
+              });
+            } else {
+              screens.forEach(s => {
+                flattened.push({
+                  UserGroupName: groupName,
+                  Description: desc,
+                  Module: s.Module_name ?? s.module_name ?? "",
+                  Screen: s.Screen_name ?? s.screen_name ?? "",
+                  AccessLevel: s.Permission ?? s.permission ?? ""
+                });
+              });
+            }
+          });
+
+          if (flattened.length === 0) {
+            showAppAlert({ icon: "info", title: "Empty", text: "No screen details to download" });
+            return;
+          }
+
+          // 3) To CSV (fixed header order)
+          const headers = ["UserGroupName", "Description", "Module", "Screen", "AccessLevel"];
+          const headerLine = headers.join(",");
+          const lines = flattened.map(r => headers.map(h => csvCell(r[h])).join(","));
+          const csv = headerLine + "\n" + lines.join("\n");
+
+          // 4) Download
+          downloadCsvText("UserGroupConfiguration.csv", csv);
+        });
+
+
+
+
+      document.getElementById("download-template-btn").addEventListener("click", () => {
+        downloadCsvTemplate(dataTable, "UserGroupConfigurationTemplate");
+      });
+
+      // Upload (CSV)
+        function getRequestVerificationToken() {
+            const tokenInput = document.querySelector('#afForm input[name="__RequestVerificationToken"]');
+            return tokenInput ? tokenInput.value : null;
+        }
+
+        document.getElementById("upload-btn").addEventListener("click", () => {
+            document.getElementById("upload-file").click();
+        });
+
+        document.getElementById("upload-file").addEventListener("change", function (event) {
+            const fileInput = event.target;
+            if (!fileInput.files || fileInput.files.length === 0) {
+                return showAppAlert({ icon: 'warning', title: 'No File', text: 'Please select a file to upload.' });
+            }
+            const file = fileInput.files[0];
+
+            const extOk = /\.csv$/i.test(file.name);
+            const type = (file.type || '').toLowerCase();
+            const typeOk = type.includes('csv') || type === 'application/vnd.ms-excel';
+            if (!extOk && !typeOk) {
+                showAppAlert({ icon: 'warning', title: 'Invalid File', text: 'Please select a .csv file.' });
+                fileInput.value = '';
+                return;
+            }
+
+            uploadFile('/UserGroupConfiguration/Upload', file);
+        });
+
+        async function uploadFile(url, file) {
+            const formData = new FormData();
+            formData.append("file", file);
+
+            const csrfToken = getRequestVerificationToken();
+
+            try {
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: { 'RequestVerificationToken': csrfToken },
+                    body: formData
+                });
+                await handleUploadResponse(response);
+            } catch (error) {
+                showToast({ icon: "error", text: error.message || "Action failed" });
+            }
+        }
+
+       async function handleUploadResponse(response) {
+          if (response.ok) {
+            const result = await response.json();
+            // showAppAlert({ icon: 'success', title: result.title, text: result.message });
+              showAppAlert({ icon: result.status, title: result.title, text: result.message });
+            if (result.invalidRecords) downloadInvalidRecords(result.invalidRecords);
+
+            if (result.status === "success") {
+              setTimeout(() => { window.location.href = "/UserGroupConfiguration/Index"; }, 900);
+            }
+          } else {
+            let title = "Upload Failed", text = "An unexpected error occurred.";
+            try {
+              const err = await response.json();
+              title = err.title || title;
+              text = err.message || text;
+              if (err.status === "error") {
+                setTimeout(() => { window.location.href = "/UserGroupConfiguration/Index"; }, 1500);
+              }
+            } catch (_) { /* ignore JSON parse errors */ }
+            showAppAlert({ icon: 'error', title, text });
+          }
+        }
+        
+        function downloadInvalidRecords(fileData) {
+            const csvData = atob(fileData);
+            const blob = new Blob([csvData], { type: 'text/csv' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = 'invalid_records.csv';
+            link.click();
+        }
+    });
+</script>
+

@@ -1,0 +1,397 @@
+﻿@model YardManagementApplication.Models.YardModel
+
+@{
+    ViewBag.Title = "Yard Plot";
+    Layout = "_Layout";
+
+    var coordsJson = Context.Request.Query["coordinates"].FirstOrDefault() ?? Model.Coordinates ?? "[]";
+
+    // Parse Plant_coordinates from query string
+    var plantCoordsRaw = Context.Request.Query["Plant_coordinates"].FirstOrDefault() ?? "{}";
+    var plantCoordsJson = "[]";
+    try
+    {
+        var plantCoordsObj = Newtonsoft.Json.JsonConvert.DeserializeObject<dynamic>(plantCoordsRaw);
+        if (plantCoordsObj != null && plantCoordsObj.success == true && plantCoordsObj.coordinates != null)
+        {
+            plantCoordsJson = plantCoordsObj.coordinates.ToString();
+        }
+    }
+    catch
+    {
+        plantCoordsJson = "[]";
+    }
+
+    var mode = (ViewBag.Mode ?? "add").ToString().ToLower();
+}
+
+<head>
+    <link href="~/css/site.css" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@@turf/turf@6/turf.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+</head>
+
+<style>
+    #map {
+        margin-left: 100px;
+        width: calc(100% - 200px);
+        height: 70vh;
+        border-radius: 8px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    }
+
+    .plant-button {
+        align-items: center;
+    }
+
+    .reset {
+        align-items: center;
+    }
+
+    .btn-darkgrey {
+        background-color: #4a4a4a; /* dark grey */
+        color: #f0f0f0; /* light text for contrast */
+        border: 1px solid #3e3e3e; /* slightly darker border */
+    }
+
+        .btn-darkgrey:hover {
+            background-color: #3e3e3e; /* darker on hover */
+            color: #ffffff;
+        }
+
+    .btn-prof {
+        background-color: #b31225;
+        border-color: #b31225;
+        color: #fff;
+    }
+
+        .btn-prof:hover {
+            background-color: #d3364a;
+            border-color: #d3364a;
+        }
+
+    .bottom-buttons {
+        text-align: center;
+        margin-top: 14px;
+    }
+
+        .bottom-buttons .btn {
+            margin: 6px;
+            min-width: 140px;
+        }
+
+    #manualCoordMenu {
+        position: absolute;
+        top: 120px;
+        right: 10px;
+        z-index: 999;
+    }
+
+    #menuToggle {
+        width: 40px;
+        height: 40px;
+        background: #b31225;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+    }
+
+    #coordPanel {
+        display: none;
+        margin-top: 8px;
+        background: white;
+        padding: 10px;
+        border-radius: 8px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+        max-height: 400px;
+        overflow-y: auto;
+        min-width: 250px;
+    }
+
+    .coordRow {
+        display: flex;
+        gap: 2px;
+        margin-bottom: 6px;
+    }
+
+        .coordRow input {
+            flex: 1;
+        }
+</style>
+
+<div class="container-fluid mt-3">
+    <div class="col-12 text-center py-2 mb-3" style="background:#242424; color:white;">
+        <h6 class="mb-0 fw-bold text-uppercase">
+            @(mode == "edit" ? "Edit Yard" : "Plot Yard")
+        </h6>
+    </div>
+
+    @* <div id="pageTitle" class="col-12 text-center py-1 mb-3">
+        <h6 class="mb-0 fw-bold text-uppercase tracking-wide">@(mode == "edit" ? "Edit Yard" : "Plot New Yard")</h6>
+    </div> *@
+
+    <div style="position:relative;">
+        <div id="map"></div>
+
+        <!-- Manual Coordinates Menu -->
+        <div id="manualCoordMenu">
+            <div id="menuToggle">
+                <i class="bi bi-list" style="color:white; font-size:1.5rem;"></i>
+            </div>
+            <div id="coordPanel">
+                <div id="coordContainer">
+                    <div class="coordRow">
+                        <input type="number" class="form-control form-control-sm latitude" placeholder="Latitude" step="0.000001" />
+                        <input type="number" class="form-control form-control-sm longitude" placeholder="Longitude" step="0.000001" />
+                    </div>
+                </div>
+                <div class="d-flex gap-2 mt-2">
+                    <button id="addPointBtn" class="btn btn-prof btn-sm flex-fill">Add Point</button>
+                    <button id="usePointsBtn" class="btn btn-prof btn-sm flex-fill">Use Points</button>
+                </div>
+                <small class="text-muted d-block mt-2">Enter at least 3 points, then click "Use Points" to plot.</small>
+            </div>
+        </div>
+    </div>
+
+    <div class="bottom-buttons">
+        <div class="plant-button">
+            <button id="undoBtn" class="btn btn-prof">Undo Last Point</button>
+            <button id="finalizeBtn" class="btn btn-prof">Finalize Layout</button>
+            <button id="saveBtn" class="btn btn-prof">Save Layout</button>
+            <button id="proceedBtn" class="btn btn-prof">Proceed to Lanes</button>
+        </div>
+        <div class="reset">
+            <button id="resetBtn" class="btn btn-darkgrey">Reset Points</button>
+            <a href="@Url.Action("Index", "Yard")" class="btn btn-darkgrey">Back</a>
+        </div>
+    </div>
+</div>
+
+<form id="saveForm" method="post" asp-action="SaveYard" asp-controller="Yard">
+    @Html.AntiForgeryToken()
+    <input type="hidden" name="Yard_id" value="@Model.Yard_id" />
+    <input type="hidden" name="Yard_name" value="@Model.Yard_name" />
+    <input type="hidden" name="Yard_code" value="@Model.Yard_code" />
+    <input type="hidden" name="Plant_id" value="@Model.Plant_id" />
+    <input type="hidden" name="Coordinates" id="coordinates" />
+    <input type="hidden" name="Area_acres" id="totalArea" />
+</form>
+
+<script>
+    (function () {
+        let yardPoints = @Html.Raw(coordsJson);
+        let plantPoints = JSON.parse('@Html.Raw(plantCoordsJson.Replace("'", "\\'"))');
+        let markers = [];
+        let polygonLayer = null;
+        let yardArea = parseFloat('@(Model.Area_acres ?? 0)') || 0;
+        let finalized = yardPoints.length >= 3;
+
+        const map = L.map('map');
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 22 }).addTo(map);
+
+        // ===== Fit map =====
+        if (plantPoints.length > 0) {
+            const plantLatLngs = plantPoints.map(p => [p[1], p[0]]);
+            const plantPolygon = L.polygon(plantLatLngs, { color: '#28a745', fillOpacity: 0.35 }).addTo(map);
+            map.fitBounds(plantPolygon.getBounds());
+        } else if (yardPoints.length > 0) {
+            map.fitBounds(yardPoints.map(p => [p[1], p[0]]));
+        } else {
+            map.setView([39.8283, -98.5795], 4);
+        }
+
+        // ===== Map helpers =====
+        function updateMap() {
+            markers.forEach(m => map.removeLayer(m));
+            markers = [];
+            yardPoints.forEach((p, i) => {
+                const m = L.marker([p[1], p[0]]).addTo(map).bindTooltip(`P${i + 1}`, { permanent: true, direction: 'top' });
+                markers.push(m);
+            });
+            if (polygonLayer) map.removeLayer(polygonLayer);
+            if (yardPoints.length >= 3) {
+                polygonLayer = L.polygon(yardPoints.map(p => [p[1], p[0]]), { color: '#007BFF', fillOpacity: 0.35 }).addTo(map);
+            }
+        }
+
+        function sortCounterClockwise(arr) {
+            const center = arr.reduce((acc, val) => [acc[0] + val[0] / arr.length, acc[1] + val[1] / arr.length], [0, 0]);
+            return arr.slice().sort((a, b) =>
+                Math.atan2(a[1] - center[1], a[0] - center[0]) -
+                Math.atan2(b[1] - center[1], b[0] - center[0])
+            );
+        }
+
+        map.on('click', e => {
+            yardPoints.push([e.latlng.lng, e.latlng.lat]);
+            yardPoints = sortCounterClockwise(yardPoints);
+            updateMap();
+        });
+
+        // ===== Controls =====
+        const saveBtn = document.getElementById('saveBtn');
+        const proceedBtn = document.getElementById('proceedBtn');
+        const finalizeBtn = document.getElementById('finalizeBtn');
+
+        // Initial button state
+        const isEdit = parseInt("@Model.Yard_id") > 0;
+        if (isEdit) {
+            saveBtn.disabled = true;
+            proceedBtn.disabled = true;
+        } else {
+            saveBtn.style.display = "none";
+            proceedBtn.style.display = "none";
+        }
+
+        document.getElementById('undoBtn').onclick = () => { yardPoints.pop(); updateMap(); };
+        document.getElementById('resetBtn').onclick = () => {
+            yardPoints = [];
+            finalized = false;
+            updateMap();
+
+            saveBtn.disabled = true;
+            proceedBtn.disabled = true;
+            Swal.fire("Reset", "All points have been cleared!", "info");
+        };
+
+        // ===== Finalize Yard =====
+        finalizeBtn.onclick = () => {
+            if (yardPoints.length < 3)
+                return Swal.fire("Error", "At least 3 points required!", "error");
+
+            yardPoints = sortCounterClockwise(yardPoints);
+            const poly = turf.polygon([[...yardPoints, yardPoints[0]]]);
+            const areaSqM = turf.area(poly);
+            yardArea = areaSqM / 4046.8564224;
+            finalized = true;
+            updateMap();
+
+            // Enable buttons after finalize
+            saveBtn.style.display = "inline-block";
+            proceedBtn.style.display = "inline-block";
+            saveBtn.disabled = false;
+            proceedBtn.disabled = false;
+
+            Swal.fire("Yard Finalized", `Area: ${yardArea.toFixed(2)} acres`, "info");
+        };
+
+        // ===== Manual Coordinate Panel =====
+        const menuToggle = document.getElementById('menuToggle');
+        const coordPanel = document.getElementById('coordPanel');
+        const addPointBtn = document.getElementById('addPointBtn');
+        const usePointsBtn = document.getElementById('usePointsBtn');
+
+        menuToggle.addEventListener('click', () => {
+            coordPanel.style.display = coordPanel.style.display === 'none' ? 'block' : 'none';
+        });
+
+        addPointBtn.addEventListener('click', () => {
+            const row = document.createElement('div');
+            row.className = 'coordRow';
+            row.innerHTML = `
+                <input type="number" class="form-control form-control-sm latitude" placeholder="Latitude" step="0.000001"/>
+                <input type="number" class="form-control form-control-sm longitude" placeholder="Longitude" step="0.000001"/>`;
+            document.getElementById('coordContainer').appendChild(row);
+        });
+
+        usePointsBtn.addEventListener('click', () => {
+            const latInputs = document.querySelectorAll('.latitude');
+            const lngInputs = document.querySelectorAll('.longitude');
+            const pts = [];
+            latInputs.forEach((latInput, i) => {
+                const lngInput = lngInputs[i];
+                const lat = parseFloat(latInput.value);
+                const lng = parseFloat(lngInput.value);
+                if (!isNaN(lat) && !isNaN(lng)) pts.push([lng, lat]);
+            });
+            if (pts.length < 3)
+                return Swal.fire("Error", "Enter at least 3 points!", "error");
+
+            yardPoints = sortCounterClockwise(pts);
+            updateMap();
+            map.fitBounds(pts.map(p => [p[1], p[0]]));
+        });
+
+        function syncInputs() {
+            const container = document.getElementById('coordContainer');
+            container.innerHTML = '';
+            yardPoints.forEach(p => {
+                const row = document.createElement('div');
+                row.className = 'coordRow';
+                row.innerHTML = `
+                    <input type="number" class="form-control form-control-sm latitude" value="${p[1]}" step="0.000001"/>
+                    <input type="number" class="form-control form-control-sm longitude" value="${p[0]}" step="0.000001"/>`;
+                container.appendChild(row);
+            });
+        }
+
+        // ===== Save Logic =====
+        async function saveYardData(redirectToLane = false) {
+            if (yardPoints.length < 3)
+                return Swal.fire("Error", "At least 3 points required!", "error");
+
+            if (!finalized)
+                return Swal.fire("Error", "Please finalize the yard before saving!", "error");
+
+            const yardData = {
+                Yard_id: isEdit ? parseInt("@Model.Yard_id") : 0,
+                Yard_name: "@Model.Yard_name" || "Yard",
+                Yard_code: "@Model.Yard_code" || "",
+                Plant_id: parseInt("@Model.Plant_id") || 0,
+                Coordinates: JSON.stringify(yardPoints),
+                Area_acres: parseFloat(yardArea.toFixed(4))
+            };
+
+            try {
+                const url = isEdit ? '/Yard/UpdateYard' : '/Yard/InsertYard';
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'RequestVerificationToken': $('input[name="__RequestVerificationToken"]').val()
+                    },
+                    body: JSON.stringify(yardData)
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    Swal.fire("Success", "Yard saved successfully!", "success").then(() => {
+                        if (redirectToLane) {
+                            let laneUrl = `/Lane/Plot?yardName=${encodeURIComponent(yardData.Yard_name)}&coordinates=${encodeURIComponent(JSON.stringify(yardPoints))}`;
+                            if (isEdit) {
+                                const yardId = yardData.Yard_id || result.Yard_id || result.id || (result.data && result.data.Yard_id);
+                                if (!yardId || yardId <= 0)
+                                    return Swal.fire("Error", "Yard saved but ID missing!", "error");
+
+                                laneUrl += `&yardId=${yardId}`;
+                            }
+                            window.location.href = laneUrl;
+                        } else {
+                            window.location.href = '/Yard/Index';
+                        }
+                    });
+                } else {
+                    Swal.fire("Error", result.message || "Failed to save yard.", "error");
+                }
+            } catch (err) {
+                Swal.fire("Error", err.message, "error");
+            }
+        }
+
+        // ===== Buttons =====
+        saveBtn.onclick = () => saveYardData(false);
+        proceedBtn.onclick = () => saveYardData(true);
+
+        updateMap();
+        syncInputs();
+    })();
+</script>

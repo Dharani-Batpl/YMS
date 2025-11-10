@@ -1,0 +1,1449 @@
+@{
+    var doDetails = ViewData["DoDetails"] as YardManagementApplication.Models.DoDetailsModel;
+    Layout = "_Layout";
+}
+
+<head>
+    <link href="~/css/site.css" rel="stylesheet" />
+</head>
+
+<style>
+    .do-details-container {
+        padding: 1rem;
+    }
+    
+    .do-header {
+        background: black;
+        color: white;
+        padding: 1rem 1.5rem;
+        border-radius: 12px;
+        margin-bottom: 1.5rem;
+        box-shadow: 0 4px 12px rgba(142, 68, 173, 0.3);
+    }
+    
+    .do-title {
+        font-size: 1.8rem;
+        font-weight: bold;
+        margin-bottom: 0.5rem;
+    }
+    
+    .etd-info {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        margin-bottom: 1rem;
+    }
+    
+    .at-risk-badge {
+        background-color: #e74c3c;
+        color: white;
+        padding: 0.25rem 0.75rem;
+        border-radius: 20px;
+        font-size: 0.8rem;
+        font-weight: 600;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.25rem;
+    }
+    
+    .total-required {
+        text-align: right;
+        font-size: 0.9rem;
+    }
+    
+    .total-required-value {
+        font-size: 1.2rem;
+        font-weight: bold;
+        color: white;
+    }
+    
+    .summary-cards {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1rem;
+        margin-bottom: 1.5rem;
+    }
+    
+    .summary-card {
+        background: white;
+        padding: 1.5rem;
+        border-radius: 12px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        text-align: center;
+        border-left: 4px solid;
+    }
+    
+    .summary-card.required { border-left-color: #3498db; }
+    .summary-card.allocated { border-left-color: #2ecc71; }
+    .summary-card.remaining { border-left-color: #f39c12; }
+    .summary-card.complete { border-left-color: #9b59b6; }
+    
+    .summary-card-title {
+        font-size: 0.9rem;
+        color: #7f8c8d;
+        margin-bottom: 0.5rem;
+        font-weight: 500;
+    }
+    
+    .summary-card-value {
+        font-size: 1.8rem;
+        font-weight: bold;
+        color: #2c3e50;
+    }
+    
+    .auto-allocate-section {
+        background: white;
+        padding: 1.5rem;
+        border-radius: 12px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        margin-bottom: 1.5rem;
+    }
+    
+    .auto-allocate-title {
+        font-size: 1.1rem;
+        font-weight: bold;
+        color: #2c3e50;
+        margin-bottom: 0.5rem;
+    }
+    
+    .auto-allocate-description {
+        color: #7f8c8d;
+        margin-bottom: 1rem;
+        line-height: 1.5;
+    }
+    
+    .auto-allocate-btn {
+        background: #6c757d;
+        color: white;
+        border: none;
+        padding: 0.75rem 1.5rem;
+        border-radius: 8px;
+        font-weight: 600;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        transition: all 0.3s ease;
+    }
+    
+    .auto-allocate-btn:hover {
+        background: #5a6268;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(108, 117, 125, 0.3);
+        color: white;
+    }
+    
+    .requirements-section {
+        background: linear-gradient(135deg, #e8f8f5, #d5f4e6);
+        padding: 1.5rem;
+        border-radius: 12px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        margin-bottom: 1.5rem;
+    }
+    
+    .requirements-title {
+        font-size: 1.1rem;
+        font-weight: bold;
+        color: #2c3e50;
+        margin-bottom: 1rem;
+    }
+    
+    .variant-item {
+        background: white;
+        padding: 1rem;
+        border-radius: 8px;
+        margin-bottom: 0.75rem;
+        box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+    }
+    
+    .variant-info {
+        flex: 1;
+    }
+    
+    .variant-name {
+        font-weight: bold;
+        color: #2c3e50;
+        margin-bottom: 0.25rem;
+        font-size: 1rem;
+    }
+    
+    .variant-required {
+        color: #7f8c8d;
+        font-size: 0.9rem;
+        margin: 0;
+    }
+    
+    .variant-progress {
+        text-align: right;
+        flex-shrink: 0;
+        margin-left: 1rem;
+    }
+    
+    .variant-ratio {
+        font-weight: bold;
+        color: #f39c12;
+        font-size: 1.1rem;
+        margin-bottom: 0.25rem;
+    }
+    
+    .variant-needed {
+        color: #7f8c8d;
+        font-size: 0.9rem;
+        margin: 0;
+    }
+    
+    .vin-allocation-section {
+        background: white;
+        padding: 1.5rem;
+        border-radius: 12px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        margin-bottom: 1.5rem;
+    }
+    
+    .vin-allocation-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1rem;
+    }
+    
+    .vin-allocation-title {
+        font-size: 1.1rem;
+        font-weight: bold;
+        color: #2c3e50;
+    }
+    
+    .add-vin-btn {
+        background: #6c757d;
+        color: white;
+        border: none;
+        padding: 0.5rem 1rem;
+        border-radius: 6px;
+        font-weight: 600;
+        font-size: 0.9rem;
+    }
+    
+    .add-vin-btn:hover {
+        background: #5a6268;
+        color: white;
+    }
+    
+    .empty-vin-state {
+        text-align: center;
+        padding: 3rem 1rem;
+        color: #7f8c8d;
+    }
+    
+    .empty-vin-icon {
+        font-size: 4rem;
+        color: #bdc3c7;
+        margin-bottom: 1rem;
+    }
+    
+    .empty-vin-text {
+        font-size: 1.1rem;
+        font-weight: 500;
+        margin-bottom: 0.5rem;
+        color: #7f8c8d;
+    }
+    
+    .empty-vin-instruction {
+        font-size: 0.9rem;
+        color: #95a5a6;
+    }
+    
+    .quality-inspector-section {
+        background: linear-gradient(135deg, #fdf2f2, #fce4e6);
+        padding: 1.5rem;
+        border-radius: 12px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    
+    .quality-inspector-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1rem;
+    }
+    
+    .quality-inspector-title {
+        font-size: 1.1rem;
+        font-weight: bold;
+        color: #2c3e50;
+    }
+    
+    .qi-per-do {
+        font-size: 0.9rem;
+        color: #7f8c8d;
+    }
+    
+    .quality-inspector-warning {
+        background: white;
+        padding: 1rem;
+        border-radius: 8px;
+        border-left: 4px solid #e74c3c;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+    
+    .warning-icon {
+        color: #e74c3c;
+        font-size: 1.5rem;
+    }
+    
+    .warning-text {
+        color: #2c3e50;
+        font-weight: 500;
+        margin-bottom: 0.25rem;
+    }
+    
+    .warning-instruction {
+        color: #7f8c8d;
+        font-size: 0.9rem;
+    }
+    
+    .back-btn {
+        background: rgba(255, 255, 255, 0.2);
+        color: white;
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        padding: 0.5rem 1rem;
+        border-radius: 6px;
+        font-weight: 600;
+        margin-bottom: 0;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        transition: all 0.3s ease;
+    }
+    
+    .back-btn:hover {
+        background: rgba(255, 255, 255, 0.3);
+        color: white;
+        border-color: rgba(255, 255, 255, 0.5);
+    }
+    
+    /* VIN Search Modal Styles */
+    .modal-content {
+        border-radius: 12px;
+        border: none;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+    }
+    
+    .modal-header {
+        background: #6c757d;
+        color: white;
+        border-radius: 12px 12px 0 0;
+        border-bottom: none;
+    }
+    
+    .modal-title {
+        font-weight: 600;
+    }
+    
+    .btn-close {
+        filter: invert(1);
+    }
+    
+    .vin-result-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(142, 68, 173, 0.2);
+    }
+    
+    .allocated-vin-item {
+        transition: all 0.2s ease;
+    }
+    
+    .allocated-vin-item:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+    }
+    
+    /* VIN Table Styles */
+    #vinAllocationTable {
+        margin-bottom: 0;
+        border-collapse: separate;
+        border-spacing: 0;
+    }
+    
+    #vinAllocationTable thead th {
+        background-color: #e8d5f2 !important;
+        color: #2c3e50 !important;
+        font-weight: 600 !important;
+        border-bottom: 1px solid #d1c4e9 !important;
+        padding: 0.75rem !important;
+        font-size: 0.9rem;
+    }
+    
+    #vinAllocationTable tbody tr {
+        transition: background-color 0.2s ease;
+    }
+    
+    #vinAllocationTable tbody tr:hover {
+        background-color: #f8f9fa;
+    }
+    
+    #vinAllocationTable tbody td {
+        padding: 0.75rem !important;
+        border-bottom: 1px solid #e9ecef;
+        vertical-align: middle;
+    }
+    
+    .vin-table-row {
+        border-bottom: 1px solid #e9ecef;
+    }
+    
+    .vin-table-row:last-child td {
+        border-bottom: none;
+    }
+    
+    @@media (max-width: 768px) {
+        .summary-cards {
+            grid-template-columns: 1fr;
+        }
+        
+        .variant-item {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 0.75rem;
+        }
+        
+        .variant-progress {
+            text-align: left;
+            margin-left: 0;
+            align-self: flex-end;
+        }
+    }
+</style>
+
+<div class="container do-details-container">
+    @if (doDetails != null)
+    {
+        <!-- DO Header -->
+        <div class="do-header">
+            <div class="row align-items-center">
+                <div class="col-md-8">
+                    <div class="do-title">@doDetails.do_number</div>
+                    <div class="etd-info">
+                        <i class="bi bi-clock"></i>
+                        <span>ETD: @doDetails.planned_dispatch_at?.ToString("dd-MM-yyyy HH:mm:ss")</span>
+                        <span class="at-risk-badge">
+                            <i class="bi bi-exclamation-triangle"></i>
+                            AT RISK
+                        </span>
+                    </div>
+                    <!-- Back Button moved below ETD -->
+                    <button class="back-btn" onclick="window.history.back()" style="margin-top: 0.75rem;">
+                        <i class="bi bi-arrow-left"></i> Back to PDI
+                    </button>
+                </div>
+                <div class="col-md-4">
+                    <div class="total-required">
+                        <div>Total Required</div>
+                        <div class="total-required-value">@doDetails.quantity_ordered units</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Summary Cards -->
+        <div class="summary-cards">
+            <div class="summary-card required">
+                <div class="summary-card-title">Required</div>
+                <div class="summary-card-value">@doDetails.quantity_ordered</div>
+            </div>
+            <div class="summary-card allocated">
+                <div class="summary-card-title">Allocated</div>
+                <div class="summary-card-value">@doDetails.allocated</div>
+            </div>
+            <div class="summary-card remaining">
+                <div class="summary-card-title">Remaining</div>
+                <div class="summary-card-value">@doDetails.remaining</div>
+            </div>
+            <div class="summary-card complete">
+                <div class="summary-card-title">Complete %</div>
+                <div class="summary-card-value">@doDetails.progress%</div>
+            </div>
+        </div>
+
+        <!-- Auto-Allocate VINs Section -->
+        <div class="auto-allocate-section">
+            <div class="auto-allocate-title">Auto-Allocate VINs</div>
+            <div class="auto-allocate-description">
+                Automatically allocate VINs from the Stored pool to meet required quantities per variant.
+            </div>
+            <button class="auto-allocate-btn" id="autoAllocateBtn">
+                <i class="bi bi-car-front"></i>
+                Auto-Allocate VINs
+            </button>
+            <div id="autoAllocateMessage" style="display:none; margin-top: 0.75rem;"></div>
+        </div>
+
+        <!-- Requirements by Variant Section -->
+        <div class="requirements-section">
+            <div class="requirements-title">Requirements by Variant</div>
+            @foreach (var variant in doDetails.variants)
+            {
+                <div class="variant-item">
+                    <div class="variant-info">
+                        <div class="variant-name">@variant.brand_name-@variant.product_name</div>
+                        <div class="variant-required">Required: @variant.quantity_ordered units</div>
+                    </div>
+                    <div class="variant-progress">
+                        <div class="variant-ratio">@variant.quantity_dispatched / @variant.quantity_ordered</div>
+                        <div class="variant-needed">@variant.balance_needed needed</div>
+                    </div>
+                </div>
+            }
+        </div>
+
+        <!-- VIN Allocation Section -->
+        <div class="vin-allocation-section">
+            <div class="vin-allocation-header">
+                <div class="vin-allocation-title">VIN Allocation (@doDetails.vins.Count units)</div>
+                <button class="add-vin-btn" data-bs-toggle="modal" data-bs-target="#vinSearchModal">+ Add VIN</button>
+            </div>
+            
+            @if (doDetails.vins.Count == 0)
+            {
+                <div class="empty-vin-state">
+                    <div class="empty-vin-icon">📦</div>
+                    <div class="empty-vin-text">No VINs allocated yet</div>
+                    <div class="empty-vin-instruction">Use Auto Allocate or manually add VINs to get started</div>
+                </div>
+            }
+            else
+            {
+                <!-- VIN table will be populated by JavaScript -->
+            }
+            
+            <!-- VIN Table (hidden initially, shown when VINs are added) -->
+            <div id="vinTableContainer" style="display: none;">
+                <div class="table-responsive">
+                    <table class="table table-hover" id="vinAllocationTable">
+                        <thead>
+                            <tr style="background-color: #e8d5f2;">
+                                <th style="color: #2c3e50; font-weight: 600; border-bottom: 1px solid #d1c4e9;">VIN</th>
+                                <th style="color: #2c3e50; font-weight: 600; border-bottom: 1px solid #d1c4e9;">Variant</th>
+                                <th style="color: #2c3e50; font-weight: 600; border-bottom: 1px solid #d1c4e9;">Location</th>
+                                <th style="color: #2c3e50; font-weight: 600; border-bottom: 1px solid #d1c4e9;">Status</th>
+                                <th style="color: #2c3e50; font-weight: 600; border-bottom: 1px solid #d1c4e9;">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="vinTableBody">
+                            <!-- VIN rows will be populated here -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Assign to Quality Inspector Section (Redesigned) -->
+        <div class="quality-inspector-section" id="qiSection" style="background:linear-gradient(180deg,#fff8ee,#fff);border:1px solid #f7e6cf;">
+            <div id="qiControlsRow" class="d-flex justify-content-between align-items-start mb-3" style="display:none;">
+                <div class="flex-grow-1 me-3">
+                    <div class="quality-inspector-title mb-2">Assign to Quality Inspector</div>
+                    <label class="form-label mb-1">Select Quality Inspector</label>
+                    <select class="form-select" id="qiSelect" style="max-width: 640px; border-color:#f3c48a;">
+                        <option value="">Select QI...</option>
+                    </select>
+                </div>
+                <div class="text-end">
+                    <div class="qi-per-do mb-2">One QI per DO</div>
+                    <button id="assignQiBtn" class="btn btn-secondary" style="background:#6c757d;color:#fff;font-weight:600;">
+                        <i class="bi bi-person"></i>&nbsp;Assign to QI
+                    </button>
+                </div>
+            </div>
+
+            <div id="qiSummaryCard" class="p-3 rounded" style="display:none;border:1px solid #fde2bf;background:#fffdf8;">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <div class="text-muted">ETD:</div>
+                            <div class="fw-bold" id="qiSummaryEtd">-</div>
+                        </div>
+                        <div class="mb-0">
+                            <div class="text-muted">Total VINs:</div>
+                            <div class="fw-bold" id="qiSummaryTotalVins">0 units</div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <div class="text-muted">Allocation Status:</div>
+                            <div class="fw-bold text-success" id="qiSummaryAllocation">All variants satisfied</div>
+                        </div>
+                        <div class="mb-0">
+                            <div class="text-muted">Assignment:</div>
+                            <div class="fw-bold" id="qiSummaryAssignment" style="color:#1f6feb;">Ready to assign</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="qiMessage" style="display:none; margin-top:12px;"></div>
+            <div id="qiGuard" class="quality-inspector-warning mt-3" style="display:none;">
+                <i class="bi bi-exclamation-triangle warning-icon"></i>
+                <div>
+                    <div class="warning-text">No VINs Allocated</div>
+                    <div class="warning-instruction">Allocate VINs before assigning to Quality Inspector</div>
+                </div>
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="alert alert-danger">
+            <h4>Error</h4>
+            <p>Unable to load DO details. Please try again.</p>
+        </div>
+    }
+</div>
+
+<!-- VIN Search Modal -->
+<div class="modal fade" id="vinSearchModal" tabindex="-1" aria-labelledby="vinSearchModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="vinSearchModalLabel">Add VIN</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Search VIN</label>
+                    <div class="input-group">
+                        <input type="text" class="form-control" id="vinSearchInput" placeholder="Enter VIN to search..." style="border-color: #8e44ad;">
+                        <button class="btn btn-secondary" type="button" id="vinSearchBtn" style="background: #6c757d; border: none; color: white;">
+                            <i class="bi bi-search" style="color: white;"></i>
+                        </button>
+                    </div>
+                </div>
+                
+                <div id="vinSearchResults" style="display: none;">
+                    <label class="form-label fw-bold">Eligible VINs</label>
+                    <div id="vinResultsContainer">
+                        <!-- VIN results will be populated here -->
+                    </div>
+                </div>
+                
+                <div id="vinSearchError" class="alert alert-danger" style="display: none;">
+                    <!-- Error messages will be shown here -->
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const vinSearchBtn = document.getElementById('vinSearchBtn');
+    const vinSearchInput = document.getElementById('vinSearchInput');
+    const vinSearchResults = document.getElementById('vinSearchResults');
+    const vinResultsContainer = document.getElementById('vinResultsContainer');
+    const vinSearchError = document.getElementById('vinSearchError');
+    const autoAllocateBtn = document.getElementById('autoAllocateBtn');
+    const qiSelect = document.getElementById('qiSelect');
+    const assignQiBtn = document.getElementById('assignQiBtn');
+    const qiMsg = document.getElementById('qiMessage');
+
+
+    // Handle search button click
+    vinSearchBtn.addEventListener('click', function() {
+        const vinNumber = vinSearchInput.value.trim();
+        if (!vinNumber) {
+            showError('Please enter a VIN number');
+            return;
+        }
+
+        searchVin(vinNumber);
+    });
+
+    // Handle Enter key in input
+    vinSearchInput.addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            vinSearchBtn.click();
+        }
+    });
+
+    // Handle Auto-Allocate button click
+    autoAllocateBtn.addEventListener('click', function() {
+        autoAllocateVins();
+    });
+
+    // Assign to QI button
+    if (assignQiBtn) {
+        assignQiBtn.addEventListener('click', onAssignToQi);
+    }
+
+    function searchVin(vinNumber) {
+        // Show loading state
+        vinSearchBtn.innerHTML = '<i class="bi bi-hourglass-split" style="color: white;"></i>';
+        vinSearchBtn.disabled = true;
+        hideError();
+        hideResults();
+
+        const doNumber = '@(doDetails?.do_number ?? "")';
+        const remaining = @(doDetails?.remaining ?? 0);
+        
+        fetch(`/Pdi/GetVinLocation?i_supervisor_name=0&i_vin_serial_no=${encodeURIComponent(vinNumber)}&i_required_quantity=${remaining}&i_delivery_no=${encodeURIComponent(doNumber)}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    displayVinResults(data.data);
+                } else {
+                    showError(data.message || 'Failed to search VIN');
+                }
+            })
+            .catch(error => {
+                showError('Error searching for VIN: ' + error.message);
+            })
+            .finally(() => {
+                // Reset button state
+                vinSearchBtn.innerHTML = '<i class="bi bi-search" style="color: white;"></i>';
+                vinSearchBtn.disabled = false;
+            });
+    }
+
+    function displayVinResults(results) {
+        if (!results || results.length === 0) {
+            showError('No VINs found for the specified number');
+            return;
+        }
+
+        // Debug: Log the API response to understand the data structure
+        console.log('VIN Search Results:', results);
+
+        vinResultsContainer.innerHTML = '';
+
+        results.forEach(result => {
+            console.log('Individual VIN Result:', result);
+            const vinCard = createVinCard(result);
+            vinResultsContainer.appendChild(vinCard);
+        });
+
+        showResults();
+    }
+
+    function createVinCard(vinData) {
+        const card = document.createElement('div');
+        card.className = 'vin-result-card';
+        // All VINs from API are considered valid with fixed status 'Eligible'
+        const isInvalid = false;
+        const baseBorder = '#8e44ad';
+        const baseCursor = 'pointer';
+        card.style.cssText = `
+            border: 1px solid ${baseBorder};
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 0.5rem;
+            cursor: ${baseCursor};
+            transition: all 0.2s ease;
+            background: white;
+            opacity: ${isInvalid ? '0.75' : '1'};
+        `;
+
+        // Create VIN display using new PdiVinDetails structure
+        const vinNumber = vinData.vin_serial_no || vinData.Vin_serial_no || vinData.vin_serial_number || vinData.Vin_serial_number || 'Unknown VIN';
+        const brandName = vinData.brand_name || vinData.Brand_name || '';
+        const productName = vinData.product_name || vinData.Product_name || vinData.product_description || vinData.Product_description || '';
+        const variantName = brandName && productName ? `${brandName}-${productName}` : (productName || 'Unknown Variant');
+        const location = vinData.slot || vinData.Slot || vinData.slot_code || vinData.Slot_code || 'No Slot Available';
+
+        card.innerHTML = `
+            <div style="font-weight: bold; color: #2c3e50; margin-bottom: 0.25rem;">${vinNumber}</div>
+            <div style="font-size: 0.9rem; color: #7f8c8d;">
+                ${variantName} • ${location}
+            </div>
+        `;
+
+        // Add hover effect
+        if (!isInvalid) {
+            card.addEventListener('mouseenter', function() {
+                this.style.backgroundColor = '#f8f9fa';
+                this.style.borderColor = '#7d3c98';
+            });
+            card.addEventListener('mouseleave', function() {
+                this.style.backgroundColor = 'white';
+                this.style.borderColor = baseBorder;
+            });
+            // Handle card click only if valid
+            card.addEventListener('click', function() {
+                selectVin(vinData);
+            });
+        }
+
+        return card;
+    }
+
+    function selectVin(vinData) {
+        // Add VIN to the allocation area
+        addVinToAllocation(vinData);
+
+        // Close modal
+        const modal = bootstrap.Modal.getInstance(document.getElementById('vinSearchModal'));
+        modal.hide();
+
+        // Clear search
+        vinSearchInput.value = '';
+        hideResults();
+        hideError();
+    }
+
+    function addVinToAllocation(vinData) {
+        // Debug: Log the VIN data being added to allocation
+        console.log('Adding VIN to allocation:', vinData);
+
+        // Find the VIN allocation section
+        const vinAllocationSection = document.querySelector('.vin-allocation-section');
+        const emptyState = vinAllocationSection.querySelector('.empty-vin-state');
+        const vinTableContainer = document.getElementById('vinTableContainer');
+        const vinTableBody = document.getElementById('vinTableBody');
+
+        if (emptyState) {
+            // Remove empty state
+            emptyState.remove();
+
+            // Show table container
+            vinTableContainer.style.display = 'block';
+        }
+
+        // Create table row
+        const tableRow = document.createElement('tr');
+        tableRow.className = 'vin-table-row';
+        tableRow.style.cssText = `
+            border-bottom: 1px solid #e9ecef;
+        `;
+
+        // Extract data with proper field mapping using new PdiVinDetails structure
+        const vinNumber = vinData.vin_serial_no || vinData.Vin_serial_no || vinData.vin_serial_number || vinData.Vin_serial_number || 'Unknown VIN';
+        const modelName = vinData.product_name || vinData.Product_name || vinData.product_description || vinData.Product_description || 'Unknown Model';
+        const slotCode = vinData.slot || vinData.Slot || vinData.slot_code || vinData.Slot_code || 'No Slot Available';
+        const status = 'Eligible'; // Fixed value as per requirements
+
+        // Debug: Log the extracted values
+        console.log('Extracted VIN Number:', vinNumber);
+        console.log('Extracted Model Name:', modelName);
+        console.log('Extracted Slot Code:', slotCode);
+
+        // Create status display with icon
+        let statusIcon, statusClass;
+        if (status.toLowerCase() === 'eligible') {
+            statusIcon = '<i class="bi bi-check-circle-fill text-success me-1"></i>';
+            statusClass = 'text-success';
+        } else if (status.toLowerCase().includes('no slot')) {
+            statusIcon = '<i class="bi bi-x-circle-fill me-1" style="color: #fd7e14;"></i>';
+            statusClass = 'style="color: #fd7e14;"';
+        } else {
+            statusIcon = '<i class="bi bi-exclamation-circle-fill text-warning me-1"></i>';
+            statusClass = 'text-warning';
+        }
+
+        tableRow.innerHTML = `
+            <td style="padding: 0.75rem; color: #2c3e50; font-weight: 500;">${vinNumber}</td>
+            <td style="padding: 0.75rem; color: #2c3e50;">${modelName}</td>
+            <td style="padding: 0.75rem; color: #2c3e50;">
+                <i class="bi bi-geo-alt-fill text-muted me-1"></i>${slotCode}
+            </td>
+            <td style="padding: 0.75rem;">
+                ${statusIcon}<span class="${statusClass}">${status}</span>
+            </td>
+            <td style="padding: 0.75rem;">
+                <button class="btn btn-sm btn-outline-danger" onclick="removeVinFromTable(this)" style="border: none; background: none; color: #dc3545; padding: 0.25rem;">
+                    <i class="bi bi-x-circle-fill"></i>
+                </button>
+            </td>
+        `;
+
+        // Store the complete VIN data in the row for later use
+        tableRow.dataset.vinData = JSON.stringify(vinData);
+
+        vinTableBody.appendChild(tableRow);
+
+        // Update VIN count in header
+        updateVinCount();
+    }
+
+    function updateVinCount() {
+        const vinTableBody = document.getElementById('vinTableBody');
+        const count = vinTableBody ? vinTableBody.children.length : 0;
+        const titleElement = document.querySelector('.vin-allocation-title');
+        if (titleElement) {
+            titleElement.textContent = `VIN Allocation (${count} units)`;
+        }
+
+        // Update summary cards
+        updateSummaryCards(count);
+        
+        // Update variant counts in requirements section
+        updateVariantCounts();
+    }
+
+    function updateSummaryCards(allocatedCount) {
+        const requiredValue = @(doDetails?.quantity_ordered ?? 0);
+        const allocatedElement = document.querySelector('.summary-card.allocated .summary-card-value');
+        const remainingElement = document.querySelector('.summary-card.remaining .summary-card-value');
+        const completeElement = document.querySelector('.summary-card.complete .summary-card-value');
+
+        if (allocatedElement) {
+            allocatedElement.textContent = allocatedCount;
+        }
+
+        if (remainingElement) {
+            const remaining = Math.max(0, requiredValue - allocatedCount);
+            remainingElement.textContent = remaining;
+        }
+
+        if (completeElement) {
+            const progress = requiredValue > 0 ? Math.round((allocatedCount / requiredValue) * 100) : 0;
+            completeElement.textContent = `${progress}%`;
+        }
+    }
+
+    function updateVariantCounts() {
+        const vinTableBody = document.getElementById('vinTableBody');
+        if (!vinTableBody) return;
+
+        // Count VINs by variant
+        const variantCounts = {};
+        const vinRows = vinTableBody.querySelectorAll('tr.vin-table-row');
+        
+        vinRows.forEach(row => {
+            const tds = row.querySelectorAll('td');
+            if (tds.length >= 2) {
+                const variantName = tds[1].textContent.trim(); // VIN variant is in second column
+                variantCounts[variantName] = (variantCounts[variantName] || 0) + 1;
+            }
+        });
+
+        // Update variant items in requirements section
+        const variantItems = document.querySelectorAll('.variant-item');
+        variantItems.forEach(item => {
+            const variantNameElement = item.querySelector('.variant-name');
+            const variantRatioElement = item.querySelector('.variant-ratio');
+            const variantNeededElement = item.querySelector('.variant-needed');
+            
+            if (variantNameElement && variantRatioElement && variantNeededElement) {
+                const variantName = variantNameElement.textContent.trim();
+                const allocatedForVariant = variantCounts[variantName] || 0;
+                
+                // Get required quantity from the variant data
+                const requiredText = item.querySelector('.variant-required').textContent;
+                const required = parseInt(requiredText.match(/\d+/)[0]) || 0;
+                
+                // Update the ratio display (allocated/required)
+                variantRatioElement.textContent = `${allocatedForVariant} / ${required}`;
+                
+                // Update the needed count
+                const needed = Math.max(0, required - allocatedForVariant);
+                variantNeededElement.textContent = `${needed} needed`;
+            }
+        });
+    }
+
+    function showError(message) {
+        vinSearchError.textContent = message;
+        vinSearchError.style.display = 'block';
+    }
+
+    function hideError() {
+        vinSearchError.style.display = 'none';
+    }
+
+    function showResults() {
+        vinSearchResults.style.display = 'block';
+    }
+
+    function hideResults() {
+        vinSearchResults.style.display = 'none';
+    }
+
+    function autoAllocateVins() {
+        // Show loading state
+        autoAllocateBtn.innerHTML = '<i class="bi bi-hourglass-split text-white"></i> Auto-Allocating...';
+        autoAllocateBtn.disabled = true;
+
+        // Get the variants from the requirements section
+        const variants = getVariantsFromRequirements();
+
+        if (variants.length === 0) {
+            showAutoAllocateMessage('No variants found to auto-allocate.', 'warning');
+            resetAutoAllocateButton();
+            return;
+        }
+
+        const doNumber = '@(doDetails?.do_number ?? "")';
+        const remaining = @(doDetails?.remaining ?? 0);
+
+        // Call API once for all variants - the USP returns all variants for the DO number
+        console.log(`Auto-allocating VINs for DO: ${doNumber}`);
+
+        fetch(`/Pdi/GetVinLocationAuto?i_required_quantity=${remaining}&i_delivery_no=${encodeURIComponent(doNumber)}`)
+            .then(response => {
+                console.log('Response status:', response.status);
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                return response.json();
+            })
+            .then(data => {
+                console.log('API Response:', data);
+
+                let totalAllocated = 0;
+
+                if (data && Array.isArray(data)) {
+                    // API returns array directly
+                    data.forEach(vinData => {
+                        addVinToAllocation(vinData);
+                        totalAllocated++;
+                    });
+                } else if (data && data.success && data.data) {
+                    // API returns wrapped response
+                    data.data.forEach(vinData => {
+                        addVinToAllocation(vinData);
+                        totalAllocated++;
+                    });
+                } else {
+                    console.log('Unexpected data format:', data);
+                }
+
+                if (totalAllocated > 0) {
+                    showAutoAllocateMessage(`Auto-allocated ${totalAllocated} VIN(s) successfully!`, 'success');
+                } else {
+                    showAutoAllocateMessage('No VINs were allocated. No eligible VINs found for this delivery order.', 'warning');
+                }
+                resetAutoAllocateButton();
+            })
+            .catch(error => {
+                console.error('Error auto-allocating VINs:', error);
+                console.error('Error details:', error.message);
+                showAutoAllocateMessage(`Error occurred during auto-allocation: ${error.message}.`, 'danger');
+                resetAutoAllocateButton();
+            });
+    }
+
+
+    function getVariantsFromRequirements() {
+        const variants = [];
+        const variantItems = document.querySelectorAll('.variant-item');
+
+        console.log('Found variant items:', variantItems.length);
+
+        variantItems.forEach((item, index) => {
+            const variantName = item.querySelector('.variant-name').textContent;
+            const neededText = item.querySelector('.variant-needed').textContent;
+            const needed = parseInt(neededText.match(/\d+/)[0]) || 0;
+
+            console.log(`Variant ${index + 1}:`, {
+                variantName: variantName,
+                neededText: neededText,
+                needed: needed
+            });
+
+            // Parse variant name (format: "BRAND-PRODUCT")
+            const parts = variantName.split('-');
+            if (parts.length >= 2) {
+                const brandName = parts[0];
+                const variantNameFromParts = parts.slice(1).join('-');
+
+                variants.push({
+                    brand_name: brandName,
+                    variant_name: variantNameFromParts,
+                    balance_needed: needed
+                });
+
+                console.log(`Parsed variant:`, {
+                    brand_name: brandName,
+                    variant_name: variantNameFromParts,
+                    balance_needed: needed
+                });
+            } else {
+                console.log('Could not parse variant name:', variantName);
+            }
+        });
+
+        console.log('Final variants array:', variants);
+        return variants;
+    }
+
+    function resetAutoAllocateButton() {
+        autoAllocateBtn.innerHTML = '<i class="bi bi-car-front"></i> Auto-Allocate VINs';
+        autoAllocateBtn.disabled = false;
+    }
+
+    // ---------- QI Helpers ----------
+    function showQiMsg(message, type) {
+        if (!qiMsg) return;
+        let bg = '#eef5ff', color = '#1f6feb', border = '#cfe2ff';
+        if (type === 'success') { bg = '#e8f5e9'; color = '#2e7d32'; border = '#c8e6c9'; }
+        if (type === 'warning') { bg = '#fff3e0'; color = '#ef6c00'; border = '#ffe0b2'; }
+        if (type === 'danger') { bg = '#ffebee'; color = '#c62828'; border = '#ffcdd2'; }
+        qiMsg.style.cssText = `padding:.6rem 1rem;border-radius:8px;background:${bg};color:${color};border:1px solid ${border};font-weight:500;`;
+        qiMsg.textContent = message;
+        qiMsg.style.display = 'block';
+        setTimeout(()=> qiMsg.style.display='none', 6000);
+    }
+
+    async function loadDrivers() {
+        try {
+            const res = await fetch('/Pdi/GetDrivers');
+            if (!res.ok) {
+                console.error('GetDrivers HTTP error:', res.status, res.statusText);
+                throw new Error(`HTTP ${res.status}`);
+            }
+            const data = await res.json();
+            console.log('GetDrivers response:', data);
+
+            // Normalize list
+            let list = [];
+            if (Array.isArray(data)) list = data;
+            else if (Array.isArray(data?.data)) list = data.data;
+            else if (Array.isArray(data?.result)) list = data.result;
+            else if (Array.isArray(data?.items)) list = data.items;
+            else if (data && typeof data === 'object') list = Object.values(data); // last resort
+
+            // Clear existing (keep the placeholder)
+            if (qiSelect) {
+                for (let i = qiSelect.options.length - 1; i >= 1; i--) qiSelect.remove(i);
+            }
+
+            (list || []).forEach(item => {
+                if (!item || typeof item !== 'object') return;
+                // Explicitly prioritize API shape: { full_name, user_id }
+                const value = item.user_id ?? item.User_id ?? item.id ?? item.value ?? item.driver_id ?? item.Driver_id ?? item.employee_id ?? item.Employee_id ?? '';
+                const text  = item.full_name ?? item.Full_name ?? item.name ?? item.text ?? item.user_name ?? item.User_name ?? item.driver_name ?? item.Driver_name ?? item.employee_name ?? item.Employee_name ?? String(value);
+                if (!value && !text) return;
+                const opt = document.createElement('option');
+                opt.value = String(value);
+                opt.text  = String(text);
+                qiSelect?.appendChild(opt);
+            });
+
+            if (!qiSelect || qiSelect.options.length <= 1) {
+                showQiMsg('No Quality Inspectors available to select.', 'warning');
+            }
+        } catch (e) {
+            console.error('GetDrivers fetch failed:', e);
+            showQiMsg(`Failed to load Quality Inspectors: ${e.message}`, 'danger');
+        }
+    }
+    if (qiSelect) loadDrivers();
+
+    const etdEl = document.getElementById('qiSummaryEtd');
+    const totalVinsEl = document.getElementById('qiSummaryTotalVins');
+    const allocationEl = document.getElementById('qiSummaryAllocation');
+    const assignmentEl = document.getElementById('qiSummaryAssignment');
+
+    function formatPlanned(planned) {
+        if (!planned) return '-';
+        // If already in dd-MM-yyyy HH:mm:ss format, return as is
+        if (planned.match(/^\d{2}-\d{2}-\d{4} \d{2}:\d{2}:\d{2}$/)) {
+            return planned;
+        }
+        const d = new Date(planned);
+        if (Number.isNaN(d.getTime())) return planned;
+        // Format as dd-MM-yyyy HH:mm:ss
+        const day = String(d.getDate()).padStart(2, '0');
+        const month = String(d.getMonth() + 1).padStart(2, '0');
+        const year = d.getFullYear();
+        const hours = String(d.getHours()).padStart(2, '0');
+        const minutes = String(d.getMinutes()).padStart(2, '0');
+        const seconds = String(d.getSeconds()).padStart(2, '0');
+        return `${day}-${month}-${year} ${hours}:${minutes}:${seconds}`;
+    }
+
+    function getVinRows() {
+        const body = document.getElementById('vinTableBody');
+        return body ? Array.from(body.querySelectorAll('tr.vin-table-row')) : [];
+    }
+
+    function allVinsHaveLocation(rows) {
+        return rows.every(r => {
+            const tds = r.querySelectorAll('td');
+            const locationCell = tds[2]?.innerText || '';
+            const statusCell = tds[3]?.innerText || '';
+            const noSlot = /no\s*slot/i.test(locationCell) || /no\s*slot/i.test(statusCell);
+            return !noSlot;
+        });
+    }
+
+    function getRemainingCount() {
+        // Remaining shown in Summary Cards; pick it from DOM or fallback to ViewData
+        const remEl = document.querySelector('.summary-card.remaining .summary-card-value');
+        if (remEl) {
+            const n = parseInt((remEl.textContent || '0').replace(/[^0-9]/g,''),10);
+            return Number.isFinite(n) ? n : 0;
+        }
+        return @(doDetails?.remaining ?? 0);
+    }
+
+    function updateAssignmentSummary() {
+        const planned = '@(doDetails?.planned_dispatch_at?.ToString("dd-MM-yyyy HH:mm:ss") ?? "")';
+        etdEl && (etdEl.textContent = formatPlanned(planned));
+        const total = getVinRows().length;
+        totalVinsEl && (totalVinsEl.textContent = `${total} ${total === 1 ? 'unit' : 'units'}`);
+        allocationEl && (allocationEl.textContent = 'All variants satisfied');
+        assignmentEl && (assignmentEl.textContent = 'Ready to assign');
+
+        // Guard logic for enabling Assign to QI
+        const rows = getVinRows();
+        const remaining = getRemainingCount();
+        const hasAllLocations = allVinsHaveLocation(rows);
+        const isReady = rows.length > 0 && hasAllLocations;
+
+        if (assignQiBtn) assignQiBtn.disabled = !isReady;
+
+        const guard = document.getElementById('qiGuard');
+        const controls = document.getElementById('qiControlsRow');
+        const summaryCard = document.getElementById('qiSummaryCard');
+        if (guard) {
+            if (!isReady) {
+                // Customize message based on failure reason
+                const title = guard.querySelector('.warning-text');
+                const desc = guard.querySelector('.warning-instruction');
+                if (rows.length === 0) {
+                    title.textContent = 'No VINs Allocated';
+                    desc.textContent = 'Allocate at least one VIN before assigning to Quality Inspector';
+                } else if (!hasAllLocations) {
+                    title.textContent = 'Location missing for some VINs';
+                    desc.textContent = 'Ensure every VIN has a slot allocated (no "No Slot Available").';
+                }
+                guard.style.display = 'block';
+                if (controls) controls.style.display = 'none';
+                if (summaryCard) summaryCard.style.display = 'none';
+            } else {
+                guard.style.display = 'none';
+                if (controls) controls.style.display = '';
+                if (summaryCard) summaryCard.style.display = '';
+            }
+        }
+    }
+    updateAssignmentSummary();
+
+    // Initialize counts on page load
+    updateVinCount();
+
+    const __origUpdateVinCount = updateVinCount;
+    updateVinCount = function() {
+        __origUpdateVinCount();
+        updateAssignmentSummary();
+    }
+
+    async function onAssignToQi() {
+        const qiId = qiSelect?.value || '';
+        if (!qiId) { showQiMsg('Please select a Quality Inspector.', 'warning'); return; }
+        const rows = getVinRows();
+        if (rows.length === 0) { showQiMsg('No VINs to assign. Please allocate VINs first.', 'warning'); return; }
+
+        const doNumber = '@(doDetails?.do_number ?? "")';
+        
+        const loginId = '@(ViewData["LoginId"] ?? "")'; // Assuming login ID is available in ViewData
+
+        assignQiBtn.disabled = true;
+        assignQiBtn.innerHTML = '<i class="bi bi-hourglass-split"></i> Assigning...';
+
+        try {
+            // Create VehicleMovement objects for each VIN
+            const vehicleMovements = [];
+
+            rows.forEach(row => {
+                // Get the stored VIN data from the row
+                const vinDataJson = row.dataset.vinData;
+                if (vinDataJson) {
+                    try {
+                        const vinData = JSON.parse(vinDataJson);
+                        const cells = row.querySelectorAll('td');
+                        const vinSerialNo = cells[0]?.textContent?.trim() || '';
+                        const variantName = cells[1]?.textContent?.trim() || '';
+
+                        // Extract variant details from the stored VIN data
+                        const brandName = vinData.brand_name || vinData.Brand_name || '';
+                        const productName = vinData.variant_name || vinData.Variant_name || vinData.product_name || vinData.Product_name || '';
+                        const productionOrderId = vinData.production_order_id || vinData.Production_order_id || doNumber;
+                        const variantId = vinData.variant_id || vinData.Variant_id || null;
+                        const colorId = vinData.color_id || vinData.Color_id || null;
+                        const colorName = vinData.color_name || vinData.Color_name || null;
+                        const brandId = vinData.brand_id || vinData.Brand_id || null;
+                        const batchLotNumber = vinData.batch_lot_number || vinData.Batch_lot_number || null;
+                        const lineId = vinData.line_id || vinData.Line_id || null;
+                        const shiftId = vinData.shift_id || vinData.Shift_id || null;
+                        const shiftName = vinData.shift_name || vinData.Shift_name || null;
+                        const dateOfProduction = vinData.date_of_production || vinData.Date_of_production || new Date().toISOString();
+
+                        // Get operator details from the selected Quality Inspector dropdown
+                        const selectedOption = qiSelect.options[qiSelect.selectedIndex];
+                        const operatorId = qiSelect.value;
+                        const operatorName = selectedOption.text;
+
+                        // Create VehicleMovement object with required fields
+                        const vehicleMovement = {
+                            vin_serial_no: vinSerialNo,
+                            production_order_no: productionOrderId,
+                            product_description: variantName,
+                            shift_id: shiftId,
+                            shift_name: shiftName,
+                            date_of_production: dateOfProduction,
+                            product_id: variantId,
+                            product_name: productName,
+                            color_id: colorId,
+                            color_name: colorName,
+                            brand_id: brandId,
+                            brand_name: brandName,
+                            batch_lot_number: batchLotNumber,
+                            line_id: lineId,
+                            operator_id: operatorId,
+                            operator_name: operatorName,
+                            completion_at: null,
+                            quality_status: null,
+                            transit_status: null,
+                            certificate_no: null,
+                            delivery_no: null,
+                            is_deleted: 0,
+                            created_by: loginId,
+                            created_at: new Date().toISOString()
+                        };
+
+                        vehicleMovements.push(vehicleMovement);
+                    } catch (e) {
+                        console.error('Error parsing VIN data:', e);
+                        // Fallback to basic data if parsing fails
+                        const cells = row.querySelectorAll('td');
+                        if (cells.length >= 4) {
+                            const vinSerialNo = cells[0]?.textContent?.trim() || '';
+                            const variantName = cells[1]?.textContent?.trim() || '';
+
+                            // Get operator details from the selected Quality Inspector dropdown
+                            const selectedOption = qiSelect.options[qiSelect.selectedIndex];
+                            const operatorId = qiSelect.value;
+                            const operatorName = selectedOption.text;
+
+                            const vehicleMovement = {
+                                vin_serial_no: vinSerialNo,
+                                production_order_no: doNumber,
+                                product_description: variantName,
+                                shift_id: null,
+                                shift_name: null,
+                                date_of_production: new Date().toISOString(),
+                                product_id: null,
+                                product_name: variantName,
+                                color_id: null,
+                                color_name: null,
+                                brand_id: null,
+                                brand_name: '',
+                                batch_lot_number: null,
+                                line_id: null,
+                                operator_id: operatorId,
+                                operator_name: operatorName,
+                                completion_at: null,
+                                quality_status: null,
+                                transit_status: null,
+                                certificate_no: null,
+                                delivery_no: null,
+                                is_deleted: 0,
+                                created_by: loginId,
+                                created_at: new Date().toISOString()
+                            };
+
+                            vehicleMovements.push(vehicleMovement);
+                        }
+                    }
+                }
+            });
+
+            // Normalize payload to match controller's expected types
+            const payload = vehicleMovements.map(vm => ({
+                vin_serial_no: String(vm.vin_serial_no || ''),
+                production_order_no: String(vm.production_order_no || ''),
+                product_description: String(vm.product_description || ''),
+                shift_id: Number(vm.shift_id || 0),
+                shift_name: vm.shift_name ? String(vm.shift_name) : '',
+                date_of_production: new Date().toISOString(),
+                product_id: Number(vm.product_id || 0),
+                product_name: String(vm.product_name || ''),
+                color_id: Number(vm.color_id || 0),
+                color_name: String(vm.color_name || ''),
+                brand_id: Number(vm.brand_id || 0),
+                brand_name: String(vm.brand_name || ''),
+                batch_lot_number: vm.batch_lot_number ? String(vm.batch_lot_number) : '',
+                line_id: vm.line_id ? String(vm.line_id) : '',
+                operator_id: Number(vm.operator_id || 0),
+                operator_name: String(vm.operator_name || ''),
+                completion_at: new Date().toISOString(),
+                quality_status: Number(vm.quality_status || 0),
+                transit_status: Number(vm.transit_status || 0),
+                certificate_no: vm.certificate_no ? String(vm.certificate_no) : '',
+                delivery_no: vm.delivery_no ? String(vm.delivery_no) : '',
+                is_deleted: Boolean(vm.is_deleted),
+                created_by: String(vm.created_by || loginId || ''),
+                created_at: new Date().toISOString()
+            }));
+
+            console.log('payload insert:', payload);
+
+            // Send VehicleMovement data to API
+            const res = await fetch('/Pdi/InsertVehicleMovement', {
+                method: 'POST',
+                headers: { 'Content-Type':'application/json', 'Accept': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+
+            if (!res.ok) throw new Error(`HTTP ${res.status}`);
+            const resp = await res.json().catch(()=>({success:true}));
+            if (resp.success === false) throw new Error(resp.message || 'Assignment failed');
+            showQiMsg('VINs successfully assigned to the selected Quality Inspector.', 'success');
+        } catch (e) {
+            showQiMsg(`Assignment failed: ${e.message}`, 'danger');
+        } finally {
+            assignQiBtn.disabled = false;
+            assignQiBtn.innerHTML = '<i class="bi bi-person"></i>&nbsp;Assign to QI';
+        }
+    }
+
+    function showAutoAllocateMessage(message, type) {
+        const msg = document.getElementById('autoAllocateMessage');
+        if (!msg) return;
+        let bg = '#f8f9fa', color = '#2c3e50', border = '#e9ecef';
+        if (type === 'success') { bg = '#e8f5e9'; color = '#2e7d32'; border = '#c8e6c9'; }
+        if (type === 'warning') { bg = '#fff3e0'; color = '#ef6c00'; border = '#ffe0b2'; }
+        if (type === 'danger') { bg = '#ffebee'; color = '#c62828'; border = '#ffcdd2'; }
+        msg.style.cssText = `padding: .75rem 1rem; border-radius: 8px; background:${bg}; color:${color}; border:1px solid ${border}; font-weight:500;`;
+        msg.innerText = message;
+        msg.style.display = 'block';
+        // auto-hide after 6s
+        setTimeout(() => { msg.style.display = 'none'; }, 6000);
+    }
+});
+
+// Global function to remove VIN from table
+function removeVinFromTable(button) {
+    const tableRow = button.closest('.vin-table-row');
+    tableRow.remove();
+
+    // Update all counts using the enhanced function
+    updateVinCount();
+
+    // Show empty state if no VINs left
+    const vinTableBody = document.getElementById('vinTableBody');
+    const count = vinTableBody ? vinTableBody.children.length : 0;
+    if (count === 0) {
+        const vinAllocationSection = document.querySelector('.vin-allocation-section');
+        const vinTableContainer = document.getElementById('vinTableContainer');
+
+        // Hide table
+        vinTableContainer.style.display = 'none';
+
+        // Show empty state
+        const emptyState = document.createElement('div');
+        emptyState.className = 'empty-vin-state';
+        emptyState.innerHTML = `
+            <div class="empty-vin-icon">📦</div>
+            <div class="empty-vin-text">No VINs allocated yet</div>
+            <div class="empty-vin-instruction">Use Auto Allocate or manually add VINs to get started</div>
+        `;
+        vinAllocationSection.appendChild(emptyState);
+    }
+}
+</script>

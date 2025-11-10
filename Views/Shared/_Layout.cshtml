@@ -1,0 +1,328 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Yard Management</title>
+
+    <!-- External CSS -->
+    <link href="~/lib/bootstrap/dist/css/bootstrap.min.css" rel="stylesheet" type="text/css" />
+    <link href="~/lib/icons/css/material-icons.css" rel="stylesheet" />
+    <link href="~/lib/tabulator/css/tabulator.min.css" rel="stylesheet" type="text/css" />
+    <link href="~/lib/tabulator/css/tabulator_bootstrap5.min.css" rel="stylesheet" />
+    <link href="~/lib/sweetalert2/sweetalert2.min.css" rel="stylesheet" />
+    <link href="~/lib/toastr/toastr.css" rel="stylesheet" />
+    <link href="~/css/site.css" rel="stylesheet" />
+    <link href="~/css/layout.css" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"> 
+    <link href="~/css/table.css" rel="stylesheet" />
+    <link href="~/css/popup.css" rel="stylesheet" />
+
+    <!-- External JS -->
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/jquery-validation/dist/jquery.validate.min.js"></script>
+    <script src="~/lib/jquery-validation-unobtrusive/dist/jquery.validate.unobtrusive.min.js"></script>
+    <script src="~/lib/tabulator/js/tabulator.min.js"></script>
+    <script src="~/lib/chartjs/chart.umd.min.js"></script>
+    <script src="~/lib/toastr/toastr.min.js"></script>
+    <script src="~/lib/sweetalert2/sweetalert2.all.min.js"></script>
+    <script src="~/js/common-utils.js"></script>
+
+</head>
+
+<body>
+    <!-- Floating Menu Button (Mobile Only) -->
+    <button class="floating-menu-btn" id="floatingMenuBtn" aria-label="Open Menu">
+        <span class="material-icons">menu</span>
+    </button>
+
+    <div style="height:100vh;">
+        <div class="sidebar-container">
+            <!-- Sidebar -->
+            <nav class="sidebar collapsed" id="sidebar">
+                <!-- Sidebar Header -->
+                <div class="sidebar-header">
+                    <div class="brand-container">
+                        <div class="brand-logo">
+                            <img src="~/images/Rockwell_SubLogo.webp" alt="Logo" class="logo" />
+                        </div>
+                        <div class="brand-name">Yard Management</div>
+                    </div>
+                </div>
+
+                <!-- Sidebar Menu -->
+                <div class="">
+                    <div class="menu-item">
+                        <a href="/Dashboard/Index" class="menu-link">
+                            <span class="material-icons menu-icon">dashboard</span>
+                            <span class="menu-text">Dashboard</span>
+                        </a>
+                    </div>
+                    <div class="menu-item">
+                        <a href="https://new-chat-uunb.bolt.host/" class="menu-link" target="_blank" rel="noopener noreferrer">
+                            <span class="material-icons menu-icon">analytics</span>
+                            <span class="menu-text">Reports</span>
+                        </a>
+                    </div>
+
+                    <div class="menu-item">
+                        <a href="#" class="menu-link" id="UserMenu">
+                            <span class="material-icons menu-icon">manage_accounts</span>
+                            <span class="menu-text">User Management</span>
+                            <span class="material-icons arrow-icon">expand_more</span>
+                        </a>
+                        <div class="submenu">
+                            <a href="/EmployeeConfiguration/Index" class="submenu-link">
+                                <span class="material-icons">badge</span>Employee
+                            </a>
+                            <a href="/UserGroupConfiguration/Index" class="submenu-link">
+                                <span class="material-icons">desktop_windows</span>User Group
+                            </a>
+                            <a href="/UserConfiguration/Index" class="submenu-link">
+                                <span class="material-icons">person_outline</span>User
+                            </a>
+                            <a href="" class="submenu-link">
+                                <span class="material-icons">person_outline</span>Role Master
+                            </a>
+                        </div>
+                    </div>
+
+                    <div class="menu-item">
+                        <a href="#" class="menu-link" id="PlantMenu">
+                            <span class="material-icons menu-icon">factory</span>
+                            <span class="menu-text">Plant Modelling</span>
+                            <span class="material-icons arrow-icon">expand_more</span>
+                        </a>
+                        <div class="submenu">
+                            <a href="/EnterpriseMaster/Index" class="submenu-link">
+                                <span class="material-icons">business</span>Enterprise
+                            </a>
+                            <a href="/PlantMaster/Index" class="submenu-link">
+                                <span class="material-icons">corporate_fare</span>Plant
+                            </a>
+                            <a href="/Yard/Index" class="submenu-link">
+                                <span class="material-icons">map</span>Yard &rarr; Lane &rarr; Slot
+                            </a>
+
+                            <a href="/RouteMaster/Index" class="submenu-link">
+                                <span class="material-icons">alt_route</span>Route
+                            </a>
+                            <a href="/DepartmentMaster/Index" class="submenu-link">
+                                <span class="material-icons">fact_check</span>Department Master
+                            </a>
+
+                        </div>
+                    </div>
+
+                    <div class="menu-item">
+                        <a href="#" class="menu-link" id="ShiftMenu">
+                            <span class="material-icons menu-icon">schedule</span>
+                            <span class="menu-text">Shift</span>
+                            <span class="material-icons arrow-icon">expand_more</span>
+                        </a>
+                        <div class="submenu">
+                            <a href="/ShiftMaster/Index" class="submenu-link">
+                                <span class="material-icons">access_time</span>Shift Category
+                            </a>
+                            <a href="/BreakMaster/Index" class="submenu-link">
+                                <span class="material-icons">free_breakfast</span>Break
+                            </a>
+                            <a href="/TemplateConfiguration/Index" class="submenu-link">
+                                <span class="material-icons">assignment</span>Template
+                            </a>
+
+                            <a href="/HolidayMaster/Index" class="submenu-link">
+                                <span class="material-icons">event</span>Holiday Master
+                            </a>
+                        </div>
+                    </div>
+
+                    <div class="menu-item">
+                        <a href="#" class="menu-link" id="VehicleMenu">
+                            <span class="material-icons menu-icon">directions_car</span>
+                            <span class="menu-text">Vehicle History</span>
+                            <span class="material-icons arrow-icon">expand_more</span>
+                        </a>
+                        <div class="submenu">
+                            <a href="/BrandMaster/Index" class="submenu-link">
+                                <span class="material-icons">branding_watermark</span>Brand Master
+                            </a>
+                            <a href="/VehicleTypeMaster/Index" class="submenu-link">
+                                <span class="material-icons">airport_shuttle</span>Vehicle Type Master
+                            </a>
+                            <a href="/VehicleModel/Index" class="submenu-link">
+                                <span class="material-icons">view_in_ar</span>Variant Master
+                            </a>
+                        </div>
+                    </div>
+
+                    <div class="menu-item">
+                        <a href="#" class="menu-link" id="DataMenu">
+                            <span class="material-icons menu-icon">dataset</span>
+                            <span class="menu-text">Data Collection</span>
+                            <span class="material-icons arrow-icon">expand_more</span>
+                        </a>
+                        <div class="submenu">
+                            <a href="/EolMaster/Index" class="submenu-link">
+                                <span class="material-icons">fact_check</span>EOL Data
+                            </a>
+                            <a href="/Rework/Index" class="submenu-link">
+                                <span class="material-icons">build_circle</span>Rework Data
+                            </a>
+                            <a href="/DeliveryOrder/Index" class="submenu-link">
+                                <span class="material-icons">sell</span>Delivery Order
+                            </a>
+
+                            <a href="/ReasonMaster/Index" class="submenu-link">
+                                <span class="material-icons">psychology</span>Reason Master
+                            </a>
+
+                        </div>
+                    </div>
+
+                    <div class="menu-item">
+                        <a href="#" class="menu-link" id="PdiMenu">
+                            <span class="material-icons menu-icon">dataset</span>
+                            <span class="menu-text">Operation</span>
+                            <span class="material-icons arrow-icon">expand_more</span>
+                        </a>
+
+                        <div class="submenu">
+                            <a href="/Pdi/Index" class="submenu-link">
+                                <span class="material-icons">fact_check</span>PDI Assign
+                            </a>
+                            <a href="/Task/Index" class="submenu-link">
+                                <span class="material-icons">fact_check</span>Task Planner
+                            </a>
+                            <a href="/QualityOprn/Index" class="submenu-link">
+                                <span class="material-icons">fact_check</span>PDI Inspection
+                            </a>
+                            <a href="https://yard-vehicle-trackin-r6wu.bolt.host/" class="submenu-link">
+                                <span class="material-icons">fact_check</span>Vehicle Tracking
+                            </a>
+                            <a href="https://major-rework-inspect-ypsh.bolt.host/" class="submenu-link">
+                                <span class="material-icons">fact_check</span>Rework Area
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="sidebar-footer-controls">
+                    <div class="sidebar-footer-toggle" id="sidebarCollapseToggle" title="Toggle Sidebar" style="cursor:pointer; color:#f4f4f7;">
+                        <span class="material-icons" style="color:white;">menu</span>
+                    </div>
+                </div>
+
+                <div class="profile-info mt-auto">
+                    <img src="~/images/Rockwell_SubLogo.webp" alt="Logo" class="logo" />
+                    <div class="brand-name">Admin</div>
+                </div>
+            </nav>
+
+            <!-- Content -->
+            <div class="content">
+                <main class="col py-3">
+                    @RenderBody()
+                </main>
+            </div>
+        </div>
+    </div>
+
+    <!-- JS libs -->
+    <script src="~/js/common.js"></script>
+
+    <!-- Consolidated JS Logic -->
+    <script>
+        $(function () {
+            // Floating menu button (mobile)
+            $('#floatingMenuBtn').off('click').on('click', function () {
+                $('#sidebar').addClass('show');
+            });
+
+            // Close sidebar when submenu link is clicked (mobile)
+            $('.submenu-link').off('click').on('click', function () {
+                if (window.innerWidth <= 768) {
+                    $('#sidebar').removeClass('show');
+                }
+            });
+
+            // Sidebar collapse toggle
+            $('#sidebarCollapseToggle').off('click').on('click', function () {
+                const $sidebar = $('#sidebar');
+                const isMobile = window.innerWidth <= 768;
+
+                if (isMobile) {
+                    $sidebar.toggleClass('show');
+                } else {
+                    $sidebar.toggleClass('collapsed');
+                    if ($sidebar.hasClass('collapsed')) {
+                        $('.menu-item.open').removeClass('open');
+                          $('.menu-link.active').removeClass('active');
+                    }
+                }
+
+                const $icon = $(this).find('.material-icons').first();
+                if ($icon.length) {
+                    const isVisible = $sidebar.hasClass('show') || !$sidebar.hasClass('collapsed');
+                    $icon.text(isVisible ? 'menu_open' : 'menu');
+                }
+            });
+
+            // Close sidebar when clicking outside (mobile)
+            $(document).on('click', function (e) {
+                if (window.innerWidth <= 768) {
+                    const $sidebar = $('#sidebar');
+                    const $floatingBtn = $('#floatingMenuBtn');
+
+                    if (
+                        $sidebar.hasClass('show') &&
+                        !$sidebar.is(e.target) &&
+                        $sidebar.has(e.target).length === 0 &&
+                        !$floatingBtn.is(e.target) &&
+                        $floatingBtn.has(e.target).length === 0
+                    ) {
+                        $sidebar.removeClass('show');
+                    }
+                }
+            });
+
+            // Menu click (toggle submenus)
+            $('.menu-link').off('click').on('click', function (e) {
+                const $link = $(this);
+                const $item = $link.closest('.menu-item');
+                const href = ($link.attr('href') || '').trim();
+                const isToggle = href === '' || href === '#';
+                const isCollapsed = $('#sidebar').hasClass('collapsed');
+
+                $('.menu-link').removeClass('active');
+                $link.addClass('active');
+
+                if (isToggle) {
+                    if (!isCollapsed || window.innerWidth <= 768) {
+                        $('.menu-item').not($item).removeClass('open');
+                        $item.toggleClass('open');
+                    }
+                    e.preventDefault();
+                }
+            });
+
+            // Adjust sidebar based on screen size
+            function adjustSidebar() {
+                const $sidebar = $('#sidebar');
+                if (window.innerWidth <= 768) {
+                    $sidebar.removeClass('collapsed show');
+                } else {
+                    $sidebar.addClass('collapsed').removeClass('show');
+                }
+            }
+
+            adjustSidebar();
+            $(window).off('resize.sidebar').on('resize.sidebar', adjustSidebar);
+            $('.menu-link.active, .menu-item.open').removeClass('active open');
+        });
+    </script>
+</body>
+
+</html>

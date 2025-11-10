@@ -1,0 +1,591 @@
+﻿@using static YardManagementApplication.Controllers.TaskController
+@model Tuple<DropdownViewModel, LivePicklistViewModel>
+@{
+}
+@{
+    ViewData["Title"] = "Yard Management Task Master";
+}
+<style>
+    .tabulator-btn-cancel {
+        /* Style the button container, not the link/span itself */
+        display: inline-block;
+    }
+
+        .tabulator-btn-cancel button {
+            background-color: #dc3545; /* Bootstrap 'danger' red */
+            color: white;
+            border: 1px solid #dc3545;
+            padding: 3px 8px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            line-height: 1;
+        }
+
+            .tabulator-btn-cancel button:hover {
+                background-color: #c82333;
+                border-color: #bd2130;
+            }
+</style>
+
+
+<div class="container mt-2">
+    <h5>Yard Management Task Master</h5>
+    @* <div class="row">
+        <div class="col-12 float-right offset-11">
+            <a href="javascript:void(0)" id="refreshpage"> <i class="material-icons">&nbsp;refresh</i></a>
+        </div>
+    </div> *@
+
+    <ul class="nav nav-tabs" id="taskTabs" role="tablist">
+        <li class="nav-item">
+
+            <a class="nav-link active" id="picklist-tab" data-bs-toggle="tab" href="#picklist" role="tab" aria-controls="picklist" aria-selected="true"><i class="material-icons">list</i>&nbsp;Picklist</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" id="manual-routing-tab" data-bs-toggle="tab" href="#manual-routing" role="tab" aria-controls="manual-routing" aria-selected="false"><i class="material-icons">route</i>&nbsp;Manual Routing</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" id="live-picklist-tab" data-bs-toggle="tab" href="#live-picklist" role="tab"
+               aria-controls="live-picklist" aria-selected="false">
+                <i class="material-icons">visibility</i>&nbsp;Live Picklist Order
+
+            </a>
+        </li>
+    </ul>
+    <div class="tab-content mt-3">
+        <div class="tab-pane fade show active" id="picklist" role="tabpanel" aria-labelledby="picklist-tab">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h5>Picklist Tasks</h5>
+                <div>
+                    <button id="autoAssignBtn" class="btn btn-primary me-2">Auto Assign</button>
+                    <button id="manualAssignBtn" class="btn btn-secondary">Manual Assign</button>
+                </div>
+            </div>
+            <div id="picklistTable" class="tabulator tabulator-bootstrap5" style="width: 100%;"></div>
+        </div>
+        <div class="tab-pane fade" id="manual-routing" role="tabpanel" aria-labelledby="manual-routing-tab">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h5>Manual Routing Tasks</h5>
+                <button id="assignRoutesBtn" class="btn btn-primary">Assign Routes</button>
+            </div>
+            <div id="manualRoutingTable" class="tabulator tabulator-bootstrap5" style="width: 100%;"></div>
+
+        </div>
+        <div class="tab-pane fade" id="live-picklist" role="tabpanel" aria-labelledby="live-picklist-tab">
+            @await Html.PartialAsync("LivePicklistPartial", Model.Item2)
+
+        </div>
+    </div>
+</div>
+
+<!-- Modal for Manual Assign -->
+<div class="modal fade" id="manualAssignModal" tabindex="-1" aria-labelledby="manualAssignModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="manualAssignModalLabel">Manual Assign Vehicle</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <h6>Vehicle Details:</h6>
+                    <p id="vehicleDetails"></p>
+                </div>
+                <div class="mb-3">
+                    <label for="operatorSelect" class="form-label">Select Operator</label>
+                    <select id="operatorSelect" class="form-select" asp-items="@Model.Item1.Operators">
+                        <option selected>Choose an operator...</option>
+                        <!-- Populate dynamically -->
+                    </select>
+                </div>
+                @* <div class="mb-3">
+                    <label for="prioritySelect" class="form-label">Priority Level</label>
+                    <select id="prioritySelect" class="form-select">
+                        <option selected>High Priority</option>
+                        <option>Normal Priority</option>
+                    </select>
+                </div> *@
+                <div class="mb-3">
+                    <label for="assignmentNotes" class="form-label">Assignment Notes (Optional)</label>
+                    <textarea id="assignmentNotes" class="form-control" rows="3" placeholder="Enter any special instructions or notes..."></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" id="assignVehicleButton">Assign Vehicle</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+<script>
+    $(document).ready(function () {
+        // Add CSS for select dropdown arrows
+        $('#refreshpage').on('click',function(){
+            window.location.reload(true);
+        });
+
+            const Toast = Swal.mixin({
+      toast: true,
+      position: "top-end",
+      showConfirmButton: false,
+      timer: 3000,
+      timerProgressBar: true,
+      didOpen: (toast) => {
+        toast.onmouseenter = Swal.stopTimer;
+        toast.onmouseleave = Swal.resumeTimer;
+      }
+    });
+
+        let picklistTable, manualRoutingTable;
+
+        // Common column definition with checkbox
+        const baseColumns = [
+            { formatter: "rowSelection", titleFormatter: "rowSelection", hozAlign: "left", headerSort: false, cellClick: function(e, cell){ cell.getRow().toggleSelect(); } },
+            { title: "VIN", field: "vin" },
+            { title: "Brand", field: "brand_name" },
+            { title: "Model", field: "variant_name" },
+            { title: "From", field: "origin", formatter: function(cell,formatterParams){
+                return cell.getValue().toUpperCase();
+            } },
+            { title: "Send To", field: "destination", editor: "select",
+            editorParams: { values: ["Quarantine", "Stored", "ReworkBay", "PDI", "Shipping"] },
+            formatter: function(cell, formatterParams) {
+                 if (!cell.getValue())
+                    return ' <span style="float:right;font-size:9px;">▼</span>';
+        return cell.getValue() + ' <span style="float:right;font-size:9px;">▼</span>';
+    }},
+            { title: "Priority", field: "priority", editor: "select", editorParams: { values: ["High", "Low"] } ,
+            formatter: function(cell, formatterParams) {
+                if (!cell.getValue())
+                    return ' <span style="float:right;font-size:9px;">▼</span>';
+        return cell.getValue() + ' <span style="float:right;font-size:9px;">▼</span>';
+    }},
+            //{ title: "SLA", field: "slaTime" },
+            // { title: "Last Updated", field: "updatedAt" }
+        ];
+
+        // Initialize Picklist Table
+        picklistTable = new Tabulator("#picklistTable", {
+            ajaxURL: "@Url.Action("GetEolData", "Task")",
+            layout: "fitColumns",
+            columns: baseColumns,
+            pagination: "local",
+            paginationSize: 10,
+            paginationSizeSelector: [10, 20, 50],
+            paginationButtonCount: 5,
+            theme: "bootstrap5",
+            selectable: true,
+            responsiveLayout: false,
+            movableColumns: false,
+            autoResize: false,
+            locale: true,
+    langs: {
+        "default": {
+            "pagination": {
+                "first": "<<",
+                "first_title": "First Page",
+                "last": ">>",
+                "last_title": "Last Page",
+                "prev": "<",
+                "prev_title": "Prev Page",
+                "next": ">",
+                "next_title": "Next Page",
+            }
+        }}
+        });
+
+        // Initialize Manual Routing Table
+        manualRoutingTable = new Tabulator("#manualRoutingTable", {
+            ajaxURL: "@Url.Action("GetEolData", "Task")",
+            layout: "fitColumns",
+            columns: baseColumns,
+            pagination: "local",
+            paginationSize: 10,
+            paginationSizeSelector: [10, 20, 50],
+            paginationButtonCount: 5,
+            theme: "bootstrap5",
+            selectable: true,
+            responsiveLayout: false,
+            movableColumns: false,
+            autoResize: false,
+            locale: true,
+    langs: {
+        "default": {
+            "pagination": {
+                "first": "<<",
+                "first_title": "First Page",
+                "last": ">>",
+                "last_title": "Last Page",
+                "prev": "<",
+                "prev_title": "Prev Page",
+                "next": ">",
+                "next_title": "Next Page",
+            }
+        }}
+        });
+
+        // Initialize Live Picklist Table
+      let livepicktable = new Tabulator("#livepickList", {
+            ajaxURL: "@Url.Action("GetLivePicklistData", "Task")",
+            layout: "fitColumns",
+           columns:[
+                { title: "Picklist ID", field: "picklist_id" },
+                { title: "VIN", field: "vin" },
+                 { title: "Operator", field: "oprator" },
+                 { title: "Route", field: "route" , formatter: function(cell, formatterParams){
+                     let val=cell.getValue();
+                     let idx=val.indexOf("?");
+                     let newval=val;
+                     if (idx !=-1){
+                         newval=val.replace("?","->");
+                        }
+
+                    return String(newval.toUpperCase());
+                 }
+                 },
+                 { title: "Status", field: "status" },
+                // { title: "SLA Due", field: "sla_due" },
+                 { title: "Elapsed Minutes", field: "elapsed_minutes" },
+                 { title: "Actions", field: "actions", formatter: "html",
+                 cellClick: function(e, cell) {
+        // Find the closest button to ensure the click came from the button
+        if (e.target.tagName === "BUTTON" && e.target.classList.contains("cancel-button")) {
+
+            const rowData = cell.getRow().getData();
+            console.log("Cancelling Picklist ID:", rowData.picklist_id);
+            Swal.fire({
+                title: 'Cancel',
+                text: 'Do you want to cancel',
+
+            }).then((result)=>{
+                if (result.isConfirmed){
+                    $.post("@Url.Action("CancelVehicleMovement", "Task")",
+                    { vin: rowData.vin}
+                    ).done(function(){
+                        Swal.fire("Canceled Successfully");
+                        cell.getRow().delete();
+                        livepicktable.redraw();
+                        location.reload();
+                        $("#taskTabs a[href='#live-picklist']").tab("show")
+                    }).fail(function(){
+                        Swal.fire("Error in cancellation");
+                    });
+                }
+
+            });
+
+        }
+    },
+    // The HTML formatter returns the string for the cell content
+    // We use the custom CSS class on the button element
+    formatter: function(cell, formatterParams) {
+        return `
+            <div class="tabulator-btn-cancel">
+                <button class="cancel-button">Cancel</button>
+            </div>
+        `;
+    }
+                 }
+            ],
+            pagination: "local",
+            paginationSize: 10,
+            paginationSizeSelector: [10, 20, 50],
+            paginationButtonCount: 5,
+            theme: "bootstrap5",
+            selectable: true,
+            responsiveLayout: false,
+            movableColumns: false,
+            autoResize: false,
+            locale: true,
+        langs: {
+        "default": {
+            "pagination": {
+                "first": "<<",
+                "first_title": "First Page",
+                "last": ">>",
+                "last_title": "Last Page",
+                "prev": "<",
+                "prev_title": "Prev Page",
+                "next": ">",
+                "next_title": "Next Page",
+            }
+        }}
+        });
+        // Load data on tab change
+        $('a[data-bs-toggle="tab"]').on('shown.bs.tab', function (e) {
+            const target = $(e.target).attr("href");
+            if (target === "#picklist") {
+                picklistTable.replaceData();
+                picklistTable.redraw();
+            } else if (target === "#manual-routing") {
+                manualRoutingTable.replaceData();
+                manualRoutingTable.redraw();
+            }
+            else if (target === "#live-picklist") {
+                livepicktable.replaceData();
+                livepicktable.redraw();
+            }
+        });
+
+            $("#manualAssignModal").on('hidden.bs.modal', function () {
+                console.log('model is hidden');
+                $("#manualAssignBtn").prop("disabled", false);
+                $("#assignRoutesBtn").prop("disabled", false);
+             });
+
+
+
+        // Handle Auto Assign button
+        $("#autoAssignBtn").click(function () {
+            const selectedData = picklistTable.getSelectedData();
+            $("#autoAssignBtn").prop("disabled", true);
+            if (selectedData.length > 0) {
+                // Implement assign routes logic, perhaps open modal or direct assign
+                //alert("Assigning routes for " + selectedData.length + " vehicles");
+                let vehicledetails='';
+                const selectedDatalen=selectedData.length;
+                for(let i=0;i<selectedDatalen;i++){
+                    const row=selectedData[i];
+                    if (!row.origin){
+                        //alert("Origin is empty cannot assign for VIN: "+row.vin);
+                            Toast.fire({
+                            icon:"error",
+                            title:"Origin is empty cannot assign for VIN: "+row.vin
+                            });
+                        return;
+                    }
+                    if (!row.destination){
+                        //alert("Please select destination to proceed for VIN: "+row.vin);
+                            Toast.fire({
+                                icon: "error",
+                                title:"Please select destination to proceed for VIN: "+row.vin
+                            });
+                        return;
+                    }
+                    if (!row.priority){
+                            Toast.fire({
+                                icon: "error",
+                                title:"Please Select a Priority for VIN: "+row.vin
+                            });
+                        //alert("Please Select a Priority for VIN: "+row.vin);
+                        return;
+                    }
+
+                  
+                   
+                }
+
+                saveVehicleAssignment(selectedData,"true");
+
+                Toast.fire({
+                    icon: "success",
+                    title: "Auto assigning " + selectedData.length + " vehicles"
+                });
+            } else {
+                Toast.fire({
+                    icon: "error",
+                    title:"Please select vehicles to auto assign"
+                });
+                //alert("Please select vehicles to auto assign");
+            }
+             $("#autoAssignBtn").prop("disabled", false);
+        });
+
+        // Handle Manual Assign button
+        $("#manualAssignBtn").click(function () {
+            const selectedData = picklistTable.getSelectedData();
+            if (selectedData.length === 1) {
+                const rowData = selectedData[0];
+                if (!rowData.origin){
+                   // alert("Origin is empty cannot assign");
+                   Toast.fire({
+                    icon: "error",
+                    title:"Origin is empty cannot assign"
+                });
+                    return;
+                }
+                if (!rowData.destination){
+                    //alert("Please select destination to proceed");
+                        Toast.fire({
+                            icon: "error",
+                            title:"Please select destination to proceed"
+                        });
+                    return;
+                }
+                if (!rowData.priority){
+                    //alert("Please Select a Priority");
+                        Toast.fire({
+                            icon: "error",
+                            title:"Please Select a Priority"
+                        });
+                    return;
+                }
+                $("#vehicleDetails").html(`
+                    <strong>VIN:</strong> ${rowData.vin}<br>
+                    <strong>Brand:</strong> ${rowData.brand_name}<br>
+                    <strong>Model:</strong> ${rowData.variant_name}<br>
+                    <strong>Route:</strong> ${rowData.origin} → ${rowData.destination}<br>
+                    <strong>Current Priority:</strong> ${rowData.priority}
+                `);
+                $("#manualAssignModal").modal("show");
+                $("#manualAssignBtn").prop("disabled", true);
+            } else {
+                //alert("Please select exactly one vehicle to manually assign");
+                    Toast.fire({
+        icon: "error",
+        title:"Please select exactly one vehicle to manually assign"
+    });
+            }
+        });
+
+        // Handle Assign Routes button
+        $("#assignRoutesBtn").click(function () {
+            const selectedData = manualRoutingTable.getSelectedData();
+            if (selectedData.length > 0) {
+                // Implement assign routes logic, perhaps open modal or direct assign
+                //alert("Assigning routes for " + selectedData.length + " vehicles");
+                let vehicledetails='';
+                const selectedDatalen=selectedData.length;
+                for(let i=0;i<selectedDatalen;i++){
+                    const row=selectedData[i];
+                    if (!row.origin){
+                        //alert("Origin is empty cannot assign for VIN: "+row.vin);
+                            Toast.fire({
+                            icon:"error",
+                            title:"Origin is empty cannot assign for VIN: "+row.vin
+                            });
+                        return;
+                    }
+                    if (!row.destination){
+                        //alert("Please select destination to proceed for VIN: "+row.vin);
+                            Toast.fire({
+        icon: "error",
+        title:"Please select destination to proceed for VIN: "+row.vin
+    });
+                        return;
+                    }
+                    if (!row.priority){
+                            Toast.fire({
+        icon: "error",
+        title:"Please Select a Priority for VIN: "+row.vin
+    });
+                        //alert("Please Select a Priority for VIN: "+row.vin);
+                        return;
+                    }
+
+                    vehicledetails +=` ${row.vin} => ${row.origin} → ${row.destination}  <br>`;
+                    $("#assignRoutesBtn").prop("disabled", true);
+                }
+
+                $("#vehicleDetails").html( `${selectedDatalen} Routes for <br>  ${vehicledetails}`);
+                $("#manualAssignModal").modal("show");
+
+            } else {
+                //alert("Please select vehicles to assign routes");
+                    Toast.fire({
+                        icon: "error",
+                        title:"Please select vehicles to assign routes"
+                        });
+            }
+        });
+
+        // Handle Assign Vehicle button in modal
+        $("#assignVehicleButton").click(function () {
+
+            var activeTabId = $('#taskTabs').find('.active').attr('href');
+            if (activeTabId === "#manual-routing") {
+                // If the active tab is manual routing, get selected data from that table
+                const selectedData = manualRoutingTable.getSelectedData();
+                if (selectedData.length === 0) {
+                    alert("Please select vehicles to assign");
+                    return;
+                }
+                saveVehicleAssignment(selectedData);
+                manualRoutingTable.replaceData(); // Refresh table
+                manualRoutingTable.redraw();
+                //$("#assignRoutesBtn").prop("disabled", false);
+                //$("#manualAssignModal").modal("hide");
+                return;
+            } else if(activeTabId ==="#picklist"){
+                // Proceed with picklist table data
+                $("#manualAssignBtn").prop("disabled", false);
+                const selectedRow= picklistTable.getSelectedData();
+                if (selectedRow.length !== 1) {
+                    //alert("Please select exactly one vehicle to assign");
+                    Toast.fire({
+                        icon: "error",
+                        title:"Please select exactly one vehicle to assign"
+                        });
+                    return;
+                }
+                saveVehicleAssignment(selectedRow[0])
+                picklistTable.replaceData(); // Refresh table
+                picklistTable.redraw();
+            }
+
+
+        });
+
+
+
+        function saveVehicleAssignment(selectedRows,autoassign){
+
+            console.log(selectedRows);
+            $("#assignVehicleButton").prop("disabled", true).text("Assigning...");
+             if (!Array.isArray(selectedRows)) {
+                selectedRows = [selectedRows];
+               }
+            //const selectedData = JSON.stringify(selectedRow[0]);
+            const selectedData = JSON.stringify(selectedRows);
+            
+            let _operator = $("#operatorSelect").val();
+            let _operatorname = $("#operatorSelect option:selected").text();
+            // const priority = $("#prioritySelect").val();
+            let notes = $("#assignmentNotes").val();
+            if (autoassign=="true"){
+                _operator=-1;
+                _operatorname="";
+
+            }
+            // Disable button and change text
+
+            // Send data to API
+            $.post("@Url.Action("AssignVehicle1", "Task")", {
+                _operator,
+                _operatorname,
+              //  priority,
+                notes,
+                selectedData,
+                autoassign
+            }).done(function () {
+                //alert("Vehicle assigned successfully!");
+                Toast.fire({
+                    icon: "success",
+                    title:"Vehicle(s) assigned successfully!"
+                }).then(function(){
+                    location.reload();
+                });
+                $("#manualAssignModal").modal("hide");
+                //picklistTable.replaceData(); // Refresh table
+                // Re-enable button and reset text
+                $("#assignVehicleButton").prop("disabled", false).text("Assign Vehicle");
+            }).fail(function (jqxhr,erromsg,status) {
+                console.log(jqxhr);
+                //alert("Failed to assign vehicle.");
+                Toast.fire({
+                    icon: "error",
+                    title:"Failed to assign vehicle(s): "
+                });
+                // Re-enable button and reset text
+                $("#assignVehicleButton").prop("disabled", false).text("Assign Vehicle");
+            });
+        }
+
+
+
+    });
+</script>

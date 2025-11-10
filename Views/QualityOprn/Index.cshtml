@@ -1,0 +1,174 @@
+@{
+    Layout = "_QualityOprnLayout";
+}
+
+@model YardManagementApplication.Models.QualityOprnModel
+
+<!-- Shift Performance Overview -->
+<div class="mb-4">
+    <h2 class="section-title">Shift Performance Overview</h2>
+    <div class="row g-3">
+        <div class="col-md-2">
+            <div class="performance-card status-assigned">
+                <div class="card-label">ORDERS ASSIGNED</div>
+                <div class="card-value" id="ordersAssigned">@Model.OrdersAssigned</div>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="performance-card status-in-progress">
+                <div class="card-label">IN PROGRESS</div>
+                <div class="card-value" id="inProgress">@Model.InProgress</div>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="performance-card status-completed">
+                <div class="card-label">COMPLETED</div>
+                <div class="card-value green" id="completed">@Model.Completed</div>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="performance-card status-total">
+                <div class="card-label">VINS TOTAL</div>
+                <div class="card-value" id="vinsTotal">@Model.VinsTotal</div>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="performance-card status-scanned">
+                <div class="card-label">VINS SCANNED</div>
+                <div class="card-value" id="vinsScanned">@Model.VinsScanned</div>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="performance-card status-quality">
+                <div class="card-label">QUALITY RESULTS</div>
+                <div class="card-value">
+                    <i class="bi bi-check-circle-fill text-success"></i> <span id="qualityOk">@Model.QualityResultsOk</span> / 
+                    <i class="bi bi-exclamation-triangle-fill text-danger"></i> <span id="qualityNok">@Model.QualityResultsNok</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Assigned Orders Section -->
+<div class="mb-4">
+    <div class="search-section">
+        <h2 class="section-title mb-0">Assigned Orders</h2>
+        <div class="search-input">
+            <i class="bi bi-search search-icon"></i>
+            <input type="text" id="searchInput" class="form-control" placeholder="Search orders or QI..." onkeyup="searchOrders()">
+        </div>
+    </div>
+
+    <div class="orders-table">
+        <table class="table table-hover mb-0">
+            <thead>
+                <tr>
+                    <th>ORDER</th>
+                    <th>TOTAL VINS</th>
+                    <th>SCANNED</th>
+                    <th>OK</th>
+                    <th>NOK</th>
+                    <th>PROGRESS</th>
+                    <th>ACTION</th>
+                </tr>
+            </thead>
+            <tbody id="ordersTableBody">
+                @foreach (var order in Model.AssignedOrders)
+                {
+                    <tr>
+                        <td><strong>@order.OrderNo</strong></td>
+                        <td>
+                            <span class="badge badge-light">@order.TotalVins</span>
+                        </td>
+                        <td>@order.Scanned</td>
+                        <td>
+                            @if (order.Ok > 0)
+                            {
+                                <span class="badge badge-success">@order.Ok</span>
+                            }
+                            else
+                            {
+                                <span class="text-muted">—</span>
+                            }
+                        </td>
+                        <td>
+                            @if (order.Nok > 0)
+                            {
+                                <span class="badge badge-danger">@order.Nok</span>
+                            }
+                            else
+                            {
+                                <span class="text-muted">—</span>
+                            }
+                        </td>
+                        <td>
+                            <div class="progress mb-1" style="height: 8px;">
+                                <div class="progress-bar @(order.Progress == 100 ? "bg-success" : "")" 
+                                     style="width: @order.Progress%"></div>
+                            </div>
+                            <small class="text-muted">@order.Progress%</small>
+                        </td>
+                        <td>
+                            <button class="inspect-btn" onclick="openInspectModal('@order.OrderNo')">
+                                INSPECT
+                            </button>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Inspect Details Modal -->
+<div class="modal fade" id="inspectModal" tabindex="-1" aria-labelledby="inspectModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="inspectModalLabel">Inspect Details</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" id="inspectModalBody">
+                <!-- Content will be loaded via AJAX -->
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Search functionality
+    function searchOrders() {
+        const searchTerm = document.getElementById('searchInput').value;
+        
+        if (searchTerm.length >= 2 || searchTerm.length === 0) {
+            fetch('/QualityOprn/SearchOrders', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: `searchTerm=${encodeURIComponent(searchTerm)}`
+            })
+            .then(response => response.text())
+            .then(html => {
+                // Extract table body content from the partial view
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(html, 'text/html');
+                const newTableBody = doc.querySelector('tbody');
+                if (newTableBody) {
+                    document.getElementById('ordersTableBody').innerHTML = newTableBody.innerHTML;
+                }
+            })
+            .catch(error => {
+                console.error('Error searching orders:', error);
+            });
+        }
+    }
+
+    // Debounce search to avoid too many requests
+    let searchTimeout;
+    document.getElementById('searchInput').addEventListener('input', function() {
+        clearTimeout(searchTimeout);
+        searchTimeout = setTimeout(searchOrders, 300);
+    });
+</script>

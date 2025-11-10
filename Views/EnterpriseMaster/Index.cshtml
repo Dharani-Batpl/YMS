@@ -1,0 +1,111 @@
+﻿@{
+    var EnterpriseMasterData = ViewData["EnterpriseMasterData"] ?? "[]";
+    Layout = "_Layout";
+}
+
+<div class="container">
+    <!--  Page title header -->
+@*     <div id="pageTitle" class="col-12 text-center py-1 mb-3 page-title">
+        <!--  Toolbar row with search + action buttons -->
+        <h6 class="mb-0 fw-bold text-uppercase tracking-wide">Enterprise Master</h6>
+    </div> *@
+    <div class="col-12 text-center py-1 mb-3" style="background: #242424; color: white;">
+        <h6 class="mb-0 fw-bold text-uppercase tracking-wide">Enterprise Master</h6>
+    </div>
+
+    <!--  Toolbar row with search + action buttons -->
+    <div class="row align-items-center mb-3">
+
+        <!-- Spacer on xs devices -->
+        <div class="w-100 d-md-none"></div>
+        <div class="col-12 col-md d-flex justify-content-md-end align-items-center gap-2 flex-wrap">
+            <!--  Global search input -->
+            <input type="search"
+                   id="searchField"
+                   class="form-control form-control-sm"
+                   placeholder="Search..."
+                   style="max-width: 280px; min-width: 150px;" />
+
+        </div>
+
+
+    </div>
+    <!--  Hidden file input for CSV upload -->
+    <input type="file" id="upload-file" style="display:none" accept=".csv" />
+
+    <!--  Tabulator grid mount point -->
+    <div id="EnterpriseMasterTable" class="tabulator-bootstrap5"></div>
+    <div id="recordCount" class="text-end mt-2 fw-semibold text-secondary"></div>
+</div>
+
+<script>
+
+
+    document.addEventListener("DOMContentLoaded", () => {
+        // ==========================
+        // 🔹 Initialize reusable components
+        // ==========================
+        initTooltips(); // Bootstrap tooltips
+
+
+        const EnterpriseMasterData = JSON.parse('@Html.Raw(EnterpriseMasterData)');
+        let selectedRow = null;
+        let currentMode = "";
+
+      
+
+        // ==========================
+        // 🔹 Initialize Tabulator
+        // ==========================
+       
+        const dataTable = initializeTabulator("#EnterpriseMasterTable", EnterpriseMasterData, generateTabulatorColumns(EnterpriseMasterData),
+             (data) => selectedRow = data[0] || null
+        );
+
+        dataTable.on("tableBuilt", function(){
+            const hideFields = [
+                    "Enterprise_id",
+                    "Status_id",
+                    "Status_name",
+                    "Is_deleted",
+                    "Created_by",
+                    "Created_at",
+                    "Updated_by",
+                    "Updated_at",
+                    "Version",
+                    "AdditionalProperties"
+            ];
+
+            hideFields.forEach(field => dataTable.hideColumn(field));
+        });
+    
+           
+        // Command: Live search (visible columns only) for parent table
+        document.getElementById("searchField").addEventListener("input", function () {
+            var searchTerm = this.value.toLowerCase();
+
+            // Command: Collect visible fields
+            var visibleColumns = dataTable.getColumns()
+                                      .filter(col => col.isVisible())
+                                      .map(col => col.getField());
+
+            // Command: Apply per-row predicate filter
+            dataTable.setFilter(function (data) {
+                return visibleColumns.some(field => {
+                    var value = data[field];
+                    return value != null && value.toString().toLowerCase().includes(searchTerm);
+                });
+            });
+        });
+        // Record count for filtered data
+         dataTable.on("dataFiltered", function(filters, rows) {
+               updateRecordCount(dataTable, rows, "Enterprise_id");  // Pass the field name >>replace with your table primary id column
+         });
+
+         // Record count for loaded data
+         dataTable.on("dataLoaded", function(data) {
+               updateRecordCount(dataTable, data, "Enterprise_id");  // Pass the field name >>replace with your table primary id column
+         });
+
+    });
+</script>

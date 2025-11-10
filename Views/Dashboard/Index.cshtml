@@ -1,0 +1,453 @@
+﻿@{
+    Layout = "_Layout";
+    var VehicleCount = ViewData["VehicleCount"] ?? "[]";
+    var OccupiedCount = ViewData["OccupiedCount"] ?? "[]";
+    var AvailableCount = ViewData["AvailableCount"] ?? "[]";
+    var ChartCount = ViewData["ChartData"] ?? "[]";
+    ViewData["Title"] = "Vehicle Yard Dashboard";
+}
+
+<head>
+    <link href="~/css/Dashboard.css" rel="stylesheet" />
+</head>
+
+<!-- =================== MAIN CONTENT WRAPPER =================== -->
+<div class="main-content">
+    <div class="dashboard-page">
+        <div class="container">
+
+            <div id="pageTitle" class="col-12 text-center py-1 mb-3">
+                <h6 class="mb-0 fw-bold text-uppercase tracking-wide">DashBoard</h6>
+            </div>
+
+            <!-- ===== Dashboard Content Starts ===== -->
+            <div class="dashboard">
+
+                <!-- =================== TOP BAR =================== -->
+                <div class="top-bar">
+
+                    <!-- ---- Shift and Day Selectors ---- -->
+                    <div class="shift-selectors">
+                        <span class="chip" data-day="today">Today</span>
+                        <span class="chip" data-day="yesterday">Yesterday</span>
+                        <span class="chip" data-shift="A">Shift A</span>
+                        <span class="chip" data-shift="B">Shift B</span>
+                        <span class="chip" data-shift="C">Shift C</span>
+                        <!-- Refresh button -->
+                        <button class="chip" type="button" title="Refresh">
+                            <i class="fas fa-redo"></i>
+                        </button>
+                    </div>
+
+                    <!-- ---- Search Input ---- -->
+                    <div class="search-input">
+                        <!-- Search Icon -->
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
+                             stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="11" cy="11" r="8" />
+                            <path d="m21 21-3.5-3.5" />
+                        </svg>
+                        <!-- Search Text Box -->
+                        <input type="text" placeholder="Search VIN, Slot, or Zone…">
+                    </div>
+
+                    <!-- ---- Quick Stats Tags ---- -->
+                    <div class="tags">
+                        <div class="tag" id="agingVehiclesLink">12 Aging Vehicles</div>
+                        <div class="tag" id="failedPdiLink">2 Failed PDI</div>
+                    </div>
+                </div>
+
+                <!-- =================== KPI CARDS SECTION =================== -->
+                <div class="kpi-cards">
+
+                    <!-- Total Vehicles -->
+                    <div class="card">
+                        <div class="card-title"><i class="fas fa-car"></i> Total Vehicles</div>
+                        <div class="card-value">30</div>
+                    </div>
+
+                    <!-- Occupancy Card with Yard Dropdown -->
+                    <div class="card">
+                        <div class="card-title">
+                            <span><i class="fas fa-parking"></i> Occupancy</span>
+                            <!-- Dropdown for selecting Yard -->
+                            @* <span class="dropdown" data-role="yard-dropdown">
+                                <span class="dropdown-toggle">All Yards</span>
+                                <div class="dropdown-content">
+                                    <div class="dropdown-item selected" data-yard="ALL">All Yards</div>
+                                    <div class="dropdown-item" data-yard="A">Yard A</div>
+                                    <div class="dropdown-item" data-yard="B">Yard B</div>
+                                    <div class="dropdown-item" data-yard="C">Yard C</div>
+                                    <div class="dropdown-item" data-yard="D">Yard D</div>
+                                </div>
+                            </span> *@
+                        </div>
+                        <div class="card-value" id="kpi-occupancy">20</div>
+                    </div>
+
+                    <!-- Available Slots Card -->
+                    <div class="card" id="availableSlotsCard">
+                        <div class="card-title"><i class="fas fa-clipboard-check"></i> Available Slots</div>
+                        <div class="card-value">80</div>
+                    </div>
+
+                    <!-- Aging Vehicles Card -->
+                    <div class="card">
+                        <div class="card-title"><i class="fas fa-clock"></i> Aging Vehicles</div>
+                        <div class="card-extra">
+                            <div class="card-value">12</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- =================== CHARTS SECTION =================== -->
+                <div class="charts">
+
+                    <!-- Yard Occupancy Chart -->
+                    <div class="chart-box">
+                        <h4>
+                            Yard Occupancy
+                            <!-- Chart Dropdown for Yard Selection -->
+                            <span class="dropdown" data-role="yard-dropdown">
+                                <span class="dropdown-toggle">All Yards</span>
+                                <div class="dropdown-content">
+                                    <div class="dropdown-item selected" data-yard="ALL">All Yards</div>
+                                    <div class="dropdown-item" data-yard="A">Yard A</div>
+                                    <div class="dropdown-item" data-yard="B">Yard B</div>
+                                    <div class="dropdown-item" data-yard="C">Yard C</div>
+                                    <div class="dropdown-item" data-yard="D">Yard D</div>
+                                </div>
+                            </span>
+                        </h4>
+                        <!-- Canvas for Yard Occupancy Chart -->
+                        <canvas id="occupancyChart"></canvas>
+                    </div>
+
+                    <!-- Check-ins vs Retrievals Chart -->
+                    <div class="chart-box">
+                        <h4>Check-ins vs Retrievals</h4>
+                        <canvas id="checkinChart"></canvas>
+                    </div>
+
+                </div>
+
+                <!-- =================== PDI OVERVIEW =================== -->
+                <div class="table-box">
+                    <h4>PDI Overview</h4>
+
+                    <!-- PDI KPI Cards -->
+                    <div class="pdi-cards">
+                        <div class="card">
+                            <div class="card-title"><i class="fas fa-hourglass-half"></i> PDI Pending</div>
+                            <div class="card-value">25</div>
+                        </div>
+
+                        <div class="card">
+                            <div class="card-title"><i class="fas fa-check-circle"></i> PDI Completed Today</div>
+                            <div class="card-value">200</div>
+                        </div>
+
+                        <div class="card">
+                            <div class="card-title"><i class="fas fa-times-circle"></i> Failures</div>
+                            <div class="card-value">4</div>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- =================== AGING VEHICLES TABLE =================== -->
+                <div class="tabs">
+                    <div class="table-box" id="AgingTable">
+                        <h4>Aging Vehicles (Top 5)</h4>
+                        <div id="AgingVehicleData" class="tabulator-bootstrap5"></div>
+                    </div>
+                    <!-- Exception & Alerts Table -->
+                    <div class="table-box">
+                        <h4>Exception & Alerts</h4>
+                        <div id="AlertTable" class="tabulator-bootstrap5"></div>
+                    </div>
+                </div>
+
+                <!-- =================== TABS SECTION =================== -->
+                <div class="tabs">
+                    <!-- PDI Details Table -->
+                    <div class="table-box" id="PdiTable">
+                        <h4>PDI Overview</h4>
+                        <div id="PDIOverViewTable" class="tabulator-bootstrap5"></div>
+                    </div>
+                    <!-- Operator Productivity Table -->
+                    <div class="table-box">
+                        <h4>Operator Productivity (Shift)</h4>
+                        <div id="OperatorProductivityTable" class="tabulator-bootstrap5"></div>
+                    </div>
+                </div>
+            </div>
+            <!-- =================== AVAILABLE SLOTS MODAL =================== -->
+            <div id="slotsBackdrop" class="slots-backdrop" aria-hidden="true">
+                <div class="slots-modal" role="dialog" aria-modal="true" aria-labelledby="slots-title">
+
+                    <!-- Modal Header -->
+                    <div class="slots-modal__header">
+                        <div id="slots-title">Available Slots by Zone</div>
+                        <button class="slots-modal__close" aria-label="Close" onclick="closeSlotsModal()">&times;</button>
+                    </div>
+
+                    <!-- Modal Body with Table -->
+                    <div class="slots-modal__body">
+                        <table class="slots-table" aria-label="Available slots">
+                            <thead>
+                                <tr>
+                                    <th>ZONE</th>
+                                    <th>AVAILABLE</th>
+                                    <th>TOTAL</th>
+                                    <th>UTILIZATION</th>
+                                </tr>
+                            </thead>
+                            <tbody id="slotsTbody"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+
+    
+    /* --------- Charts (with ref we can update) --------- */
+    const legendBottom = {
+      plugins: { legend: { position: 'bottom', labels: { boxWidth: 12, boxHeight: 12, usePointStyle: true } }, tooltip: { enabled: true } },
+      maintainAspectRatio: false
+    };
+
+    const occupancyChart = new Chart(document.getElementById('occupancyChart'), {
+      type: 'doughnut',
+      data: { labels: ['Occupied', 'Free'], datasets: [{ data: [20,80], backgroundColor: ['#2563eb', '#e5e7eb'], borderWidth: 0 }] },
+      options: { ...legendBottom, cutout: '68%' }
+    });
+
+    new Chart(document.getElementById('checkinChart'), {
+      type: 'bar',
+      data: {
+        labels: ['6AM','8AM','10AM','12PM','2PM','4PM','6PM'],
+        datasets: [
+          { label: 'Check-ins', data: [3,5,7,4,6,3,2], backgroundColor: '#2563eb', borderRadius: 6 },
+          { label: 'Retrievals', data: [2,3,4,5,5,2,3], backgroundColor: '#111827', borderRadius: 6 }
+        ]
+      },
+      options: { ...legendBottom, scales: { x: { grid: { display: false } }, y: { beginAtZero: true, ticks: { stepSize: 2 } } } }
+    });
+
+    document.addEventListener("DOMContentLoaded", () => {
+     initTooltips();
+    // Columns configuration for each table
+    const agingVehicleColumns = [
+        { title: "VIN", field: "vin", widthGrow: 2 },
+        { title: "ZONE", field: "zone" },
+        { title: "SLOT", field: "slot" },
+        { title: "THRESHOLD", field: "threshold", formatter: cell =>
+            `<span style="color:#DC3545;font-size:16px;display:flex;align-items:center;">
+                <i class="fas fa-exclamation-triangle"></i>&nbsp;${cell.getValue()}</span>`
+        }
+    ];
+
+    const pdiOverviewColumns = [
+        { title: "VIN", field: "vin", widthGrow: 2 },
+        { title: "ZONE/SLOT", field: "zone" },
+        { title: "PDI STATUS", field: "status", formatter: cell => {
+            const s = cell.getValue();
+            const bg = s === 'WAITING' ? '#FFC107' : s === 'PASS' ? '#198754' : s === 'FAIL' ? '#DE3545' : '#6C757D';
+            return `<div style="background-color:${bg};height:100%;border-radius:10px;color:white;display:flex;align-items:center;justify-content:center;font-weight:500;">${s}</div>`;
+        }},
+        { title: "LAST UPDATED", field: "date" },
+        { title: "ISSUES", field: "issue" }
+    ];
+
+    const operatorProductivityColumns = [
+        { title: "OPERATOR", field: "vin" },
+        { title: "ASSIGNED", field: "zone" },
+        { title: "COMPLETED", field: "slot" },
+        { title: "AVG TIME", field: "dwell" }
+    ];
+
+    const alertColumns = [
+        { title: "VIN", field: "vin" },
+        { title: "ISSUES", field: "zone" },
+        { title: "TIMING", field: "dwell" },
+        { title: "DESCRIPTION", field: "slot" }
+    ];
+
+    const agingData = [
+        { vin: "VIN00612636469797", zone: "C1", slot: "C1-034", threshold: "+108h over" },
+        { vin: "VIN00347238901464", zone: "A1", slot: "A1-045", threshold: "+98h over" },
+        { vin: "VIN01076894509468", zone: "A1", slot: "A1-067", threshold: "+89h over" },
+        { vin: "VIN01251898563257", zone: "C1", slot: "C1-101", threshold: "+70h over" },
+        { vin: "VIN00279786005956", zone: "A2", slot: "A2-014", threshold: "+68h over" }
+    ];
+
+    const pdiData = [
+        { vin: "VIN0062435467586", zone: "C1/C1-034", status: "WAITING", issue: "Scratch", date: "Sep 28, 9.00 AM" },
+        { vin: "VIN0032457869403", zone: "A1/A1-045", status: "PASS", issue: "None", date: "Sep 28, 11.45 AM" },
+        { vin: "VIN0104658687883", zone: "A1/A1-067", status: "FAIL", issue: "None", date: "Sep 29, 2.00 PM" },
+        { vin: "VIN0123415285970", zone: "C1/C1-101", status: "PASS", issue: "Scratch", date: "Sep 29, 5.00 PM" },
+        { vin: "VIN0028754309215", zone: "A2/A2-014", status: "WAITING", issue: "None", date: "Sep 30, 10.00 AM" }
+    ];
+
+    const operatorData = [
+        { vin: "Rajesh", zone: "15", slot: "13(87%)", dwell: "16min" },
+        { vin: "Priya", zone: "11", slot: "11(100%)", dwell: "11min" },
+        { vin: "Ravi", zone: "12", slot: "10(83%)", dwell: "14min" },
+        { vin: "Asha Patel", zone: "9", slot: "9(100%)", dwell: "12min" },
+        { vin: "Desai", zone: "8", slot: "7(88%)", dwell: "15min" }
+    ];
+
+    const alertData = [
+        { vin: "VIN00623465789293", zone: "Overstay", slot: "Vehicle Exceeding", dwell: "8 days ago" },
+        { vin: "VIN00334567890123", zone: "Overstay", slot: "Vehicle Exceeding", dwell: "5 days ago" },
+        { vin: "VIN01007564392617", zone: "Inspection Failure", slot: "Pending rework", dwell: "8 days ago" },
+        { vin: "VIN01206853426185", zone: "Inspection Failure", slot: "PDI failed", dwell: "11 days ago" },
+        { vin: "VIN00296046271845", zone: "High Priority Retrieval", slot: "ETA 30 mins", dwell: "10 days ago" }
+    ];
+
+    // Initialize tables
+    const AgingVehicleData = initializeTabulator("#AgingVehicleData", agingData, agingVehicleColumns, (data) => console.log("Selected Row: ", data));
+    const PDIOverViewTable = initializeTabulator("#PDIOverViewTable", pdiData, pdiOverviewColumns, (data) => console.log("Selected Row: ", data));
+    const OperatorProductivityTable = initializeTabulator("#OperatorProductivityTable", operatorData, operatorProductivityColumns, (data) => console.log("Selected Row: ", data));
+    const AlertTable = initializeTabulator("#AlertTable", alertData, alertColumns, (data) => console.log("Selected Row: ", data));
+    });
+
+    const zoneSlots = [
+      {zone:"A1",available:147,total:150},
+      {zone:"A2",available:148,total:150},
+      {zone:"B1",available:198,total:200},
+      {zone:"B2",available:198,total:200},
+      {zone:"C1",available:73,total:75},
+      {zone:"C2",available:74,total:75}
+    ];
+
+    /* --------- Available Slots Modal --------- */
+    function renderSlotsTable(){
+      const tbody = document.getElementById('slotsTbody'); tbody.innerHTML = '';
+      zoneSlots.forEach(r => {
+        const used = Math.max(0, r.total - r.available);
+        const pct  = r.total ? Math.round((used / r.total) * 100) : 0;
+        const tr = document.createElement('tr');
+        tr.innerHTML = `<td><strong>${r.zone}</strong></td>
+                        <td>${r.available}</td>
+                        <td>${r.total}</td>
+                        <td><div class="util-wrap"><div class="util-bar" style="width:${pct}%"></div></div></td>`;
+        tbody.appendChild(tr);
+      });
+    }
+    function openSlotsModal(){ renderSlotsTable(); document.getElementById('slotsBackdrop').classList.add('show'); document.documentElement.classList.add('no-scroll'); }
+    function closeSlotsModal(){ document.getElementById('slotsBackdrop').classList.remove('show'); document.documentElement.classList.remove('no-scroll'); }
+    document.getElementById('availableSlotsCard').addEventListener('click', openSlotsModal);
+    document.getElementById('slotsBackdrop').addEventListener('click', e => { if (e.target.id === 'slotsBackdrop') closeSlotsModal(); });
+    document.addEventListener('keydown', e => { if (e.key === 'Escape' && document.getElementById('slotsBackdrop').classList.contains('show')) closeSlotsModal(); });
+
+    /* --------- Chip selection (day/shift) --------- */
+    let selectedDay = null, selectedShift = null;
+    function updateView(){
+      if (selectedDay && selectedShift){
+        console.log(`Selected: ${selectedDay} - Shift ${selectedShift}`);
+        // fetch(`/api/data?day=${selectedDay}&shift=${selectedShift}`) // hook your API
+      }
+    }
+    document.querySelectorAll('.shift-selectors .chip').forEach(chip => {
+      chip.addEventListener('click', () => {
+        if (chip.dataset.day){
+          selectedDay = chip.dataset.day;
+          document.querySelectorAll('.chip[data-day]').forEach(c => c.classList.remove('selected'));
+        } else if (chip.dataset.shift){
+          selectedShift = chip.dataset.shift;
+          document.querySelectorAll('.chip[data-shift]').forEach(c => c.classList.remove('selected'));
+        }
+        chip.classList.add('selected');
+        updateView();
+      });
+    });
+
+    /* --------- Yard Dropdowns (shared handler) --------- */
+    const OCCUPANCY_BY_YARD = {
+      ALL:{ occupied:20, free:80 },
+      A:{ occupied:30, free:70 },
+      B:{ occupied:45, free:55 },
+      C:{ occupied:60, free:40 },
+      D:{ occupied:15, free:85 }
+    };
+
+    function closeAllDropdowns(exceptEl){
+      document.querySelectorAll('.dropdown.open').forEach(d => { if (d !== exceptEl) d.classList.remove('open'); });
+    }
+
+    function applyYardSelection(yard, dropdownEl){
+      // Update KPI occupancy if this dropdown is inside a card (demo: show occupied)
+      const card = dropdownEl.closest('.card');
+      if (card){
+        const val = OCCUPANCY_BY_YARD[yard] || OCCUPANCY_BY_YARD.ALL;
+        const cardValue = card.querySelector('.card-value#kpi-occupancy');
+        if (cardValue) cardValue.textContent = String(val.occupied);
+      }
+
+      // Update the doughnut chart
+      const vals = OCCUPANCY_BY_YARD[yard] || OCCUPANCY_BY_YARD.ALL;
+      occupancyChart.data.datasets[0].data = [vals.occupied, vals.free];
+      occupancyChart.update();
+
+    }
+
+    // Global click handler
+    document.addEventListener('click', (e) => {
+      const toggle = e.target.closest('.dropdown-toggle');
+      const item   = e.target.closest('.dropdown-item');
+      const dd     = e.target.closest('.dropdown');
+
+      if (toggle && dd){
+        dd.classList.toggle('open');
+        closeAllDropdowns(dd);
+        return;
+      }
+
+      if (item && dd){
+        const yard = item.dataset.yard || item.textContent.trim();
+        dd.querySelectorAll('.dropdown-item').forEach(i => i.classList.toggle('selected', i === item));
+        const label = item.textContent.trim();
+        const toggleEl = dd.querySelector('.dropdown-toggle');
+        if (toggleEl) toggleEl.textContent = label;
+        dd.classList.remove('open');
+        applyYardSelection(yard, dd);
+
+        // Optional: keep all yard dropdowns in sync
+        document.querySelectorAll('.dropdown[data-role="yard-dropdown"]').forEach(other => {
+          if (other === dd) return;
+          const toggleOther = other.querySelector('.dropdown-toggle');
+          const match = Array.from(other.querySelectorAll('.dropdown-item'))
+                       .find(i => (i.dataset.yard || i.textContent.trim()) === yard);
+          other.querySelectorAll('.dropdown-item').forEach(i => i.classList.toggle('selected', i === match));
+          if (toggleOther && match) toggleOther.textContent = match.textContent.trim();
+        });
+        return;
+      }
+
+      // Clicked outside
+      if (!dd) closeAllDropdowns();
+    });
+
+
+
+    // Close dropdowns on Escape
+    document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeAllDropdowns(); });
+
+    /* --------- Quick links scroll --------- */
+    document.getElementById('agingVehiclesLink').addEventListener('click', () => {
+      document.getElementById('AgingTable').scrollIntoView({ behavior: 'smooth' });
+    });
+    document.getElementById('failedPdiLink').addEventListener('click', () => {
+      document.getElementById('PdiTable').scrollIntoView({ behavior: 'smooth' });
+    });
+
+
+  
+</script>

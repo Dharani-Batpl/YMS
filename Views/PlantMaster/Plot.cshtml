@@ -1,0 +1,347 @@
+﻿@model YardManagementApplication.Models.PlantMasterModel
+
+@{
+    ViewBag.Title = "Plant Plot";
+    Layout = "_Layout";
+
+    // Get coordinates from query string first, fallback to model, then empty array
+    var coordsJson = Context.Request.Query["coordinates"].FirstOrDefault() ?? Model.Coordinates ?? "[]";
+}
+
+<head>
+    <link href="~/css/site.css" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@@turf/turf@6/turf.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+</head>
+
+<style>
+    #map {
+        margin-left: 100px;
+        width: calc(100% - 200px);
+        height: 70vh;
+        border-radius: 8px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    }
+
+    .plant-button {
+        align-items: center;
+    }
+
+    .reset {
+        align-items: center;
+    }
+
+    .btn-darkgrey {
+        background-color: #4a4a4a; /* dark grey */
+        color: #f0f0f0; /* light text for contrast */
+        border: 1px solid #3e3e3e; /* slightly darker border */
+    }
+
+        .btn-darkgrey:hover {
+            background-color: #3e3e3e; /* darker on hover */
+            color: #ffffff;
+        }
+
+    .btn-prof {
+        background-color: #b31225;
+        border-color: #b31225;
+        color: #fff;
+    }
+
+        .btn-prof:hover {
+            background-color: #d3364a;
+            border-color: #d3364a;
+        }
+
+    .bottom-buttons {
+        text-align: center;
+        margin-top: 14px;
+    }
+
+        .bottom-buttons .btn {
+            margin: 6px;
+            min-width: 140px;
+        }
+</style>
+
+<div class="container-fluid mt-3">
+    <div class="col-12 text-center py-2 mb-3" style="background:#242424; color:white;">
+        <h6 class="mb-0 fw-bold text-uppercase">Plant Plotting</h6>
+    </div>
+
+    <div id="map"></div>
+
+    <!-- Manual Coordinates Menu -->
+    <div id="manualCoordMenu" style="position:absolute; top:120px; right:10px; z-index:999;">
+        <div id="menuToggle" style="width:40px; height:40px; background:#b31225; border-radius:50%; display:flex; align-items:center; justify-content:center; cursor:pointer; box-shadow:0 2px 8px rgba(0,0,0,0.2);">
+            <i class="bi bi-list" style="color:white; font-size:1.5rem;"></i>
+        </div>
+        <div id="coordPanel" style="display:none; margin-top:8px; background:white; padding:10px; border-radius:8px; box-shadow:0 2px 8px rgba(0,0,0,0.2); max-height:400px; overflow-y:auto; min-width:250px;">
+            <div id="coordContainer">
+                <div class="coordRow d-flex gap-2 mb-2">
+                    <input type="number" class="form-control form-control-sm latitude" placeholder="Latitude" step="0.000001" />
+                    <input type="number" class="form-control form-control-sm longitude" placeholder="Longitude" step="0.000001" />
+                </div>
+            </div>
+            <div class="d-flex gap-2 mt-2">
+                <button id="addPointBtn" type="button" class="btn btn-prof btn-sm flex-fill">Add Point</button>
+                <button id="usePointsBtn" type="button" class="btn btn-prof btn-sm flex-fill">Use Points</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="bottom-buttons">
+        <div class="plant-button">
+            <button id="undoBtn" class="btn btn-prof">Undo Last Point</button>
+            <button id="finalizeBtn" class="btn btn-prof">Finalize Layout</button>
+            <button id="saveBtn" class="btn btn-prof">Save Layout</button>
+            @* <button id="proceedToYardBtn" class="btn btn-prof">Proceed to Yard</button> *@
+        </div>
+        <div class="reset">
+            <button id="resetBtn" class="btn btn-darkgrey">Reset Points</button>
+            <a href="@Url.Action("Index", "PlantMaster")" class="btn btn-darkgrey">Back</a>
+        </div>
+    </div>
+</div>
+
+<form id="saveForm" method="post" asp-action="SavePlot" asp-controller="PlantMaster">
+    @Html.AntiForgeryToken()
+    <input type="hidden" name="Plant_id" value="@Model.Plant_id" />
+    <input type="hidden" name="Plant_name" value="@Model.Plant_name" />
+    <input type="hidden" name="Plant_code" value="@Model.Plant_code" />
+    <input type="hidden" name="Enterprise_name" value="@Model.Enterprise_name" />
+
+    <input type="hidden" name="Status_name" value="@Model.Status_name" />
+    <input type="hidden" name="Plant_address" value="@Model.Plant_address" />
+    <input type="hidden" name="Coordinates" id="coordinates" />
+    <input type="hidden" name="Total_area" id="totalArea" />
+</form>
+
+<script>
+    // ===== LOAD PLANT DATA FROM SESSION =====
+    let plantData = {};
+    try {
+        const storedData = sessionStorage.getItem("PlantData");
+        if(storedData && storedData.trim() !== "") {
+            plantData = JSON.parse(storedData);
+        }
+    } catch (err) {
+        console.error("Failed to parse PlantData from sessionStorage", err);
+        plantData = {};
+    }
+
+    // Assign properties safely
+    const plantId = plantData.Plant_id || 0;
+    const plantName = plantData.Plant_name || "";
+    const plantCode = plantData.Plant_code || "";
+    const enterpriseId = plantData.Enterprise_id || 1;
+    const enterpriseName = plantData.Enterprise_name || "";
+    const statusId = plantData.Status_id || 1;
+    const statusName = plantData.Status_name || "";
+    const plantAddress = plantData.Plant_address || "";
+
+    // Restore points & area from sessionStorage
+    let points = [];
+    let plantAreaKm2 = 0;
+    let finalized = false;
+
+    if(plantData.Coordinates) {
+        try {
+            points = JSON.parse(plantData.Coordinates);
+
+            // If 3+ points, mark finalized and recalc area
+            if(points.length >= 3){
+                finalized = true;
+                const poly = turf.polygon([[...points, points[0]]]);
+                const areaMeters = turf.area(poly);
+                plantAreaKm2 = areaMeters / 1_000_000;
+            }
+        } catch(e) { points = []; }
+    }
+
+    let markers = [];
+    let polygonLayer = null;
+
+    // Initialize Leaflet map
+    const map = L.map('map');
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 22 }).addTo(map);
+    if (points.length > 0) {
+        const bounds = points.map(p => [p[1], p[0]]);
+        map.fitBounds(bounds);
+    } else {
+        map.setView([39.8283, -98.5795], 4);
+    }
+
+    // Update map markers & polygon
+    function updateMap() {
+        markers.forEach(m => map.removeLayer(m));
+        markers = [];
+        points.forEach((p, i) => {
+            const m = L.marker([p[1], p[0]]).addTo(map).bindTooltip(`P${i+1}`, { permanent: true, direction: 'top' });
+            markers.push(m);
+        });
+        if(polygonLayer) map.removeLayer(polygonLayer);
+        if(points.length >= 3) {
+            polygonLayer = L.polygon(points.map(p => [p[1], p[0]]), { color: '#b31225', fillOpacity: 0.35 }).addTo(map);
+        }
+    }
+
+    // Sort points counter-clockwise
+    function sortCounterClockwise(arr) {
+        const center = arr.reduce((acc, val) => [acc[0] + val[0]/arr.length, acc[1] + val[1]/arr.length], [0,0]);
+        return arr.slice().sort((a,b) => Math.atan2(a[1]-center[1], a[0]-center[0]) - Math.atan2(b[1]-center[1], b[0]-center[0]));
+    }
+
+    // // Map click to add points
+    // map.on('click', e => {
+    //     points.push([e.latlng.lng, e.latlng.lat]);
+    //     points = sortCounterClockwise(points);
+    //     updateMap();
+    // });
+
+    // document.getElementById('undoBtn').onclick = () => { points.pop(); updateMap(); };
+
+        // Map click to add points
+        // Keep a separate array for click order
+    let clickOrder = [];
+
+    map.on('click', e => {
+         const newPoint = [e.latlng.lng, e.latlng.lat];
+         clickOrder.push(newPoint);      // Track raw click order
+         points = sortCounterClockwise([...clickOrder]); // Only sort for shape, not logic
+         updateMap();
+    });
+
+    // Undo last clicked point
+    document.getElementById('undoBtn').onclick = () => {
+         if (clickOrder.length === 0) return;
+         clickOrder.pop();                          // Remove the actual last clicked point
+         points = sortCounterClockwise([...clickOrder]); // Rebuild shape
+         updateMap();
+    };
+    document.getElementById('resetBtn').onclick = () => { points=[]; updateMap(); finalized=false; };
+
+    function syncFormInputs() {
+        document.getElementById("coordinates").value = JSON.stringify(points);
+        document.getElementById("totalArea").value = plantAreaKm2;
+    }
+
+    // Finalize plant (calculate area)
+    document.getElementById('finalizeBtn').onclick = () => {
+        if(points.length < 3)
+            return Swal.fire("Error","At least 3 points required!","error");
+
+        points = sortCounterClockwise(points);
+        const poly = turf.polygon([[...points, points[0]]]);
+        const areaMeters = turf.area(poly);
+        plantAreaKm2 = areaMeters / 1_000_000;
+        finalized = true;
+
+        // Save all data to sessionStorage
+        plantData.Coordinates = JSON.stringify(points);
+        plantData.Total_area = plantAreaKm2;
+        sessionStorage.setItem("PlantData", JSON.stringify(plantData));
+
+        Swal.fire({
+            icon: 'info',
+            title: 'Plant Finalized',
+            text: `Area: ${plantAreaKm2.toFixed(4)} km²`,
+            showConfirmButton: false,
+            timer: 1200
+        }).then(() => {
+            location.reload();  // reload page to restore session data
+        });
+    };
+
+    // Save plant (false = stay, true = proceed to yard)
+    async function savePlant(redirectToYard=false) {
+        if(!finalized) return Swal.fire("Error", "Please finalize the layout before saving.", "error");
+
+        syncFormInputs();
+
+        const saveData = {
+            Plant_id: plantId,
+            Plant_name: plantName,
+            Plant_code: plantCode,
+            Enterprise_id: enterpriseId,
+            Enterprise_name: enterpriseName,
+            Status_id: statusId,
+            Status_name: statusName,
+            Plant_address: plantAddress,
+            Coordinates: JSON.stringify(points),
+            Total_area: plantAreaKm2
+        };
+
+        try {
+            const url = saveData.Plant_id > 0 ? '/PlantMaster/UpdatePlant' : '/PlantMaster/InsertPlant';
+            const response = await fetch(url, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'RequestVerificationToken': $('input[name="__RequestVerificationToken"]').val()
+                },
+                body: JSON.stringify(saveData)
+            });
+            const result = await response.json();
+            if(result.success){
+                Swal.fire("Success", "Plant saved successfully!", "success").then(() => {
+                    const plantIdToUse = saveData.Plant_id > 0 ? saveData.Plant_id : result.Plant_id;
+                    if(redirectToYard) {
+                        window.location.href = `/Yard/Index?plant_id=${plantIdToUse}`;
+                    } else {
+                        window.location.href = '/PlantMaster/Index';
+                    }
+                });
+            } else {
+                Swal.fire("Error", result.message || "Failed to save plant.", "error");
+            }
+        } catch(err) {
+            Swal.fire("Error", err.message, "error");
+        }
+    }
+
+    document.getElementById('saveBtn').onclick = () => savePlant(false);
+    // document.getElementById('proceedToYardBtn').onclick = () => savePlant(true);
+
+    // Manual coordinate inputs
+    const menuToggle = document.getElementById("menuToggle");
+    const coordPanel = document.getElementById("coordPanel");
+    const coordContainer = document.getElementById("coordContainer");
+    const addPointBtn = document.getElementById("addPointBtn");
+    const usePointsBtn = document.getElementById("usePointsBtn");
+
+    menuToggle.addEventListener("click", () => {
+        coordPanel.style.display = coordPanel.style.display === "none" ? "block" : "none";
+    });
+
+    addPointBtn.addEventListener("click", () => {
+        const row = document.createElement("div");
+        row.className = "coordRow d-flex gap-2 mb-2";
+        row.innerHTML = `
+            <input type="number" class="form-control form-control-sm latitude" placeholder="Latitude" step="0.000001" />
+            <input type="number" class="form-control form-control-sm longitude" placeholder="Longitude" step="0.000001" />
+        `;
+        coordContainer.appendChild(row);
+    });
+
+    usePointsBtn.addEventListener("click", () => {
+        const latInputs = document.querySelectorAll(".latitude");
+        const lngInputs = document.querySelectorAll(".longitude");
+        points = [];
+        latInputs.forEach((latInput, i) => {
+            const lngInput = lngInputs[i];
+            const lat = parseFloat(latInput.value);
+            const lng = parseFloat(lngInput.value);
+            if(!isNaN(lat) && !isNaN(lng)) points.push([lng, lat]);
+        });
+        points = sortCounterClockwise(points);
+        updateMap();
+        if(points.length > 0) map.fitBounds(points.map(p => [p[1], p[0]]));
+    });
+
+    updateMap();
+</script>

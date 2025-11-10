@@ -1,0 +1,448 @@
+﻿@model IEnumerable<YardManagementApplication.Models.PlantMasterModel>
+
+@{
+    ViewBag.Title = "Plant Master Configuration";
+    Layout = "_Layout";
+}
+
+<head>
+    <link href="~/css/site.css" rel="stylesheet" />
+    <link href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css" rel="stylesheet" />
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tabulator-tables@5.5.0/dist/css/tabulator_bootstrap5.min.css" />
+</head>
+
+<div class="container mt-3">
+    <div class="col-12 text-center py-1 mb-3" style="background: #242424; color: white;">
+        <h6 class="mb-0 fw-bold text-uppercase tracking-wide">Plant Master Configuration</h6>
+    </div>
+
+    <div class="row align-items-center mb-3">
+        <div class="w-100 d-md-none"></div>
+        <div class="col-12 col-md d-flex justify-content-md-end align-items-center gap-2 flex-wrap">
+            <input type="search" id="searchField" class="form-control form-control-sm" placeholder="Search..." style="max-width: 280px; min-width: 150px;" />
+            <div class="btn-group flex-wrap" role="group" style="flex-wrap: wrap;">
+                <button id="add-btn" type="button" class="btn btn-primary-professional btn-sm px-3" title="Add" data-bs-toggle="tooltip" data-bs-placement="top">
+                    <span class="material-icons" aria-hidden="true">add</span>
+                </button>
+                <button id="edit-btn" type="button" class="btn btn-primary-professional btn-sm px-3" title="Edit" data-bs-toggle="tooltip" data-bs-placement="top">
+                    <span class="material-icons" aria-hidden="true">edit</span>
+                </button>
+                <button id="delete-btn" type="button" class="btn btn-primary-professional btn-sm px-3" title="Delete" data-bs-toggle="tooltip" data-bs-placement="top">
+                    <span class="material-icons" aria-hidden="true">delete</span>
+                </button>
+                <button id="download-btn" type="button" class="btn btn-primary-professional btn-sm px-3" title="Download" data-bs-toggle="tooltip" data-bs-placement="top" aria-label="Download">
+                    <span class="material-icons" aria-hidden="true">download</span>
+                </button>
+                @* <button id="upload-btn" type="button" class="btn btn-primary-professional btn-sm px-3" title="Upload" data-bs-toggle="tooltip" data-bs-placement="top">
+                    <span class="material-icons" aria-hidden="true">upload</span>
+                </button>
+                <button id="download-template-btn" type="button" class="btn btn-primary-professional btn-sm px-3" title="Download Template" data-bs-toggle="tooltip" data-bs-placement="top">
+                    <span class="material-icons" aria-hidden="true">file_download</span>
+                </button> *@
+            </div>
+        </div>
+    </div>
+
+    <div id="plantTable" class="tabulator-bootstrap5"></div>
+
+    <!-- Yard Info + Table Section -->
+    <div id="yardSection" class="mt-5" style="display:none;">
+        <div class="p-3 border rounded bg-light mb-3">
+            <h6 class="fw-bold mb-0">
+                Selected Plant: <span id="selectedPlantInfo" class="text-primary"></span>
+            </h6>
+            <small class="text-muted">Total Yards: <span id="yardCount">0</span></small>
+        </div>
+        <div id="yardTable" class="tabulator-bootstrap5"></div>
+    </div>
+</div>
+
+<input type="file" id="upload-file" style="display:none" accept=".csv" />
+
+<!-- Modal for Add/Edit Plant -->
+<div class="modal fade" id="addEditModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content border-0 shadow-sm">
+            <div class="modal-header">
+                <h6 class="modal-title fw-bold" id="addEditModalLabel">Add/Edit Plant Master</h6>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="addEditForm">
+                <div class="modal-body">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label for="Enterprise_id" class="form-label">Enterprise Name</label>
+                            <span class="text-danger"><strong>*</strong></span>
+                            <select class="form-select" id="Enterprise_id" name="Enterprise_id" required
+                                    asp-items="@(ViewBag.EnterpriseNameList as IEnumerable<SelectListItem>)">
+                                <option value="" selected disabled>Select Enterprise Name</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Plant Code</label>
+                            <span class="text-danger"><strong>*</strong></span>
+                            <input type="text" id="Plant_code" class="form-control" required />
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Plant Name</label>
+                            <span class="text-danger"><strong>*</strong></span>
+                            <input type="text" id="Plant_name" class="form-control" required />
+                        </div>
+                        <div class="col-md-6">
+                            <label for="Status_id" class="form-label">Status</label>
+                            <span class="text-danger"><strong>*</strong></span>
+                            <select class="form-select" id="Status_id" name="StatusId" required
+                                    asp-items="@(ViewBag.PlantStatusList as IEnumerable<SelectListItem>)">
+                                <option value="" selected disabled>-- Select Status --</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6"><label class="form-label">Street</label><span class="text-danger"><strong>*</strong></span><input type="text" id="Street" class="form-control" required /></div>
+                        <div class="col-md-6"><label class="form-label">State</label><span class="text-danger"><strong>*</strong></span><input type="text" id="State" class="form-control" required /></div>
+                        <div class="col-md-6"><label class="form-label">Zip Code</label><span class="text-danger"><strong>*</strong></span><input type="text" id="Zipcode" class="form-control" required /></div>
+                        <div class="col-md-6"><label class="form-label">Country</label><span class="text-danger"><strong>*</strong></span><input type="text" id="Country" class="form-control" required /></div>
+                    </div>
+                </div>
+                <div class="modal-footer py-2">
+                    <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" id="modalSubmitBtn" class="btn btn-primary-professional btn-sm">Plot Plant</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- JS libraries -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://unpkg.com/tabulator-tables@5.5.0/dist/js/tabulator.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<script>
+    document.addEventListener("DOMContentLoaded", async () => {
+        // Tooltips
+        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+        tooltipTriggerList.map(function (tooltipTriggerEl) { return new bootstrap.Tooltip(tooltipTriggerEl); });
+
+        // Parse model data safely
+        let plants = [];
+        try { plants = JSON.parse('@Html.Raw(ViewData["PlantMasterData"] ?? "[]")'); }
+        catch (err) { console.error("Failed to parse PlantMasterData:", err); plants = []; }
+
+        let selectedRow = null;
+        const modal = new bootstrap.Modal(document.getElementById("addEditModal"));
+
+    //     // -----------------------------
+    //     // PLANT TABLE
+    //     // -----------------------------
+    //         // -----------------------------
+    // // PLANT TABLE
+    // // -----------------------------
+    // const table = new Tabulator("#plantTable", {
+    //     data: plants,
+    //     layout: "fitColumns",
+    //     placeholder: "No plant master records available",
+    //     selectable: 1,
+    //     pagination: "local",              // enable local pagination
+    //     paginationSize: 10,               // default rows per page
+    //     paginationSizeSelector: [10, 20, 50], // dropdown for page size
+    //     paginationButtonCount: 5,         // number of numeric buttons in footer
+    //     theme: "bootstrap5",
+    //     columns: [
+    //         { title: "Plant ID", field: "Plant_id", width: 120 },
+    //         { title: "Enterprise", field: "Enterprise_name" },
+    //         { title: "Plant Code", field: "Plant_code" },
+    //         { title: "Plant Name", field: "Plant_name" },
+    //         { title: "Address", field: "Plant_address" },
+    //         { title: "Coordinates", field: "Coordinates" },
+    //         { title: "Area", field: "Total_area", formatter: cell => cell.getValue() != null ? cell.getValue().toFixed(4) + " km²" : "" }
+    //     ],
+    //     rowSelectionChanged: function(data, rows) {
+    //         selectedRow = data.length > 0 ? data[0] : null;
+    //     }
+    // });
+
+
+                    // -----------------------------
+
+        // PLANT TABLE
+
+        // -----------------------------
+
+        const table = new Tabulator("#plantTable", {
+
+            data: plants,
+
+            layout: "fitColumns",
+
+            placeholder: "No plant master records available",
+
+            selectable: 1,
+
+            pagination: "local",              // enable local pagination
+
+            paginationSize: 10,               // default rows per page
+
+            paginationSizeSelector: [10, 20, 50], // dropdown for page size
+
+            paginationButtonCount: 5,         // number of numeric buttons in footer
+
+            theme: "bootstrap5",
+
+            columns: [
+
+                { title: "Plant ID", field: "Plant_id", width: 120 },
+
+                { title: "Enterprise", field: "Enterprise_name" },
+
+                { title: "Plant Code", field: "Plant_code" },
+
+                { title: "Plant Name", field: "Plant_name" },
+
+                { title: "Address", field: "Plant_address" },
+
+                { title: "Coordinates", field: "Coordinates" },
+
+                { title: "Area", field: "Total_area", formatter: cell => cell.getValue() != null ? cell.getValue().toFixed(4) + " km²" : "" }
+
+            ],
+
+            rowSelectionChanged: function(data, rows) {
+
+                selectedRow = data.length > 0 ? data[0] : null;
+
+            },
+
+            locale: true,
+
+    langs: {
+
+         "default": {
+
+             "pagination": {
+
+                 "first": "<<",
+
+                 "first_title": "First Page",
+
+                 "last": ">>",
+
+                 "last_title": "Last Page",
+
+                 "prev": "<",
+
+                 "prev_title": "Prev Page",
+
+                 "next": ">",
+
+                 "next_title": "Next Page",
+
+             }
+
+         }
+
+    }
+
+        });
+
+
+            table.on("rowSelected", async row => {
+            selectedRow = row.getData();
+            await loadYardsForPlant(selectedRow);
+        });
+        table.on("rowDeselected", () => {
+            selectedRow = null;
+            document.getElementById("yardSection").style.display = "none";
+        });
+
+        document.getElementById("searchField").addEventListener("keyup", e => {
+            table.setFilter("Plant_name", "like", e.target.value);
+        });
+
+        // -----------------------------
+        // LOAD YARDS
+        // -----------------------------
+        // async function loadYardsForPlant(plant) {
+        //     try {
+        //         const response = await fetch("/Yard/GetYardList");
+        //         const allYards = await response.json();
+        //        const plantYards = allYards.filter(y => Number(y.Plant_id) === Number(plant.Plant_id) && !y.Is_deleted);
+
+
+        //         document.getElementById("selectedPlantInfo").textContent = `${plant.Plant_id} - ${plant.Plant_name}`;
+        //         document.getElementById("yardCount").textContent = plantYards.length;
+        //         document.getElementById("yardSection").style.display = "block";
+
+        //         new Tabulator("#yardTable", {
+        //             data: plantYards,
+        //             layout: "fitColumns",
+        //             placeholder: "No yards available for this plant",
+        //             columns: [
+        //                 { title: "Yard ID", field: "Yard_id", width: 100 },
+        //                 { title: "Yard Code", field: "Yard_code" },
+        //                 { title: "Yard Name", field: "Yard_name" },
+        //                 { title: "Status", field: "Status_name" },
+        //                 { title: "Description", field: "Description" }
+        //             ]
+        //         });
+        //     } catch (error) { console.error("Error loading yards:", error); }
+        // }
+
+        // -----------------------------
+        // BUTTONS
+        // -----------------------------
+        document.getElementById("add-btn").addEventListener("click", () => {
+            document.getElementById("addEditForm").reset();
+            document.getElementById("modalSubmitBtn").textContent = "Plot Plant";
+            document.getElementById("addEditModalLabel").textContent = "Add Plant";
+            selectedRow = null;
+            modal.show();
+        });
+
+    document.getElementById("edit-btn").addEventListener("click", () => {
+        if (!selectedRow) return Swal.fire("Error", "Select a plant first!", "error");
+        console.log(selectedRow);
+        // Set Enterprise dropdown (disabled in edit mode)
+        const enterpriseSelect = document.getElementById("Enterprise_id");
+        enterpriseSelect.value = selectedRow.Enterprise_id || "";
+        enterpriseSelect.disabled = true; // Disable in edit mode
+
+        // Set Plant Code (disabled in edit mode)
+        const plantCodeInput = document.getElementById("Plant_code");
+        plantCodeInput.value = selectedRow.Plant_code || "";
+        plantCodeInput.disabled = true; // Disable in edit mode
+
+        // Set other fields (editable)
+        document.getElementById("Plant_name").value = selectedRow.Plant_name || "";
+        const statusSelect = document.getElementById("Status_id");
+        statusSelect.value = selectedRow.Status_id || "";
+        statusSelect.disabled = false; // Ensure status is editable
+
+        const addressParts = selectedRow.Plant_address ? selectedRow.Plant_address.split(',') : [];
+        document.getElementById("Street").value = (addressParts[0] || "").trim();
+        document.getElementById("State").value = (addressParts[1] || "").trim();
+        document.getElementById("Zipcode").value = (addressParts[2] || "").trim();
+        document.getElementById("Country").value = (addressParts[3] || "").trim();
+
+        // Update modal title and button
+        document.getElementById("modalSubmitBtn").textContent = "Edit Plant";
+        document.getElementById("addEditModalLabel").textContent = "Edit Plant";
+
+        modal.show();
+    });
+
+
+        document.getElementById("delete-btn").addEventListener("click", async () => {
+            if (!selectedRow) return Swal.fire("Error","Select a plant first!","error");
+
+            const result = await Swal.fire({
+                title: 'Delete Confirmation',
+                text: `Do you want to delete plant "${selectedRow.Plant_name}"?`,
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonText: 'Yes, Delete',
+                cancelButtonText: 'Cancel'
+            });
+
+            if (result.isConfirmed) {
+                try {
+                    await fetch('/PlantMaster/Delete', {
+                        method: 'DELETE',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ Plant_id: selectedRow.Plant_id })
+                    });
+                    Swal.fire("Deleted!", "Plant deleted successfully.", "success");
+                    location.reload();
+                } catch (err) { Swal.fire("Error", "Delete failed: " + err.message, "error"); }
+            }
+        });
+
+        document.getElementById("download-btn").addEventListener("click", () => table.download("csv", "PlantMasterList.csv"));
+
+        // document.getElementById("download-template-btn").addEventListener("click", () => {
+        //     const headers = table.getColumns().map(col => col.getDefinition().title);
+        //     const blob = new Blob([headers.join(",") + "\n"], { type: "text/csv;charset=utf-8;" });
+        //     const link = document.createElement("a");
+        //     link.href = URL.createObjectURL(blob);
+        //     link.download = "PlantMasterTemplate.csv";
+        //     document.body.appendChild(link);
+        //     link.click();
+        //     document.body.removeChild(link);
+        //     URL.revokeObjectURL(link.href);
+        // });
+
+        // document.getElementById("upload-btn").addEventListener("click", () => document.getElementById("upload-file").click());
+
+        // document.getElementById("upload-file").addEventListener("change", async (event) => {
+        //     const fileInput = event.target;
+        //     if (!fileInput.files.length) return alert("No file selected.");
+        //     let formData = new FormData();
+        //     formData.append("file", fileInput.files[0]);
+        //     try {
+        //         const response = await fetch("/PlantMaster/UploadYards", { method: "POST", body: formData });
+        //         if (response.ok) {
+        //             const data = await response.json();
+        //             if (data.success) {
+        //                 alert("Upload successful!");
+        //                 table.replaceData(data.yards || []);
+        //             } else alert(data.message || "Invalid rows. Check the file.");
+        //         } else alert("Upload failed. Please try again.");
+        //     } catch (error) { alert("Error uploading file: " + error.message); }
+        //     finally { fileInput.value = ""; }
+        // });
+
+        // -----------------------------
+        // FORM SUBMIT
+        // -----------------------------
+            // -----------------------------
+    // FORM SUBMIT USING SESSION STORAGE
+    // -----------------------------
+    document.getElementById("addEditForm").onsubmit = function(e){
+        e.preventDefault();
+
+        // Collect all field values
+        const Plant_name = document.getElementById("Plant_name").value || "";
+        const Plant_code = document.getElementById("Plant_code").value || "";
+
+        const enterpriseSelect = document.getElementById("Enterprise_id");
+        const Enterprise_id = enterpriseSelect.value || "";
+        const Enterprise_name = enterpriseSelect.selectedOptions[0]?.text || "";
+
+        const statusSelect = document.getElementById("Status_id");
+        const Status_id = statusSelect.value || "";
+        const Status_name = statusSelect.selectedOptions[0]?.text || "";
+
+        const Street = document.getElementById("Street").value || "";
+        const State = document.getElementById("State").value || "";
+        const Zipcode = document.getElementById("Zipcode").value || "";
+        const Country = document.getElementById("Country").value || "";
+
+        // Combine into Plant_address
+        const Plant_address = `${Street}, ${State}, ${Zipcode}, ${Country}`;
+
+        const Plant_id = selectedRow ? selectedRow.Plant_id : 0;
+        const Coordinates = selectedRow && selectedRow.Coordinates ? selectedRow.Coordinates : [];
+
+        // Create plant object
+        const plantData = {
+            Plant_id,
+            Plant_name,
+            Plant_code,
+            Enterprise_id,
+            Enterprise_name,
+            Status_id,
+            Status_name,
+            Plant_address,
+            Coordinates
+        };
+
+        // Save to sessionStorage
+        sessionStorage.setItem("PlantData", JSON.stringify(plantData));
+
+        // Navigate to Plot page
+        const mode = selectedRow ? "edit" : "add";
+        window.location.href = `/PlantMaster/Plot?mode=${mode}`;
+    };
+
+    });
+</script>

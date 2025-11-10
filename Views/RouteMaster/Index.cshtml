@@ -1,0 +1,683 @@
+﻿@{
+    var routeMasterData = ViewData["RouteMasterData"] ?? "[]";
+    Layout = "_Layout";
+}
+
+<head>
+    <!--  Keep head empty as per request (no changes to assets/includes) -->
+</head>
+
+<div class="container">
+
+
+
+    <!--  Page title header -->
+@*     <div id="pageTitle" class="col-12 text-center py-1 mb-3 page-title">
+        <h6 class="mb-0 fw-bold text-uppercase tracking-wide">Route Master Configuration</h6>
+    </div> *@
+    <div class="col-12 text-center py-1 mb-3" style="background: #242424; color: white;">
+        <h6 class="mb-0 fw-bold text-uppercase tracking-wide">Route Master</h6>
+    </div>
+    <!--  Toolbar row with search + action buttons -->
+    <div class="row align-items-center mb-3">
+
+        <!-- Spacer on xs devices -->
+        <div class="w-100 d-md-none"></div>
+
+        <!--  Right-aligned tools on md+ -->
+        <div class="col-12 col-md d-flex justify-content-md-end align-items-center gap-2 flex-wrap">
+
+            <!--  Global search input -->
+            <input type="search"
+                   id="searchField"
+                   class="form-control form-control-sm"
+                   placeholder="Search..."
+                   style="max-width: 280px; min-width: 150px;" />
+
+            <!--  Action buttons group (Add/Edit/Delete/Download/Upload/Template) -->
+            <div class="btn-group flex-wrap" role="group" aria-label="Icon button group" style="flex-wrap: wrap;">
+                <!--  Add row -->
+                <button id="add-btn" type="button" class="btn btn-primary-professional btn-sm px-3" title="Add" data-bs-toggle="tooltip" data-bs-placement="top" aria-label="Add">
+                    <span class="material-icons" aria-hidden="true">add</span>
+                </button>
+                <!--  Edit selected row -->
+                <button id="edit-btn" type="button" class="btn btn-primary-professional btn-sm px-3" title="Edit" data-bs-toggle="tooltip" data-bs-placement="top" aria-label="Edit">
+                    <span class="material-icons" aria-hidden="true">edit</span>
+                </button>
+                <!--  Delete selected row -->
+                <button id="delete-btn" type="button" class="btn btn-primary-professional btn-sm px-3" title="Delete" data-bs-toggle="tooltip" data-bs-placement="top" aria-label="Delete">
+                    <span class="material-icons" aria-hidden="true">delete</span>
+                </button>
+                <!--  Download CSV -->
+                <button id="download-btn" type="button" class="btn btn-primary-professional btn-sm px-3" title="Download" data-bs-toggle="tooltip" data-bs-placement="top" aria-label="Download">
+                    <span class="material-icons" aria-hidden="true">download</span>
+                </button>
+                <!--  Upload CSV -->
+                <button id="upload-btn" type="button" class="btn btn-primary-professional btn-sm px-3" title="Upload" data-bs-toggle="tooltip" data-bs-placement="top" aria-label="Upload">
+                    <span class="material-icons" aria-hidden="true">upload</span>
+                </button>
+                <!--  Download CSV template -->
+                <button id="download-template-btn" type="button" class="btn btn-primary-professional btn-sm px-3" title="Download Template" data-bs-toggle="tooltip" data-bs-placement="top" aria-label="Download Template">
+                    <span class="material-icons" aria-hidden="true">assignment_returned</span>
+                </button>
+            </div>
+        </div>
+
+
+    </div>
+
+    <!--  Hidden file input for CSV upload -->
+    <!-- Anti-forgery token source (hidden) -->
+    <form id="afForm" style="display:none" method="post">
+        @Html.AntiForgeryToken()
+        <input type="file" id="upload-file" style="display:none" accept=".csv,text/csv" />
+    </form>
+
+    <!------- Data grid + record count ------->
+    
+    <div id="RoutemasterTable" class="tabulator-bootstrap5"></div>
+    <div id="recordCount" class="text-end mt-2 fw-semibold text-secondary"></div>
+</div>
+
+
+<!-- Add/Edit Modal -->
+<div class="modal fade" id="addEditModal" tabindex="-1" aria-labelledby="addEditModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h6 class="modal-title" id="addEditModalLabel">Add/Edit EOL Production</h6>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close" style="filter: invert(1);"></button>
+            </div>
+            <div class="modal-body">
+                <form id="addEditForm">
+                    <input type="hidden" id="Route_id" name="Route_id" />
+                    <div class="row g-3">
+                        <!--  Source select + hidden name sync -->
+                        <div class="col-md-4">
+                            <label for="Source_process_area_id" class="form-label">Source Process Area  <span class="text-danger"><strong>*</strong></span></label>
+                            <select class="form-select" id="Source_process_area_id" name="Source_process_area_id"
+                                    asp-items="@(ViewBag.SourceList as IEnumerable<SelectListItem>)" required>
+                                <option value="" selected disabled>Select Source</option>
+                            </select>
+                        </div>
+                  
+
+                        <div class="col-md-3">
+                            <label for="Destination_process_area_id" class="form-label">Destination Process Area  <span class="text-danger"><strong>*</strong></span></label>
+                            <select class="form-select" id="Destination_process_area_id" name="Destination_process_area_id" required>
+                                <option value="" selected disabled>Select Destination</option>
+                            </select>
+                        </div>
+
+                        <div class="col-md-4">
+                            <!-- SLA Time (minute) -->
+                            <label for="Sla_minutes_cnt" class="form-label">SLA Time (minute)  <span class="text-danger"><strong>*</strong></span></label>
+                            <input type="number"
+                                   class="form-control"
+                                   id="Sla_minutes_cnt"
+                                   name="Sla_minutes_cnt"
+                                   required
+                                   min="1"
+                                   pattern="[0-9]+"
+                                   title="Only numbers greater than 0 are allowed. No spaces or special characters.">
+                        </div>
+
+                        @* <div class="col-md-4">
+                            <!-- SLA Time(minute) -->
+                            <label for="Sla_minutes_cnt" class="form-label">SLA Time(minute)</label>
+                            <input type="number" class="form-control" id="Sla_minutes_cnt" name="Sla_minutes_cnt" required
+                                   pattern="[0-9]+"
+                                   title="Only numbers are allowed. No spaces or special characters.">
+                        </div> *@
+                        <!--  Status select + hidden name sync -->
+                        <div class="col-md-4">
+                            <label for="Status_id" class="form-label">Status  <span class="text-danger"><strong>*</strong></span></label>
+                            <select class="form-select" id="Status_id" name="Status_id"
+                                    asp-items="@(ViewBag.StatusList as IEnumerable<SelectListItem>)" required>
+                                <option value="" selected disabled>Select Status</option>
+                            </select>
+                        </div>
+
+                    </div>
+                </form>
+            </div>
+            <!--  Modal footer with actions -->
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary-professional" data-bs-dismiss="modal">Cancel</button>
+                <button type="submit" class="btn btn-primary-professional" id="modalSubmitBtn" form="addEditForm">Add</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<script>
+
+         // ===== Helper functions =====
+    function showError(inputId, message) {
+        const inputField = document.getElementById(inputId);
+        inputField.classList.add("input-error");
+
+        const existingErrorDiv = inputField.parentElement.querySelector(".error-message");
+        if (existingErrorDiv) existingErrorDiv.remove();
+
+        const errorDiv = document.createElement("div");
+        errorDiv.classList.add("error-message");
+        errorDiv.innerText = message;
+        inputField.parentElement.appendChild(errorDiv);
+    }
+
+    function removeError(inputId) {
+        const inputField = document.getElementById(inputId);
+        inputField.classList.remove("input-error");
+
+        const existingErrorDiv = inputField.parentElement.querySelector(".error-message");
+        if (existingErrorDiv) existingErrorDiv.remove();
+    }
+
+    // ===== Validation functions =====
+
+    // Dropdown validation
+    function validateSelect(fieldId, fieldLabel) {
+        const value = document.getElementById(fieldId).value;
+        if (!value) {
+            showError(fieldId, `Please select ${fieldLabel}`);
+            return false;
+        } else {
+            removeError(fieldId);
+            return true;
+        }
+    }
+
+    // SLA minutes validation (required + positive number)
+    function validateSlaMinutes() {
+        const slaInput = document.getElementById("Sla_minutes_cnt");
+        const slaValue = slaInput.value.trim();
+        if (!slaValue) {
+            showError("Sla_minutes_cnt", "SLA Time is required");
+            return false;
+        } else if (isNaN(slaValue) || Number(slaValue) <= 0) {
+            showError("Sla_minutes_cnt", "Enter a valid positive number");
+            return false;
+        } else {
+            removeError("Sla_minutes_cnt");
+            return true;
+        }
+    }
+
+    // ===== Form submission validation =====
+    document.getElementById("addEditForm").addEventListener("submit", function (e) {
+        e.preventDefault(); // prevent default submit
+
+        let valid = true;
+
+        valid &= validateSelect("Source_process_area_id", "Source Process Area");
+        valid &= validateSelect("Destination_process_area_id", "Destination Process Area");
+        valid &= validateSlaMinutes();
+        valid &= validateSelect("Status_id", "Status");
+
+        if (valid) {
+           // this.submit(); // submit form if all valid
+        } else {
+            console.log("Validation failed");
+        }
+    });
+
+    document.addEventListener("DOMContentLoaded", () => {
+        // ==========================
+        // 🔹 Initialize reusable components
+        // ==========================
+        initTooltips(); // Bootstrap tooltips
+
+
+        const routeMasterData = JSON.parse('@Html.Raw(routeMasterData)');
+        let selectedRow = null;
+        let currentMode = "";
+
+
+
+
+        // ==========================
+        // 🔹 Initialize Tabulator
+        // ==========================
+        const dataTable = initializeTabulator("#RoutemasterTable", routeMasterData, generateTabulatorColumns(routeMasterData),
+            (data) => selectedRow = data[0] || null
+        );
+
+        // Command: Live search (visible columns only) for parent table
+        document.getElementById("searchField").addEventListener("input", function () {
+            var searchTerm = this.value.toLowerCase();
+
+            // Command: Collect visible fields
+            var visibleColumns = dataTable.getColumns()
+                                      .filter(col => col.isVisible())
+                                      .map(col => col.getField());
+
+            // Command: Apply per-row predicate filter
+            dataTable.setFilter(function (data) {
+                return visibleColumns.some(field => {
+                    var value = data[field];
+                    return value != null && value.toString().toLowerCase().includes(searchTerm);
+                });
+            });
+        });
+   
+          // Record count for filtered data
+     dataTable.on("dataFiltered", function(filters, rows) {
+           updateRecordCount(dataTable, rows, "Route_id");  // Pass the field name >>replace with your table primary id column
+     });
+
+     // Record count for loaded data
+     dataTable.on("dataLoaded", function(data) {
+           updateRecordCount(dataTable, data, "Route_id");  // Pass the field name >>replace with your table primary id column
+     });
+
+
+
+                   dataTable.on("tableBuilt", function() {
+            // List of columns to hide
+            const hideFields = [
+                  "Shift_id",
+                   "Source_process_area_id",
+                   "Destination_process_area_id",
+                   "Route_id",
+                   "Status_name",
+                  "Status_id",
+                  "Is_deleted",
+                  "Created_at",
+                  "Updated_by",
+                  "Updated_at",
+                  "Version",
+                  "AdditionalProperties"
+            ];
+
+            // Define new column names for renaming
+            const columnRenameMap = {
+                "Sla_minutes_cnt": "SLA Minutes Count"
+  
+            };
+
+            // Hide columns
+            hideFields.forEach(field => {
+                dataTable.hideColumn(field);  // Tabulator's method to hide columns
+            });
+
+            // Rename specified columns based on the columnRenameMap
+            Object.keys(columnRenameMap).forEach(field => {
+                const column = dataTable.getColumn(field);  // Tabulator's method to get column by field name
+
+                if (column) {
+                    column.updateDefinition({
+                        title: columnRenameMap[field]  // Update the column title (header)
+                    });
+                } else {
+                    console.log(`Column '${field}' not found.`);
+                }
+            });
+        });
+
+
+
+
+
+
+        const addEditModalEl = document.getElementById('addEditModal');
+        const addEditModal = new bootstrap.Modal(addEditModalEl);
+        const form = document.getElementById("addEditForm");
+
+        // ==========================
+        // 🔹 Add Button
+        // ==========================
+        document.getElementById("add-btn").addEventListener("click", () => {
+            currentMode = "Add";
+            form.reset();
+            document.getElementById("addEditModalLabel").textContent = "Add Route Master";
+            document.getElementById("modalSubmitBtn").textContent = "Add";
+            document.getElementById("Route_id").value=0;
+            addEditModal.show();
+        });
+
+        // // ==========================
+        // // 🔹 Edit Button
+        // // ==========================
+        // document.getElementById("edit-btn").addEventListener("click", () => {
+        //   const selectedRow = dataTable.getSelectedData()?.[0];
+        //     if (!selectedRow) {
+        //         return showAppAlert({ icon: 'warning', title: 'No Selection', text: 'Please select a row to edit.' });
+        //     }
+
+        //     currentMode = "Edit";
+        //     document.getElementById("addEditModalLabel").textContent = "Route Master Configuration";
+        //     document.getElementById("modalSubmitBtn").textContent = "Update";
+
+        //     // Populate modal form fields dynamically
+        //     Object.keys(selectedRow).forEach(field => {
+        //         const RouteMasterField = document.getElementById(field);
+        //         if (RouteMasterField) {
+        //             if (RouteMasterField.type === "datetime-local" && selectedRow[field]) {
+        //                 RouteMasterField.value = new Date(selectedRow[field]).toISOString().slice(0,16);
+        //             } else {
+        //                 RouteMasterField.value = selectedRow[field] ?? "";
+        //             }
+        //         }
+        //     });
+
+        //     addEditModal.show();
+        // });
+
+
+        document.getElementById("edit-btn").addEventListener("click", () => {
+        const selectedRow = dataTable.getSelectedData()?.[0];
+        if (!selectedRow) {
+            return showAppAlert({
+                icon: "warning",
+                title: "No Selection",
+                text: "Please select a row to edit."
+            });
+        }
+
+        currentMode = "Edit";
+        document.getElementById("addEditModalLabel").textContent = "Edit Route Master";
+        document.getElementById("modalSubmitBtn").textContent = "Update";
+
+        // Fill simple fields directly
+        Object.keys(selectedRow).forEach(field => {
+            const el = document.getElementById(field);
+            if (el) {
+                if (el.type === "datetime-local" && selectedRow[field]) {
+                    el.value = new Date(selectedRow[field]).toISOString().slice(0, 16);
+                } else {
+                    el.value = selectedRow[field] ?? "";
+                }
+            }
+        });
+
+        // ✅ Handle dependent dropdown: Route Type
+        const source = selectedRow.Source_process_area_id;
+
+        if (source) {
+            fetch(`/RouteMaster/GetDestination?source=${source}`)
+                .then(res => {
+                    if (!res.ok) throw new Error("Error loading Route");
+                    return res.json();
+                })
+                .then(data => {
+                    // Populate and preselect based on selectedRow.Route_type_id or name
+                    populateDropdown(
+                        "Destination_process_area_id",
+                        data.variantList,
+                        "Select destination ",
+                        selectedRow.Destination_process_area_id || selectedRow.Destination_process_area_name
+                    );
+                })
+                .catch(err => console.error("Error fetching Destination:", err));
+        }
+
+        addEditModal.show();
+    });
+
+
+    /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+        document.getElementById('Source_process_area_id').addEventListener('change', function () {
+            const source = this.value;
+            console.log("Selected source", Source_process_area_id);
+            console.log("Selected source", source);
+
+            fetch(`/RouteMaster/GetDestination?source=${source}`)
+                .then(res => {
+                    if (!res.ok) throw new Error("Network error while loading Route");
+                    return res.json();
+                })
+                .then(data => {
+                    console.log("source:", data);
+                    populateDropdown('Destination_process_area_id', data.variantList, 'Select Destination');
+                })
+                .catch(err => console.error("Error fetching Destination:", err));
+        });
+
+        function populateDropdown(dropdownId, items, defaultText, selectedValue = null) {
+        const dropdown = document.getElementById(dropdownId);
+        dropdown.innerHTML = ''; // clear existing options
+
+        const defaultOption = document.createElement('option');
+        defaultOption.text = defaultText;
+        defaultOption.value = '';
+        defaultOption.disabled = true;
+        dropdown.appendChild(defaultOption);
+
+        // Add dropdown options from API
+        if (items && items.length > 0) {
+            items.forEach(item => {
+                const option = document.createElement('option');
+                option.value = item.id;   // Adjust according to your API structure
+                option.text = item.name;  // Adjust according to your API structure
+                dropdown.appendChild(option);
+            });
+        } else {
+            const option = document.createElement('option');
+            option.text = 'No Destination found';
+            option.disabled = true;
+            dropdown.appendChild(option);
+        }
+
+        // ✅ Only preselect value in Edit mode
+        if (typeof currentMode !== "undefined" && currentMode === "Edit") {
+            if (selectedValue) {
+                // Try to select by ID first
+                dropdown.value = selectedValue;
+
+                // If ID doesn't match, fallback to matching text (name)
+                if (!dropdown.value) {
+                    const match = Array.from(dropdown.options).find(opt =>
+                        opt.text.trim().toLowerCase() === String(selectedValue).trim().toLowerCase()
+                    );
+                    if (match) match.selected = true;
+                }
+            } else {
+                defaultOption.selected = true;
+            }
+        } else {
+            defaultOption.selected = true;
+        }
+    }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        // ==========================
+        // 🔹 Delete Button
+        // ==========================
+
+        document.getElementById("delete-btn").addEventListener("click", async () => {
+            const selectedRow = dataTable.getSelectedData()?.[0];
+            if (!selectedRow) {
+                return showAppAlert({ icon: "warning", title: "No Selection", text: "Please select a row to delete." });
+            }
+
+            const Routeid = selectedRow.Route_id;
+
+            const confirm = await showAppAlert({
+                type: "confirm",
+                icon: "question",
+                title: "Delete Confirmation",
+                text: "Are you sure you want to delete this record?"
+            });
+
+            if (!confirm.isConfirmed) return;
+
+            const success = await deleteRecord("/RouteMaster/Delete", { Route_id: Routeid }); // method defaults to PUT
+            if (success) {
+                // redirect or refresh your table
+                setTimeout(() => { window.location.href = "/RouteMaster/Index"; }, 900);
+                // or: dataTable.replaceData();
+            }
+        });
+
+        // ==========================
+        // 🔹 Form Submit (Add/Edit)
+        // ==========================
+    
+             form.addEventListener("submit", async (e) => {
+            e.preventDefault();
+            const formData = Object.fromEntries(new FormData(form).entries());
+            console.log(formData);
+
+            const fetchUrl = currentMode === "Add" ? "/RouteMaster/Create" : "/RouteMaster/Update";
+
+            const success = await saveRecord(fetchUrl, formData, currentMode, addEditModal, form);
+            if (success) {
+                setTimeout(() => {
+                    window.location.href = "/RouteMaster/Index";
+                }, 900);
+            }
+        });
+        // // ==========================
+        // // 🔹 Download Template
+        // // ==========================
+        // document.getElementById("download-btn").addEventListener("click", function () {
+        //     downloadCsv(dataTable, "RouteMaster.csv");
+        // });
+      document.getElementById("download-btn").addEventListener("click", function () {
+
+       let rowCount = dataTable.getDataCount ? dataTable.getDataCount() : dataTable.getData().length;
+
+     if (rowCount === 1) {
+         let firstRowData = dataTable.getData()[0];
+         let firstRowFieldValue = firstRowData ? firstRowData["Route_id"] : null;
+         if (firstRowFieldValue === null || firstRowFieldValue === 0 || firstRowFieldValue === "") {
+             rowCount = 0;
+         }
+     }
+     if (rowCount === 0) {
+         showAppAlert({
+             icon: 'warning',
+             title: 'No Data',
+             text: 'No records found to download.'
+         });
+         return; // Stop further execution
+     }
+
+        downloadCsv(dataTable, "RouteMaster.csv");
+    });
+        // // ==========================
+        // // 🔹 Download Template
+        // // ==========================
+        // document.getElementById("download-template-btn").addEventListener("click", () =>
+        //     downloadCsvTemplate(dataTable, "RouteMasterTemplate")
+        // );
+
+        // ==========================
+        // 🔹 Upload Excel
+        // ==========================
+       //////////// // Helper: get anti-forgery token value from hidden form
+    //   function getRequestVerificationToken() {
+    //     const tokenInput = document.querySelector('#afForm input[name="__RequestVerificationToken"]');
+    //     return tokenInput ? tokenInput.value : null;
+    //   }
+
+    //   // Click -> open chooser
+    //   document.getElementById("upload-btn").addEventListener("click", () => {
+    //     document.getElementById("upload-file").click();
+    //   });
+
+    //       // Event listener to handle file selection
+    // document.getElementById("upload-file").addEventListener("change", function (event) {
+    //     const fileInput = event.target;
+    //     if (!fileInput.files || fileInput.files.length === 0) {
+    //         return showAppAlert({ icon: 'warning', title: 'No File', text: 'Please select a file to upload.' });
+    //     }
+    //     const file = fileInput.files[0];
+
+    //     // Client-side CSV guards
+    //     const extOk = /\.csv$/i.test(file.name);
+    //     const type = (file.type || '').toLowerCase();
+    //     const typeOk = type.includes('csv') || type === 'application/vnd.ms-excel'; // some browsers
+    //     if (!extOk && !typeOk) {
+    //         showAppAlert({ icon: 'warning', title: 'Invalid File', text: 'Please select a .csv file.' });
+    //         fileInput.value = ''; // Clear the file input
+    //         return;
+    //     }
+
+    //     // Proceed with uploading the file
+    //     const url = '/RouteMaster/Upload';  // Ensure this matches the controller route
+    //     uploadFile(url, file);
+    // });
+
+    // // Call this function after submitting the form
+    // async function uploadFile(url, file) {
+    //     const formData = new FormData();
+    //     formData.append("file", file);
+
+    //     // Get the CSRF token from the page
+    //     const csrfToken = document.querySelector('input[name="__RequestVerificationToken"]').value;
+
+    //     try {
+    //         const response = await fetch(url, {
+    //             method: 'POST',
+    //             headers: {
+    //                 'RequestVerificationToken': csrfToken // Add CSRF token in the header
+    //             },
+    //             body: formData  // Attach the file to FormData
+    //         });
+
+    //        await handleUploadResponse(response);  // Handle response
+
+    //        console.log(response);
+
+    //     } catch (error) {
+    //         showAppAlert('An error occurred while uploading the file.');
+    //     }
+    // }
+
+    //    async function handleUploadResponse(response) {
+    //     if (response.ok) {
+    //         const result = await response.json();
+    //         showAppAlert({ icon: 'success', title: result.title, text: result.message });
+
+    //         // If invalid records exist, trigger the download of the CSV file
+    //         if (result.invalidRecords) {
+    //             const invalidRecordsFileData = result.invalidRecords;
+    //             downloadInvalidRecords(invalidRecordsFileData); // Trigger the download
+    //         }
+    //     } else {
+    //         const error = await response.json();
+    //         showAppAlert({ icon: 'error', title: error.title, text: error.message });
+    //     }
+    // }
+
+    // function downloadInvalidRecords(fileData) {
+    //     // Decode the base64 CSV data and create a Blob
+    //     const csvData = atob(fileData); // Decode base64 string to CSV
+    //     const blob = new Blob([csvData], { type: 'text/csv' });  // Create a Blob of CSV data
+    //     const link = document.createElement('a');
+    //     link.href = URL.createObjectURL(blob);  // Create a URL for the Blob
+    //     link.download = 'invalid_records.csv';  // Set the file name
+    //     link.click();  // Trigger the download
+    // }
+
+    });
+</script>

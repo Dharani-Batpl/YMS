@@ -1,0 +1,120 @@
+@model YardManagementApplication.Models.QualityOprnModel
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <h6 class="text-muted mb-3">Order: <strong>@Model.SelectedOrderNo</strong></h6>
+            
+            <!-- VIN Input Section -->
+            <div class="vin-input-section">
+                <label for="vinInput" class="form-label">Scan or Enter VIN</label>
+                <input type="text" id="vinInput" class="form-control vin-input" 
+                       placeholder="Enter VIN number..." maxlength="17" 
+                       style="text-transform: uppercase;">
+                <div class="form-text">Enter the 17-character VIN number</div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="action-buttons">
+                <button type="button" class="btn-pass" onclick="processInspection(true)">
+                    <i class="bi bi-check-circle me-2"></i>PASS
+                </button>
+                <button type="button" class="btn-fail" onclick="processInspection(false)">
+                    <i class="bi bi-x-circle me-2"></i>FAIL
+                </button>
+            </div>
+
+            <!-- VIN List (if needed) -->
+            @if (Model.VehicleMovements.Any())
+            {
+                <div class="mt-4">
+                    <h6>VINs in this Order:</h6>
+                    <div class="table-responsive">
+                        <table class="table table-sm">
+                            <thead>
+                                <tr>
+                                    <th>VIN</th>
+                                    <th>Status</th>
+                                    <th>Quality</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var vehicle in Model.VehicleMovements)
+                                {
+                                    <tr>
+                                        <td>@vehicle.vin_serial_no</td>
+                                        <td>
+                                            @if (vehicle.quality_status == 1)
+                                            {
+                                                <span class="badge badge-success">OK</span>
+                                            }
+                                            else if (vehicle.quality_status == 0)
+                                            {
+                                                <span class="badge badge-danger">NOK</span>
+                                            }
+                                            else
+                                            {
+                                                <span class="badge badge-light">Pending</span>
+                                            }
+                                        </td>
+                                        <td>
+                                            @if (vehicle.quality_status == 1)
+                                            {
+                                                <i class="bi bi-check-circle-fill text-success"></i>
+                                            }
+                                            else if (vehicle.quality_status == 0)
+                                            {
+                                                <i class="bi bi-x-circle-fill text-danger"></i>
+                                            }
+                                            else
+                                            {
+                                                <i class="bi bi-clock text-muted"></i>
+                                            }
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+<script>
+    // Auto-format VIN input
+    document.getElementById('vinInput').addEventListener('input', function(e) {
+        e.target.value = e.target.value.toUpperCase();
+    });
+
+    // Process inspection
+    function processInspection(isPass) {
+        const vinNumber = document.getElementById('vinInput').value.trim();
+        
+        if (!vinNumber) {
+            alert('Please enter a VIN number');
+            return;
+        }
+
+        if (vinNumber.length !== 17) {
+            alert('VIN number must be exactly 17 characters');
+            return;
+        }
+
+        const orderNo = '@Model.SelectedOrderNo';
+        
+        // Call the controller method
+        processVinInspection(vinNumber, orderNo, isPass);
+        
+        // Clear the input
+        document.getElementById('vinInput').value = '';
+    }
+
+    // Focus on VIN input when modal opens
+    document.addEventListener('shown.bs.modal', function (e) {
+        if (e.target.id === 'inspectModal') {
+            document.getElementById('vinInput').focus();
+        }
+    });
+</script>

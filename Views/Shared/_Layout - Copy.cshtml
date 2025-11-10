@@ -1,0 +1,311 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>YMS</title>
+    <link href="~/lib/bootstrap/dist/css/bootstrap.min.css" rel="stylesheet" type="text/css" />
+    <link href="~/lib/icons/css/material-icons.css" rel="stylesheet" />
+    <link href="~/lib/tabulator/css/tabulator.min.css" rel="stylesheet" type="text/css" />
+    @* <link href="~/lib/tabulator/css/tabulator_bootstrap5.css" rel="stylesheet" type="text/css" /> *@
+    <link href="~/lib/tabulator/css/tabulator_bootstrap5.min.css" rel="stylesheet" />
+    <link href="~/lib/sweetalert2/sweetalert2.min.css" rel="stylesheet" />
+    <link href="~/lib/toastr/toastr.css" rel="stylesheet" />
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/jquery-validation/dist/jquery.validate.min.js"></script>
+    <script src="~/lib/jquery-validation-unobtrusive/dist/jquery.validate.unobtrusive.min.js"></script>
+    <script src="~/lib/tabulator/js/tabulator.min.js"></script>
+    <script src="~/lib/chartjs/chart.umd.min.js"></script>
+    <script src="~/lib/toastr/toastr.min.js"></script>
+    <script src="~/lib/sweetalert2/sweetalert2.all.min.js"></script>
+    @* <script src="~/lib/tabulator/js/tabulator.js"></script> *@
+    <!-- Base CSS -->
+    <link href="~/css/site.css" rel="stylesheet" />
+
+    <style>
+        /* Push the content to the right by sidebar width */
+        .content {
+            margin-left: 260px; /* equal to sidebar width */
+            flex: 1 1 auto;
+            min-width: 0;
+            transition: margin-left 0.25s ease;
+        }
+
+        /* When sidebar is collapsed */
+        .sidebar.collapsed ~ .content {
+            margin-left: 70px; /* equal to collapsed sidebar width */
+        }
+
+    </style>
+</head>
+<body>
+    <div class="d-flex" style="height:100vh;">
+        <div class="sidebar-container">
+            <!-- Sidebar -->
+            <nav class="sidebar collapsed" id="sidebar">
+                <!-- Sidebar Header -->
+                <div class="sidebar-header">
+                    <div class="brand-container">
+                        <div class="brand-logo">
+                            <img src="~/images/Rockwell_SubLogo.webp" alt="Logo" class="logo" />
+                        </div>
+                        <div class="brand-name">YMS</div>
+                    </div>
+                </div>
+
+                <!-- Sidebar Menu -->
+                <div class="">
+                    <div class="menu-item">
+                        <a href="/Dashboard/Index" class="menu-link">
+                            <span class="material-icons menu-icon">dashboard</span>
+                            <span class="menu-text">Dashboard</span>
+                        </a>
+                    </div>
+                    <div class="menu-item">
+                        <a href="#" class="menu-link" id="UserMenu">
+                            <span class="material-icons menu-icon">manage_accounts</span>
+                            <span class="menu-text">User Management</span>
+                            <span class="material-icons arrow-icon">expand_more</span>
+                        </a>
+                        <div class="submenu">
+                            <a href="/UserConfiguration/Index" class="submenu-link">
+                                <span class="material-icons">person_outline</span>User Configuration
+                            </a>
+                            <a href="/UserGroupConfiguration/Index" class="submenu-link">
+                                <span class="material-icons">desktop_windows</span>User Group Configuration
+                            </a>
+
+                        </div>
+                    </div>
+
+                    <div class="menu-item">
+                        <a href="#" class="menu-link" id="PlantMenu">
+                            <span class="material-icons menu-icon">factory</span>
+                            <span class="menu-text">Plant Modelling</span>
+                            <span class="material-icons arrow-icon">expand_more</span>
+                        </a>
+                        <div class="submenu">
+                            <a href="/EnterpriseMaster/Index" class="submenu-link">
+                                <span class="material-icons">business</span>Enterprise
+                            </a>
+                            <a href="/Site/Index" class="submenu-link">
+                                <span class="material-icons">corporate_fare</span>Plant
+                            </a>
+                            <a href="/EnterpriseMaster/Index" class="submenu-link">
+                                <span class="material-icons">map</span>Yard &rarr; Lane &rarr; Slot
+                            </a>
+
+                            <a href="/RouteMaster/Index" class="submenu-link">
+                                <span class="material-icons">alt_route</span>Route
+                            </a>
+                        </div>
+                    </div>
+
+                    <div class="menu-item">
+                        <a href="#" class="menu-link" id="ShiftMenu">
+                            <span class="material-icons menu-icon">schedule</span>
+                            <span class="menu-text">Shift Configuration</span>
+                            <span class="material-icons arrow-icon">expand_more</span>
+                        </a>
+                        <div class="submenu">
+                            <a href="/ShiftMaster/Index" class="submenu-link">
+                                <span class="material-icons">access_time</span>Shift Configuration
+                            </a>
+                            <a href="/BreakMaster/Index" class="submenu-link">
+                                <span class="material-icons">free_breakfast</span>Break Configuration
+                            </a>
+                            <a href="/BreakMaster/Index" class="submenu-link">
+                                <span class="material-icons">assignment</span>Template Configuration
+                            </a>
+                            <a href="/BreakMaster/Index" class="submenu-link">
+                                <span class="material-icons">calendar_month</span>Shift Calendar
+                            </a>
+                            <a href="/HolidayMaster/Index" class="submenu-link">
+                                <span class="material-icons">event</span>Holiday Master
+                            </a>
+                        </div>
+                    </div>
+
+                    <div class="menu-item">
+                        <a href="#" class="menu-link" id="EmployeeMenu">
+                            <span class="material-icons menu-icon">groups</span>
+                            <span class="menu-text">Associate Management</span>
+                            <span class="material-icons arrow-icon">expand_more</span>
+                        </a>
+                        <div class="submenu">
+                            <a href="/EmployeeConfiguration/Index" class="submenu-link">
+                                <span class="material-icons">badge</span>Employee Configuration
+                            </a>
+                        </div>
+                    </div>
+
+                    <div class="menu-item">
+                        <a href="#" class="menu-link" id="VehicleMenu">
+                            <span class="material-icons menu-icon">directions_car</span>
+                            <span class="menu-text">Vehicle Variant</span>
+                            <span class="material-icons arrow-icon">expand_more</span>
+                        </a>
+                        <div class="submenu">
+                            <a href="/BrandMaster/Index" class="submenu-link">
+                                <span class="material-icons">branding_watermark</span>Brand Master
+                            </a>
+                            <a href="/VehicleTypeMaster/Index" class="submenu-link">
+                                <span class="material-icons">airport_shuttle</span>Vehicle Type Master
+                            </a>
+                            <a href="/VehicleModel/Index" class="submenu-link">
+                                <span class="material-icons">view_in_ar</span>Model Master
+                            </a>
+                        </div>
+                    </div>
+
+                    <div class="menu-item">
+                        <a href="#" class="menu-link" id="DataMenu">
+                            <span class="material-icons menu-icon">dataset</span>
+                            <span class="menu-text">Data Collection</span>
+                            <span class="material-icons arrow-icon">expand_more</span>
+                        </a>
+                        <div class="submenu">
+                            <a href="/EolMaster/Index" class="submenu-link">
+                                <span class="material-icons">fact_check</span>EOL Data
+                            </a>
+                            <a href="/Rework/Index" class="submenu-link">
+                                <span class="material-icons">build_circle</span>Rework Data
+                            </a>
+                            <a href="/DeliveryOrder/Index" class="submenu-link">
+                                <span class="material-icons">sell</span>Delivery Order
+                            </a>
+
+                            <a href="/ReasonMaster/Index" class="submenu-link">
+                                <span class="material-icons">psychology</span>Reason Master
+                            </a>
+
+                        </div>
+                    </div>
+
+                    <div class="menu-item">
+                        <a href="#" class="menu-link" id="DataMenu">
+                            <span class="material-icons menu-icon">dataset</span>
+                            <span class="menu-text">Pdi</span>
+                            <span class="material-icons arrow-icon">expand_more</span>
+                        </a>
+
+                        <div class="submenu">
+                            <a href="/Pdi/Index" class="submenu-link">
+                                <span class="material-icons">fact_check</span>Pdi Assign
+                            </a>
+
+                            <a href="/DepartmentMaster/Index" class="submenu-link">
+                                <span class="material-icons">fact_check</span>Department Master
+                            </a>
+
+                        </div>
+                    </div>
+
+                    @*   <div class="menu-item">
+                        <a href="#" class="menu-link">
+                            <span class="material-icons menu-icon">settings</span>
+                            <span class="menu-text">Settings</span>
+                        </a>
+                    </div> *@
+                </div>
+
+
+                <!-- Combined Toggle Buttons Container -->
+                <div class="sidebar-footer-controls" style="display:flex; height:36px; justify-content:center; gap: 20px; padding: 10px 0; border-top: 3px solid brown;">
+
+                    <!-- Sidebar Collapse Toggle Button -->
+                    <div class="sidebar-footer-toggle" id="sidebarCollapseToggle" title="Toggle Sidebar" style="cursor:pointer; color:#f4f4f7;">
+                        @* <i class="bi bi-three-dots" style="font-size: 1.6rem;"></i> *@
+                        <span class="material-icons" style="color:white;">menu</span>
+                    </div>
+                </div>
+                <div class="profile-info mt-auto">
+                    <img src="~/images/Rockwell_SubLogo.webp" alt="Logo" class="logo" />
+
+                    <div class="brand-name">Admin</div>
+                </div>
+
+
+                @*  <!-- Sidebar Footer -->
+            <div class="sidebar-footer">
+                <div class="user-container">
+                    <img src="https://randomuser.me/api/portraits/men/32.jpg" alt="User Avatar" class="user-avatar">
+                    <div class="user-info">
+                        <div class="user-name">Alex Morgan</div>
+                        <div class="user-role">Administrator</div>
+                    </div>
+                    <div class="logout-dropdown">
+                        <button class="logout-btn">
+                            <span class="material-icons">logout</span>
+                            Logout
+                        </button>
+                    </div>
+                </div>
+            </div> *@
+            </nav>
+            <div class="content">
+                <main class="col py-3">
+                    @RenderBody()
+                </main>
+            </div>
+        </div>
+
+
+    </div>
+
+    <!-- JS libs -->
+
+    <script src="~/js/common.js"></script>
+
+    <script>
+        $(document).ready(function(){
+            $('.submenu-link').on('click',function(){
+               $('#sidebar').toggleClass('collapsed');
+            });
+            $('#sidebarCollapseToggle').on('click',function(){
+               $('#sidebar').toggleClass('collapsed');
+               const sidebarspan=$(this).children()[0];
+               if(sidebarspan){
+                  const innertext=$(sidebarspan)[0].innerText;
+                  if (innertext === "menu"){
+                      $(sidebarspan)[0].innerText="menu_open";
+                  }else{
+                      $(sidebarspan)[0].innerText="menu";
+                  }
+               }else{
+                   console.log("sidebarspan Not found");
+               }
+            });
+
+            $('.menu-link').on('click',function(e){
+                e.preventDefault();
+                const parentElement=$(this).parent();
+                $('.menu-link').removeClass('active');
+                $('.menu-item').removeClass('open');
+                $(this).addClass('active');
+                if (!$('#sidebar').hasClass('collapsed')){
+                    $(parentElement).toggleClass('open');
+                }
+            });
+
+            if (window.innerWidth <= 768) {
+                $('#sidebar').toggleClass('collapsed');
+                // $('#sidebar').addClass('show');
+            }
+
+            window.addEventListener('resize', function() {
+                if (window.innerWidth <= 768) {
+                    $('#sidebar').removeClass('collapsed');
+                    $('#sidebar').addClass('show');
+                } else {
+                    $('#sidebar').addClass('collapsed');
+                    $('#sidebar').removeClass('show');
+                }
+            });
+
+        });
+
+    </script>
+</body>
+</html>

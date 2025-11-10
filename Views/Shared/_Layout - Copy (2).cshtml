@@ -1,0 +1,344 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Yard Management</title>
+    <link href="~/lib/bootstrap/dist/css/bootstrap.min.css" rel="stylesheet" type="text/css" />
+    <link href="~/lib/icons/css/material-icons.css" rel="stylesheet" />
+    <link href="~/lib/tabulator/css/tabulator.min.css" rel="stylesheet" type="text/css" />
+    @* <link href="~/lib/tabulator/css/tabulator_bootstrap5.css" rel="stylesheet" type="text/css" /> *@
+    <link href="~/lib/tabulator/css/tabulator_bootstrap5.min.css" rel="stylesheet" />
+    <link href="~/lib/sweetalert2/sweetalert2.min.css" rel="stylesheet" />
+    <link href="~/lib/toastr/toastr.css" rel="stylesheet" />
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/jquery-validation/dist/jquery.validate.min.js"></script>
+    <script src="~/lib/jquery-validation-unobtrusive/dist/jquery.validate.unobtrusive.min.js"></script>
+    <script src="~/lib/tabulator/js/tabulator.min.js"></script>
+    <script src="~/lib/chartjs/chart.umd.min.js"></script>
+    <script src="~/lib/toastr/toastr.min.js"></script>
+    <script src="~/lib/sweetalert2/sweetalert2.all.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+
+    @* <script src="~/lib/tabulator/js/tabulator.js"></script> *@
+    <!-- Base CSS -->
+    <link href="~/css/site.css" rel="stylesheet" />
+
+    <style>
+        /* Push the content to the right by sidebar width */
+        .content {
+            margin-left: 260px; /* equal to sidebar width */
+            flex: 1 1 auto;
+            min-width: 0;
+            transition: margin-left 0.25s ease;
+        }
+
+        /* When sidebar is collapsed */
+        .sidebar.collapsed ~ .content {
+            margin-left: 70px; /* equal to collapsed sidebar width */
+        }
+
+        /* Arrow icon rotation */
+        .arrow-icon {
+            transition: transform 0.3s ease;
+        }
+
+        .menu-item.open .arrow-icon {
+            transform: rotate(180deg);
+        }
+
+        /* DO NOT force-display arrow icons here; site.css will control visibility */
+    </style>
+</head>
+<body>
+    <div style="height:100vh;">
+        <!-- yashwant removed class="d-flex" -->
+        <div class="sidebar-container">
+            <!-- Sidebar -->
+            <nav class="sidebar collapsed" id="sidebar">
+                <!-- Sidebar Header -->
+                <div class="sidebar-header">
+                    <div class="brand-container">
+                        <div class="brand-logo">
+                            <img src="~/images/Rockwell_SubLogo.webp" alt="Logo" class="logo" />
+                        </div>
+                        <div class="brand-name">Yard Management</div>
+                    </div>
+                </div>
+
+                <!-- Sidebar Menu -->
+                <div class="">
+                    <div class="menu-item">
+                        <a href="/Dashboard/Index" class="menu-link">
+                            <span class="material-icons menu-icon">dashboard</span>
+                            <span class="menu-text">Dashboard</span>
+                        </a>
+                    </div>
+                    <div class="menu-item">
+                        <a href="https://new-chat-uunb.bolt.host/"
+                           class="menu-link"
+                           target="_blank"
+                           rel="noopener noreferrer">
+                            <span class="material-icons menu-icon">report</span>
+                            <span class="menu-text">Reports</span>
+                        </a>
+                    </div>
+
+                    <div class="menu-item">
+                        <a href="#" class="menu-link" id="UserMenu">
+                            <span class="material-icons menu-icon">manage_accounts</span>
+                            <span class="menu-text">User Management</span>
+                            <span class="material-icons arrow-icon">expand_more</span>
+                        </a>
+                        <div class="submenu">
+                            <a href="/EmployeeConfiguration/Index" class="submenu-link">
+                                <span class="material-icons">badge</span>Employee
+                            </a>
+                             <a href="/UserGroupConfiguration/Index" class="submenu-link">
+                                <span class="material-icons">desktop_windows</span>User Group
+                            </a>
+                            <a href="/UserConfiguration/Index" class="submenu-link">
+                                <span class="material-icons">person_outline</span>User
+                            </a>
+                            <a href="" class="submenu-link">
+                                <span class="material-icons">person_outline</span>Role Master
+                            </a>
+                        </div>
+                    </div>
+
+                    <div class="menu-item">
+                        <a href="#" class="menu-link" id="PlantMenu">
+                            <span class="material-icons menu-icon">factory</span>
+                            <span class="menu-text">Plant Modelling</span>
+                            <span class="material-icons arrow-icon">expand_more</span>
+                        </a>
+                        <div class="submenu">
+                            <a href="/EnterpriseMaster/Index" class="submenu-link">
+                                <span class="material-icons">business</span>Enterprise
+                            </a>
+                            <a href="/PlantMaster/Index" class="submenu-link">
+                                <span class="material-icons">corporate_fare</span>Plant
+                            </a>
+                            <a href="/Yard/Index" class="submenu-link">
+                                <span class="material-icons">map</span>Yard &rarr; Lane &rarr; Slot
+                            </a>
+
+                            <a href="/RouteMaster/Index" class="submenu-link">
+                                <span class="material-icons">alt_route</span>Route
+                            </a>
+                            <a href="/DepartmentMaster/Index" class="submenu-link">
+                                <span class="material-icons">fact_check</span>Department Master
+                            </a>
+
+                        </div>
+                    </div>
+
+                    <div class="menu-item">
+                        <a href="#" class="menu-link" id="ShiftMenu">
+                            <span class="material-icons menu-icon">schedule</span>
+                            <span class="menu-text">Shift</span>
+                            <span class="material-icons arrow-icon">expand_more</span>
+                        </a>
+                        <div class="submenu">
+                            <a href="/ShiftMaster/Index" class="submenu-link">
+                                <span class="material-icons">access_time</span>Shift Category
+                            </a>
+                            <a href="/BreakMaster/Index" class="submenu-link">
+                                <span class="material-icons">free_breakfast</span>Break
+                            </a>
+                            <a href="/TemplateConfiguration/Index" class="submenu-link">
+                                <span class="material-icons">assignment</span>Template
+                            </a>
+                           @*  <a href="/BreakMaster/Index" class="submenu-link">
+                                <span class="material-icons">calendar_month</span>Shift Calendar
+                            </a> *@
+                            <a href="/HolidayMaster/Index" class="submenu-link">
+                                <span class="material-icons">event</span>Holiday Master
+                            </a>
+                        </div>
+                    </div>
+
+                    @* <div class="menu-item">
+                        <a href="#" class="menu-link" id="EmployeeMenu">
+                            <span class="material-icons menu-icon">groups</span>
+                            <span class="menu-text">Associate Management</span>
+                            <span class="material-icons arrow-icon">expand_more</span>
+                        </a>
+                        <div class="submenu">
+                            <a href="/EmployeeConfiguration/Index" class="submenu-link">
+                                <span class="material-icons">badge</span>Employee
+                            </a>
+                        </div>
+                    </div> *@
+
+                    <div class="menu-item">
+                        <a href="#" class="menu-link" id="VehicleMenu">
+                            <span class="material-icons menu-icon">directions_car</span>
+                            <span class="menu-text">Vehicle Variant</span>
+                            <span class="material-icons arrow-icon">expand_more</span>
+                        </a>
+                        <div class="submenu">
+                            <a href="/BrandMaster/Index" class="submenu-link">
+                                <span class="material-icons">branding_watermark</span>Brand Master
+                            </a>
+                            <a href="/VehicleTypeMaster/Index" class="submenu-link">
+                                <span class="material-icons">airport_shuttle</span>Vehicle Type Master
+                            </a>
+                            <a href="/VehicleModel/Index" class="submenu-link">
+                                <span class="material-icons">view_in_ar</span>Variant Master
+                            </a>
+                        </div>
+                    </div>
+
+                    <div class="menu-item">
+                        <a href="#" class="menu-link" id="DataMenu">
+                            <span class="material-icons menu-icon">dataset</span>
+                            <span class="menu-text">Data Collection</span>
+                            <span class="material-icons arrow-icon">expand_more</span>
+                        </a>
+                        <div class="submenu">
+                            <a href="/EolMaster/Index" class="submenu-link">
+                                <span class="material-icons">fact_check</span>EOL Data
+                            </a>
+                            <a href="/Rework/Index" class="submenu-link">
+                                <span class="material-icons">build_circle</span>Rework Data
+                            </a>
+                            <a href="/DeliveryOrder/Index" class="submenu-link">
+                                <span class="material-icons">sell</span>Delivery Order
+                            </a>
+
+                            <a href="/ReasonMaster/Index" class="submenu-link">
+                                <span class="material-icons">psychology</span>Reason Master
+                            </a>
+
+                        </div>
+                    </div>
+
+                    <div class="menu-item">
+                        <a href="#" class="menu-link" id="PdiMenu">
+                            <span class="material-icons menu-icon">dataset</span>
+                            <span class="menu-text">PDI</span>
+                            <span class="material-icons arrow-icon">expand_more</span>
+                        </a>
+
+                        <div class="submenu">
+                            <a href="/Pdi/Index" class="submenu-link">
+                                <span class="material-icons">fact_check</span>PDI Assign
+                            </a>
+                            <a href="/Task/Index" class="submenu-link">
+                                <span class="material-icons">fact_check</span>Task Master
+                            </a>
+
+                        </div>
+                    </div>
+
+                    @*   <div class="menu-item">
+                        <a href="#" class="menu-link">
+                            <span class="material-icons menu-icon">settings</span>
+                            <span class="menu-text">Settings</span>
+                        </a>
+                    </div> *@
+                </div>
+
+
+                <!-- Combined Toggle Buttons Container -->
+                <div class="sidebar-footer-controls" style="display:flex; height:36px; justify-content:center; gap: 20px; padding: 10px 0; border-top: 3px solid brown;">
+
+                    <!-- Sidebar Collapse Toggle Button -->
+                    <div class="sidebar-footer-toggle" id="sidebarCollapseToggle" title="Toggle Sidebar" style="cursor:pointer; color:#f4f4f7;">
+                        @* <i class="bi bi-three-dots" style="font-size: 1.6rem;"></i> *@
+                        <span class="material-icons" style="color:white;">menu</span>
+                    </div>
+                </div>
+                <div class="profile-info mt-auto">
+                    <img src="~/images/Rockwell_SubLogo.webp" alt="Logo" class="logo" />
+
+                    <div class="brand-name">Admin</div>
+                </div>
+
+
+                @*  <!-- Sidebar Footer -->
+            <div class="sidebar-footer">
+                <div class="user-container">
+                    <img src="https://randomuser.me/api/portraits/men/32.jpg" alt="User Avatar" class="user-avatar">
+                    <div class="user-info">
+                        <div class="user-name">Alex Morgan</div>
+                        <div class="user-role">Administrator</div>
+                    </div>
+                    <div class="logout-dropdown">
+                        <button class="logout-btn">
+                            <span class="material-icons">logout</span>
+                            Logout
+                        </button>
+                    </div>
+                </div>
+            </div> *@
+            </nav>
+            <div class="content">
+                <main class="col py-3">
+                    @RenderBody()
+                </main>
+            </div>
+        </div>
+
+
+    </div>
+
+    <!-- JS libs -->
+
+    <script src="~/js/common.js"></script>
+
+    <script>
+        $(function () {
+            // Only collapse the whole sidebar when a submenu is clicked on small screens
+            $('.submenu-link').off('click').on('click', function () {
+                if (window.innerWidth <= 768) {
+                    $('#sidebar').addClass('collapsed').removeClass('show');
+                }
+                // allow normal navigation to proceed
+            });
+
+            // collapse toggle button
+            $('#sidebarCollapseToggle').off('click').on('click', function () {
+                $('#sidebar').toggleClass('collapsed');
+                const span = $(this).find('.material-icons').first();
+                if (span.length) {
+                    span.text(span.text().trim() === 'menu' ? 'menu_open' : 'menu');
+                }
+            });
+
+            // menu link handling: robust selection and only prevent default for toggle links
+            $('.menu-link').off('click').on('click', function (e) {
+                const $link = $(this);
+                const $item = $link.closest('.menu-item');
+                const href = ($link.attr('href') || '').trim();
+                const isToggle = href === '' || href === '#';
+
+                // set active state
+                $('.menu-link').removeClass('active');
+                $link.addClass('active');
+
+                // toggle submenu only when sidebar is expanded and the link is a toggle
+                if (!$('#sidebar').hasClass('collapsed') && isToggle) {
+                    $('.menu-item').not($item).removeClass('open'); // close others
+                    $item.toggleClass('open');
+                }
+
+                if (isToggle) e.preventDefault(); // allow real navigation links to work
+            });
+
+            // responsive initial state
+            function adjustSidebar() {
+                if (window.innerWidth <= 768) {
+                    $('#sidebar').removeClass('collapsed').addClass('show');
+                } else {
+                    $('#sidebar').addClass('collapsed').removeClass('show');
+                }
+            }
+            adjustSidebar();
+            $(window).off('resize.sidebar').on('resize.sidebar', adjustSidebar);
+        });
+    </script>
+</body>
+</html>
