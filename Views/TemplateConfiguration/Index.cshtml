@@ -49,71 +49,61 @@
 
 </div>
 
-<!-- Add/Edit Modal -->
-<div class="modal fade modal-request" id="addEditModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered modal-lg">
-        <div class="modal-content">
+        <!-- Add/Edit Modal -->
+        <div class="modal fade modal-request" id="addEditModal" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered modal-lg">
+                <div class="modal-content">
 
-            <div class="modal-header">
-                <h6 class="modal-title" id="addEditModalLabel">Add/Edit Template</h6>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" style="filter: invert(1);"></button>
-            </div>
-
-            <div class="modal-body">
-                <form id="addEditForm">
-                    <input type="hidden" id="Template_id" name="Template_id" />
-
-                    <div class="row g-3">
-                        <div>
-                            <label class="form-label">Plant</label>
-                            <span class="text-danger">*</span>
-                            <select class="form-select" id="Plant_id" name="Plant_id"
-                                    asp-items="@(ViewBag.PlantList as IEnumerable<SelectListItem>)">
-                                <option value="" disabled selected>Select Plant</option>
-                            </select>
-                        </div>
-
-                        <div>
-                            <label class="form-label">Template Name</label>
-                            <span class="text-danger">*</span>
-                            <input type="text" id="Template_name" name="Template_name"
-                                   class="form-control" required />
-                        </div>
-
-                        <div>
-                            <label class="form-label">Template Start Date</label>
-                            <span class="text-danger">*</span>
-                            <input type="date" id="Temp_start_time" name="Temp_start_time"
-                                   class="form-control" required />
-                            <span id="Temp_start_timeError" class="text-danger" style="display:none;"></span>
-                        </div>
-
-                        <div>
-                            <label class="form-label">Template End Date</label>
-                            <span class="text-danger">*</span>
-                            <input type="date" id="Temp_end_time" name="Temp_end_time"
-                                   class="form-control" required />
-                            <span id="Temp_end_timeError" class="text-danger" style="display:none;"></span>
-                        </div>
-
-                        <div>
-                            <label class="form-label">Status</label>
-                            <span class="text-danger">*</span>
-                            <select id="Status_id" name="Status_id" class="form-select"
-                                    asp-items="@(ViewBag.StatusList as IEnumerable<SelectListItem>)">
-                                <option value="" disabled selected>Select Status</option>
-                            </select>
-                        </div>
-
-                        <div>
-                            <label class="form-label">Description</label>
-                            <input type="text" id="Description" name="Description"
-                                   class="form-control" />
-                        </div>
+                    <div class="modal-header">
+                        <h6 class="modal-title" id="addEditModalLabel">Add/Edit Template</h6>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" style="filter: invert(1);"></button>
                     </div>
 
-                </form>
-            </div>
+                   <div class="modal-body">
+            <form id="addEditForm">
+
+                <input type="hidden" id="Template_id" name="Template_id" />
+
+                <div class="row g-3">
+
+                    <!-- Template Name -->
+                    <div>
+                        <label class="form-label">Template Name</label>
+                        <span class="text-danger">*</span>
+                        <input type="text" id="Template_name" name="Template_name"
+                               class="form-control" required maxlength="50">
+                    </div>
+
+                    <!-- Template Description -->
+                    <div>
+                        <label class="form-label">Template Description</label>
+                        <input type="text" id="Description" name="Description"
+                               class="form-control" maxlength="150">
+                    </div>
+
+                    <!-- Shift Dropdown -->
+                    <div>
+                        <label class="form-label">Shift</label>
+                        <span class="text-danger">*</span>
+                        <select class="form-select" id="Shift_id" name="Shift_id"
+                                asp-items="@(ViewBag.ShiftList as IEnumerable<SelectListItem>)">
+                            <option disabled selected value="">Select Shift</option>
+                        </select>
+                    </div>
+
+                    <!-- Effective From -->
+                    <div>
+                        <label class="form-label">Effective From</label>
+                        <span class="text-danger">*</span>
+                        <input type="date" id="Effective_from" name="Effective_from"
+                               class="form-control" required min="">
+                        <span id="effectiveFromError" class="text-danger" style="display:none;"></span>
+                    </div>
+
+                </div>
+            </form>
+        </div>
+
 
              <div class="modal-footer">
 
@@ -124,156 +114,202 @@
     </div>
 </div>
 
-
 <script>
-document.addEventListener("DOMContentLoaded", () => {
+$(document).ready(function () {
 
     initTooltips();
 
     const templateConfiguration = JSON.parse('@Html.Raw(templateConfiguration)');
+    console.log(templateConfiguration);
 
     // Initialize Template Table
     let selectedRow = null;
 
     const templateTable = new Tabulator("#templateTable", {
         data: templateConfiguration,
-        columns: generateTabulatorColumns(templateConfiguration),
-        layout: "fitDataStretch",
-        height: "80vh",
+        columns: [
+    { title: "Template Name", field: "template_name", minWidth: 220, headerHozAlign: "center" },
 
+    {
+        title: "Shift Name",
+        field: "shift_name",
+        minWidth: 180,
+        headerHozAlign: "center"
+    },
+
+    {
+        title: "Status",
+        field: "is_deleted",
+        hozAlign: "center",
+        width: 130,
+        headerHozAlign: "center",
+        formatter: function (cell) {
+            return cell.getValue()
+                ? "<span class='badge bg-danger'>Inactive</span>"
+                : "<span class='badge bg-success'>Active</span>";
+        }
+    },
+
+    {
+        title: "Effective From",
+        field: "effective_from",
+        hozAlign: "center",
+        minWidth: 160,
+        headerHozAlign: "center"
+    },
+
+    {
+        title: "Created By",
+        field: "created_by",
+        hozAlign: "center",
+        minWidth: 150,
+        headerHozAlign: "center"
+    }
+],
+
+
+       layout: "fitColumns",
+        height: "70vh",
         selectable: 1,
-
         pagination: "local",
+        resizableRows:false,
+        resizableRowGuide:false,
+        resizableColumnGuide:false,
+        resizableColumnGuide:false,
+        columnDefaults:{ resizable:false },
+        movableColumns: false,
         paginationSize: 10,
         paginationSizeSelector: [5, 10, 20, 50, 100],
-
-        resizableRows: false,
-        resizableRowGuide: false,
-        resizableColumnGuide: false,
-
-        columnDefaults: {
-            resizable: false,
-        },
-
-        movableColumns: false,
-
         locale: true,
         langs: {
             "en": {
                 pagination: {
                     first: "<<",
                     first_title: "First",
-                    last: ">>",
-                    last_title: "Last",
-                    prev: "<",
+                    last: ">>", 
+                    last_title: "Last", 
+                    prev: "<", 
                     prev_title: "Prev",
-                    next: ">",
-                    next_title: "Next",
-                    page_size: "Page Size"
+                    next: ">", 
+                    next_title: "Next", 
+                    page_size: "Page Size" 
                 }
             }
         },
-
         rowClick: function (e, row) {
-            templateTable.deselectRow();
-            row.select();
             selectedRow = row.getData();
-        },
-
+        }
     });
 
+    // ✅ Search
+    $("#searchField").on("input", function () {
+        const q = $(this).val().toLowerCase();
+        const visibleCols = templateTable.getColumns().map(col => col.getField());
 
-    // Search
-    document.getElementById("searchField")?.addEventListener("input", function () {
-        const q = this.value.toLowerCase();
-        const visible = templateTable.getColumns().map(c => c.getField());
         templateTable.setFilter(d =>
-            visible.some(f => (d?.[f] ?? "").toString().toLowerCase().includes(q))
+            visibleCols.some(f => (d?.[f] ?? "").toString().toLowerCase().includes(q))
         );
     });
 
-    // Record count
-    templateTable.on("dataFiltered", (_, rows) => {
-        document.getElementById("recordCount").innerText = "Total Records: " + rows.length;
-    });
-
+    // ✅ Record Count
     templateTable.on("dataLoaded", (data) => {
-        document.getElementById("recordCount").innerText = "Total Records: " + data.length;
+        $("#recordCount").text("Total Records: " + data.length);
     });
 
-    // Hide unwanted columns
+    templateTable.on("dataFiltered", (_, rows) => {
+        $("#recordCount").text("Total Records: " + rows.length);
+    });
+
+    // ✅ Hide unwanted columns
     templateTable.on("tableBuilt", () => {
         const hideFields = [
-            "Template_id", "Status_id", "Plant_id", "Is_deleted",
-            "Version", "Created_at", "Updated_by", "Updated_at",
-            "Shiftdetails", "AdditionalProperties"
+            "template_id", "Status_id", "Plant_id", "Version",
+            "Created_at", "Updated_at", "Updated_by", "Shiftdetails", "AdditionalProperties"
         ];
         hideFields.forEach(f => templateTable.hideColumn(f));
-
-        const columnRenameMap = {
-            "Temp_start_time": "Template Start Date",
-            "Temp_end_time": "Template End Date"
-        };
-
-        Object.keys(columnRenameMap).forEach(f => {
-            const col = templateTable.getColumn(f);
-            if (col) col.updateDefinition({ title: columnRenameMap[f] });
-        });
     });
 
-    // Modal
-    const addEditModal = new bootstrap.Modal(document.getElementById("addEditModal"));
-
+    // ✅ Modal
+    const addEditModal = new bootstrap.Modal($("#addEditModal")[0]);
     let currentMode = "Add";
 
-    // Prevent typing manually in date inputs
-    document.querySelectorAll('input[type="date"]').forEach(input => {
-        input.addEventListener('keydown', e => e.preventDefault());
-    });
-
-    // Add
-    document.getElementById("add-btn").addEventListener("click", () => {
+    // ✅ Add Mode
+    $("#add-btn").on("click", function () {
         currentMode = "Add";
-        document.getElementById("addEditModalLabel").textContent = "Add Shift Template";
-        document.getElementById("modalSubmitBtn").textContent = "Add";
-        document.getElementById("addEditForm").reset();
+        $("#addEditModalLabel").text("Add Shift Template");
+        $("#modalSubmitBtn").text("Add");
+        $("#addEditForm")[0].reset();
+         $("#Template_name").prop("disabled", false);
         addEditModal.show();
     });
 
-    // Edit
-    document.getElementById("edit-btn").addEventListener("click", () => {
+    // ✅ Edit Mode
+        $("#edit-btn").on("click", function () {
+            const sel = templateTable.getSelectedData()?.[0];
+
+            if (!sel)
+                return showAppAlert({
+                    icon: "warning",
+                    title: "No Selection",
+                    text: "Select a row to edit."
+                });
+
+            currentMode = "Edit";
+            $("#addEditModalLabel").text("Edit Shift Template");
+            $("#modalSubmitBtn").text("Update");
+             $("#Template_name").prop("disabled", true);
+            $("#Template_id").val(sel.template_id || "");
+            $("#Template_name").val(sel.template_name || "");
+            $("#Description").val(sel.template_description || "");
+            $("#Shift_id").val(sel.shift_id || "");
+
+           
+            let effDate = "";
+
+            if (sel.effective_from) {
+                if (sel.effective_from.includes("T")) {
+                    // Convert ISO date safely
+                    const d = new Date(sel.effective_from);
+                    effDate = new Date(d.getTime() - (d.getTimezoneOffset() * 60000))
+                                 .toISOString()
+                                 .split("T")[0];
+                } 
+                else if (sel.effective_from.includes("/Date(")) {
+                    // For .NET-style /Date(1731369600000)/
+                    const ms = parseInt(sel.effective_from.replace(/\D/g, ""), 10);
+                    const d = new Date(ms);
+                    effDate = new Date(d.getTime() - (d.getTimezoneOffset() * 60000))
+                                 .toISOString()
+                                 .split("T")[0];
+                } 
+                else {
+                    // Handle normal date string
+                    const d = new Date(sel.effective_from);
+                    if (!isNaN(d)) {
+                        effDate = new Date(d.getTime() - (d.getTimezoneOffset() * 60000))
+                                     .toISOString()
+                                     .split("T")[0];
+                    }
+                }
+            }
+
+            $("#Effective_from").val(effDate);
+
+
+            addEditModal.show();
+        });
+
+
+    // ✅ Delete
+    $("#delete-btn").on("click", async function () {
         const sel = templateTable.getSelectedData()?.[0];
 
         if (!sel)
-            return showAppAlert({ icon: "warning", title: "No Selection", text: "Select a row to edit." });
-
-        currentMode = "Edit";
-        document.getElementById("addEditModalLabel").textContent = "Edit Shift Template";
-        document.getElementById("modalSubmitBtn").textContent = "Update";
-
-        document.getElementById("Template_id").value = sel.Template_id;
-        document.getElementById("Template_name").value = sel.Template_name ?? "";
-        document.getElementById("Description").value = sel.Description ?? "";
-        document.getElementById("Status_id").value = sel.Status_id ?? "";
-        document.getElementById("Plant_id").value = sel.Plant_id ?? "";
-        document.getElementById("Temp_start_time").value = formatDate(sel.Temp_start_time);
-        document.getElementById("Temp_end_time").value = formatDate(sel.Temp_end_time);
-
-        addEditModal.show();
-    });
-
-    function formatDate(dt) {
-        if (!dt) return "";
-        const d = new Date(dt);
-        return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
-    }
-
-    // Delete
-    document.getElementById("delete-btn").addEventListener("click", async () => {
-        const sel = templateTable.getSelectedData()?.[0];
-
-        if (!sel)
-            return showAppAlert({ icon: "warning", title: "No Selection", text: "Select a row to delete." });
+            return showAppAlert({
+                icon: "warning",
+                title: "No Selection",
+                text: "Select a row to delete."
+            });
 
         const confirm = await showAppAlert({
             type: "confirm",
@@ -284,78 +320,53 @@ document.addEventListener("DOMContentLoaded", () => {
 
         if (!confirm.isConfirmed) return;
 
-        const ok = await deleteRecord("/TemplateConfiguration/Delete", { Template_id: sel.Template_id });
+        const ok = await deleteRecord("/TemplateConfiguration/Delete", { template_id: sel.template_id });
         if (ok) location.reload();
     });
 
-    // Validate date range
-    function validateDateRange() {
-        const s = document.getElementById("Temp_start_time").value;
-        const e = document.getElementById("Temp_end_time").value;
-        const sErr = document.getElementById("Temp_start_timeError");
-        const eErr = document.getElementById("Temp_end_timeError");
-
-        sErr.style.display = "none";
-        eErr.style.display = "none";
-
-        if (!s) { sErr.textContent = "Start date required"; sErr.style.display = "inline"; return false; }
-        if (!e) { eErr.textContent = "End date required"; eErr.style.display = "inline"; return false; }
-
-        if (new Date(s) >= new Date(e)) {
-            sErr.textContent = "Start date must be before end date";
-            eErr.textContent = "End date must be after start date";
-            sErr.style.display = "inline";
-            eErr.style.display = "inline";
-            return false;
-        }
-        return true;
-    }
-
-    // Submit
-    document.getElementById("addEditForm").addEventListener("submit", async (e) => {
+    // ✅ Submit (Add / Edit)
+    $("#addEditForm").on("submit", async function (e) {
         e.preventDefault();
 
-        if (!validateDateRange()) return;
-
-        const formData = Object.fromEntries(new FormData(e.target).entries());
+        const formData = Object.fromEntries(new FormData(this).entries());
 
         const payload = {
-            Template_id: currentMode === "Edit" ? Number(formData.Template_id) : 0,
-            Template_name: formData.Template_name,
-            Temp_start_time: formData.Temp_start_time,
-            Temp_end_time: formData.Temp_end_time,
-            Description: formData.Description,
-            Status_id: Number(formData.Status_id || 0),
-            Plant_id: Number(formData.Plant_id || 0)
+            template_id: currentMode === "Edit" ? Number(formData.Template_id) : 0,
+            template_name: formData.Template_name,
+              template_description: formData.Description || "",
+            shift_id: Number(formData.Shift_id),
+            effective_from: formData.Effective_from
+          
         };
 
-        const url = currentMode === "Add" ? "/TemplateConfiguration/Create" : "/TemplateConfiguration/Update";
-        const ok = await saveRecord(url, payload, currentMode, addEditModal, e.target);
+
+        
+
+        const url = currentMode === "Add"
+            ? "/TemplateConfiguration/Create"
+            : "/TemplateConfiguration/Update";
+
+        const ok = await saveRecord(url, payload, currentMode, addEditModal, this);
 
         if (ok) location.reload();
     });
 
-    // Download CSV (Template only)
-    document.getElementById("download-btn").addEventListener("click", () => {
-        const data = templateTable.getData();
-        if (!data.length)
-            return showAppAlert({ icon: "info", title: "No Data", text: "Nothing to export." });
+    // ✅ Set minimum date for future selection
+    const today = new Date().toISOString().split("T")[0];
+    $("#Effective_from").attr("min", today);
+    $("#download-btn").on("click", function () {
+            let rowCount = templateTable.getDataCount ? templateTable.getDataCount() : templateTable.getData().length;
+            if (rowCount === 1) {
+              const firstRow = templateTable.getData()[0];
+              if (!firstRow["Template_id"]) rowCount = 0;
+            }
 
-        const headers = ["Template_name", "Temp_start_time", "Temp_end_time", "Plant_name", "Description", "Status_name"];
-        const csvRows = [];
-
-        csvRows.push(headers.join(","));
-
-        data.forEach(d => {
-            csvRows.push(headers.map(h => `"${(d[h] ?? "").toString().replace(/"/g,'""')}"`).join(","));
-        });
-
-        const blob = new Blob([csvRows.join("\n")], { type: "text/csv;charset=utf-8;" });
-        const link = document.createElement("a");
-        link.href = URL.createObjectURL(blob);
-        link.download = "TemplateConfiguration.csv";
-        link.click();
-    });
+            if (rowCount === 0) {
+              showAppAlert({ icon: 'warning', title: 'No Data', text: 'No records found to download.' });
+              return;
+            }
+            downloadCsv(templateTable, "TemplateMaster.csv");
+          });
 
 });
 </script>

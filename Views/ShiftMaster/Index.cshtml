@@ -1,600 +1,535 @@
-﻿@{
-    //  Read JSON payload for grid from ViewData
-    var shiftMasterData = ViewData["ShiftMasterData"] ?? "[]";
+﻿    @{
+        //  Read JSON payload for grid from ViewData
+        var shiftMasterData = ViewData["ShiftMasterData"] ?? "[]";
 
-    // set layout
-    Layout = "_Layout";
-}
-<head>
-    <!--  Keep head empty as per request (no changes to assets/includes) -->
-</head>
-
-<style>
-    .main-container {
-        margin-left: 5px;
-        margin-right: 5px;
+        // set layout
+        Layout = "_Layout";
     }
+    <head>
+        <!--  Keep head empty as per request (no changes to assets/includes) -->
+    </head>
 
-
-</style>
-
-<div class="main-container">
- 
-    <div class="col-12 text-center py-1 mb-3" style="background: #242424; color: white;">
-        <h6 class="mb-0 fw-bold text-uppercase tracking-wide">Shift Category</h6>
-    </div>
-   
-    <!--  Toolbar row with search + action buttons -->
-    <div class="row align-items-center mb-3">
-
-        <!-- Spacer on xs devices -->
-        <div class="w-100 d-md-none"></div>
-
-        <!--  Right-aligned tools on md+ -->
-        <div class="col-12 col-md d-flex justify-content-md-end align-items-center gap-2 flex-wrap">
-
-            <!--  Global search input -->
-            <input type="search"
-                   id="searchField"
-                   class="form-control form-control-sm"
-                   placeholder="Search..."
-                   style="max-width: 280px; min-width: 150px;" />
-
-            <!--  Action buttons group (Add/Edit/Delete/Download/Upload/Template) -->
-            <div class="btn-group flex-wrap" role="group" aria-label="Icon button group" style="flex-wrap: wrap;">
-                <!--  Add row -->
-                <button id="add-btn" type="button" class="btn btn-primary-professional btn-sm px-3" title="Add" data-bs-toggle="tooltip" data-bs-placement="top" aria-label="Add">
-                    <span class="material-icons" aria-hidden="true">add</span>
-                </button>
-                <!--  Edit selected row -->
-                <button id="edit-btn" type="button" class="btn btn-primary-professional btn-sm px-3" title="Edit" data-bs-toggle="tooltip" data-bs-placement="top" aria-label="Edit">
-                    <span class="material-icons" aria-hidden="true">edit</span>
-                </button>
-                <!--  Delete selected row -->
-                <button id="delete-btn" type="button" class="btn btn-primary-professional btn-sm px-3" title="Delete" data-bs-toggle="tooltip" data-bs-placement="top" aria-label="Delete">
-                    <span class="material-icons" aria-hidden="true">delete</span>
-                </button>
-                <!--  Download CSV -->
-                <button id="download-btn" type="button" class="btn btn-primary-professional btn-sm px-3" title="Download" data-bs-toggle="tooltip" data-bs-placement="top" aria-label="Download">
-                    <span class="material-icons" aria-hidden="true">download</span>
-                </button>
-                <!--  Upload CSV -->
-                <button id="upload-btn" type="button" class="btn btn-primary-professional btn-sm px-3" title="Upload" data-bs-toggle="tooltip" data-bs-placement="top" aria-label="Upload">
-                    <span class="material-icons" aria-hidden="true">upload</span>
-                </button>
-                <!--  Download CSV template -->
-                <button id="download-template-btn" type="button" class="btn btn-primary-professional btn-sm px-3" title="Download Template" data-bs-toggle="tooltip" data-bs-placement="top" aria-label="Download Template">
-                    <span class="material-icons" aria-hidden="true">assignment_returned</span>
-                </button>
-            </div>
-        </div>
-
-
-    </div>
-
-    <form id="afForm" style="display:none" method="post">
-        @Html.AntiForgeryToken()
-        <input type="file" id="upload-file" style="display:none" accept=".csv,text/csv" />
-    </form>
-
-
-    <div id="shiftMastertable" class="tabulator-bootstrap5"></div>
-
-    <div id="recordCount" class="footer-total-records"></div>
-</div>
-
-<!--  Add/Edit modal (single form reused for both modes) -->
-<div class="modal fade modal-request" id="addEditModal" tabindex="-1" aria-labelledby="addEditModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered modal-lg">
-        <div class="modal-content">
-
-            <div class="modal-header">
-                <h6 class="modal-title" id="addEditModalLabel">Add/Edit Shift Master</h6>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close" style="filter: invert(1);"></button>
-            </div>
-            <!--  Modal body with form fields -->
-            <div class="modal-body">
-                <form id="addEditForm">
-                    <!--  Hidden Id field -->
-                    <input type="hidden" id="Shift_id" name="Shift_id" />
-                    <div class="row g-3">
-
-                        <div>
-                            <!--  Shift_name -->
-                            <label for="Shift_name" class="form-label">Shift Name  <span class="text-danger"><strong>*</strong></span></label>
-                            <input type="text" class="form-control" id="Shift_name" name="Shift_name" required
-                                   pattern="[A-Za-z0-9 ]+"
-                                   maxlength="15"
-                                   title="Only letters and numbers are allowed. No spaces or special characters.">
-                        </div>
-
-                        <!-- Description -->
-                        <div>
-                            <!-- Description -->
-                            <label for="Description" class="form-label">Description</label>
-                            <input type="text" class="form-control" id="Shift_description" name="Shift_description" 
-                                   pattern="[A-Za-z0-9 ]+"
-                                   maxlength="25"
-                                   title="Only letters and numbers are allowed. No spaces or special characters.">
-                        </div>
-
-                        <!--  Status select + hidden name sync -->
-                        <div>
-                            <label for="Status_id" class="form-label">Status  <span class="text-danger"><strong>*</strong></span></label>
-                            <select class="form-select" id="Status_id" name="Status_id"
-                                    asp-items="@(ViewBag.StatusList as IEnumerable<SelectListItem>)" required>
-                                <option value="" selected disabled>Select Status</option>
-                            </select>
-                        </div>
-                    </div>
-                    <!-- Shift Timings -->
-                    <div class="row g-3 align-items-end">
-                      <div>
-                        <label for="From_time" class="form-label">From Time <span class="text-danger">*</span></label>
-                        <input type="time" class="form-control" id="From_time" name="From_time" required>
-                      </div>
-
-                      <div>
-                        <label for="To_time" class="form-label">To Time <span class="text-danger">*</span></label>
-                        <input type="time" class="form-control" id="To_time" name="To_time" required>
-                      </div>
-
-                      <div class="d-flex align-items-center justify-content-end">
-                        <button type="button" id="addBreakBtn"
-                                style="background:#007bff; color:white; border:1px solid #007bff;">
-                          <span class="material-icons align-middle" style="font-size: 16px; color:white;">add</span>
-                          Add Break
-                        </button>
-                      </div>
-                    </div>
-
-                    <!-- Break Timings Container -->
-                    <div id="breakContainer" class="mt-3 border rounded-3 p-3" style="display:none;">
-                      <label class="form-label fw-bold mb-2">Break Timings</label>
-                      <div id="breakRows"></div>
-                    </div>
-                </form>
-            </div>
-
-            <!--  Modal footer with actions -->
-            <div class="modal-footer">
-                
-                 <button type="button" class="btn btn-cancel" data-bs-dismiss="modal">Cancel</button>
-                <button type="submit" class="btn btn-submit" id="modalSubmitBtn" form="addEditForm">Add</button>
-            </div>
-        </div>
-    </div>
-</div>
-
-<script>
-
-
-    document.addEventListener("DOMContentLoaded", () => {
-        // ==========================
-        // 🔹 Initialize reusable components
-        // ==========================
-        initTooltips(); // Bootstrap tooltips
-
-
-        const shiftMasterData = JSON.parse('@Html.Raw(shiftMasterData)');
-        let selectedRow = null;
-        let currentMode = "";
-
-        // ==========================
-        // 🔹 Generate Tabulator columns dynamically
-        // ==========================
-        function generateTabulatorColumns(data) {
-            if (!data || data.length === 0) return [];
-
-            const fields = Object.keys(data[0]);
-
-            // 🏷️ Custom aliases (you can edit these)
-            const aliases = {
-                Status_name: "Status",
-
-            };
-
-            const formatTitle = (str) => {
-                let result = str.replace(/[_\-]/g, ' ');
-                result = result.replace(/([a-z])([A-Z])/g, '$1 $2');
-                return result.replace(/\w\S*/g, (txt) => txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase());
-            };
-
-            return fields.map(field => ({
-                title: aliases[field] || formatTitle(field),
-                field: field,
-                headerHozAlign: "center",
-                hozAlign: "center",
-                tooltip: true,
-                resizable: true
-            }));
+    <style>
+        .main-container {
+            margin-left: 5px;
+            margin-right: 5px;
         }
 
-        // ==========================
-        // 🔹 Initialize Tabulator
-        // ==========================
-        // const dataTable = initializeTabulator("#shiftMastertable", shiftMasterData, generateTabulatorColumns(shiftMasterData),
-        //     (data) => selectedRow = data[0] || null
-        // );
 
-            const dataTable = new Tabulator("#shiftMastertable", {
-            data: shiftMasterData,
-            columns: [
-              { title: "Shift Name", field: "Shift_name", width: 220 },
-              { title: "Shift Description", field: "Shift_description", width: 600 },
-              { title: "Status", field: "Status_name", width: 150, hozAlign: "center" },
-              { title: "Created By", field: "Created_by", width: 150, hozAlign: "center" },
-            ],
-            layout: "fitDataStretch",
-            height: "70vh",
-            selectable: 1,
-            pagination: "local",
-            resizableRows:false,
-            resizableRowGuide:false,
-            resizableColumnGuide:false,
-            columnDefaults:{
-                resizable:false,
-            },           
-            movableColumns: false,
-            paginationSize: 10,
-            paginationSizeSelector: [5, 10, 20, 50, 100],
-             locale: true,
-            langs: {
-                "en": {
-            pagination: {
-                first: "<<",
-                first_title: "First",
-                last: ">>", 
-                last_title: "Last", 
-                prev: "<", 
-                prev_title: "Prev",
-                next: ">", 
-                next_title: "Next", 
-                page_size: "Page Size" 
-                 }
+    </style>
+
+    <div class="main-container">
+ 
+        <div class="col-12 text-center py-1 mb-3" style="background: #242424; color: white;">
+            <h6 class="mb-0 fw-bold text-uppercase tracking-wide">Shift Category</h6>
+        </div>
+   
+        <!--  Toolbar row with search + action buttons -->
+        <div class="row align-items-center mb-3">
+
+            <!-- Spacer on xs devices -->
+            <div class="w-100 d-md-none"></div>
+
+            <!--  Right-aligned tools on md+ -->
+            <div class="col-12 col-md d-flex justify-content-md-end align-items-center gap-2 flex-wrap">
+
+                <!--  Global search input -->
+                <input type="search"
+                       id="searchField"
+                       class="form-control form-control-sm"
+                       placeholder="Search..."
+                       style="max-width: 280px; min-width: 150px;" />
+
+                <!--  Action buttons group (Add/Edit/Delete/Download/Upload/Template) -->
+                <div class="btn-group flex-wrap" role="group" aria-label="Icon button group" style="flex-wrap: wrap;">
+                    <!--  Add row -->
+                    <button id="add-btn" type="button" class="btn btn-primary-professional btn-sm px-3" title="Add" data-bs-toggle="tooltip" data-bs-placement="top" aria-label="Add">
+                        <span class="material-icons" aria-hidden="true">add</span>
+                    </button>
+                    <!--  Edit selected row -->
+                    <button id="edit-btn" type="button" class="btn btn-primary-professional btn-sm px-3" title="Edit" data-bs-toggle="tooltip" data-bs-placement="top" aria-label="Edit">
+                        <span class="material-icons" aria-hidden="true">edit</span>
+                    </button>
+                    <!--  Delete selected row -->
+                    <button id="delete-btn" type="button" class="btn btn-primary-professional btn-sm px-3" title="Delete" data-bs-toggle="tooltip" data-bs-placement="top" aria-label="Delete">
+                        <span class="material-icons" aria-hidden="true">delete</span>
+                    </button>
+                    <!--  Download CSV -->
+                    <button id="download-btn" type="button" class="btn btn-primary-professional btn-sm px-3" title="Download" data-bs-toggle="tooltip" data-bs-placement="top" aria-label="Download">
+                        <span class="material-icons" aria-hidden="true">download</span>
+                    </button>
+                    <!--  Upload CSV -->
+                    <button id="upload-btn" type="button" class="btn btn-primary-professional btn-sm px-3" title="Upload" data-bs-toggle="tooltip" data-bs-placement="top" aria-label="Upload">
+                        <span class="material-icons" aria-hidden="true">upload</span>
+                    </button>
+                    <!--  Download CSV template -->
+                    <button id="download-template-btn" type="button" class="btn btn-primary-professional btn-sm px-3" title="Download Template" data-bs-toggle="tooltip" data-bs-placement="top" aria-label="Download Template">
+                        <span class="material-icons" aria-hidden="true">assignment_returned</span>
+                    </button>
+                </div>
+            </div>
+
+
+        </div>
+
+        <form id="afForm" style="display:none" method="post">
+            @Html.AntiForgeryToken()
+            <input type="file" id="upload-file" style="display:none" accept=".csv,text/csv" />
+        </form>
+
+
+        <div id="shiftMastertable" class="tabulator-bootstrap5"></div>
+
+        <div id="recordCount" class="footer-total-records"></div>
+    </div>
+
+    <!--  Add/Edit modal (single form reused for both modes) -->
+    <div class="modal fade modal-request" id="addEditModal" tabindex="-1" aria-labelledby="addEditModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content">
+
+                <div class="modal-header">
+                    <h6 class="modal-title" id="addEditModalLabel">Add/Edit Shift Master</h6>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close" style="filter: invert(1);"></button>
+                </div>
+                <!--  Modal body with form fields -->
+                <div class="modal-body">
+                    <form id="addEditForm">
+                        <!--  Hidden Id field -->
+                        <input type="hidden" id="Shift_id" name="Shift_id" />
+                        <div class="row g-3">
+
+                            <div>
+                                <!--  Shift_name -->
+                                <label for="Shift_name" class="form-label">Shift Name  <span class="text-danger"><strong>*</strong></span></label>
+                                <input type="text" class="form-control" id="Shift_name" name="Shift_name" required
+                                       pattern="[A-Za-z0-9 ]+"
+                                       maxlength="15"
+                                       title="Only letters and numbers are allowed. No spaces or special characters.">
+                            </div>
+
+                            <!-- Description -->
+                            <div>
+                                <!-- Description -->
+                                <label for="Description" class="form-label">Description</label>
+                                <input type="text" class="form-control" id="Shift_description" name="Shift_description" 
+                                       pattern="[A-Za-z0-9 ]+"
+                                       maxlength="25"
+                                       title="Only letters and numbers are allowed. No spaces or special characters.">
+                            </div>
+
+                            <!--  Status select + hidden name sync -->
+                            <div>
+                                <label for="Status_id" class="form-label">Status  <span class="text-danger"><strong>*</strong></span></label>
+                                <select class="form-select" id="Status_id" name="Status_id"
+                                        asp-items="@(ViewBag.StatusList as IEnumerable<SelectListItem>)" required>
+                                    <option value="" selected disabled>Select Status</option>
+                                </select>
+                            </div>
+                        </div>
+                        <!-- Shift Timings -->
+                        <div class="row g-3 align-items-end">
+                          <div>
+                            <label for="From_time" class="form-label">From Time <span class="text-danger">*</span></label>
+                            <input type="time" class="form-control" id="start_time" name="start_time" required>
+                          </div>
+
+                          <div>
+                            <label for="To_time" class="form-label">To Time <span class="text-danger">*</span></label>
+                            <input type="time" class="form-control" id="end_time" name="end_time" required>
+                          </div>
+
+                          <div class="d-flex align-items-center justify-content-end">
+                            <button type="button" id="addBreakBtn"
+                                    style="background:#007bff; color:white; border:1px solid #007bff;">
+                              <span class="material-icons align-middle" style="font-size: 16px; color:white;">add</span>
+                              Add Break
+                            </button>
+                          </div>
+                        </div>
+
+                        <!-- Break Timings Container -->
+                        <div id="breakContainer" class="mt-3 border rounded-3 p-3" style="display:none;">
+                          <label class="form-label fw-bold mb-2">Break Timings</label>
+                          <div id="breakRows"></div>
+                        </div>
+                    </form>
+                </div>
+
+                <!--  Modal footer with actions -->
+                <div class="modal-footer">
+                
+                     <button type="button" class="btn btn-cancel" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-submit" id="modalSubmitBtn" form="addEditForm">Add</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script>
+$(document).ready(function () {
+
+    initTooltips();
+
+    const shiftMasterData = @Html.Raw(shiftMasterData);
+    let selectedRow = null;
+    let currentMode = "";
+
+    //===============================
+    // Tabulator Initialization
+    //===============================
+    const dataTable = new Tabulator("#shiftMastertable", {
+        data: shiftMasterData,
+        columns: [
+            { title: "Shift Name", field: "Shift_name", width: 220 },
+            { title: "Shift Description", field: "Shift_description", width: 220 },
+            { title: "Start Time", field: "Start_Time", width: 220 },
+            { title: "End Time", field: "End_Time", width: 220 },
+            { title: "Status", field: "Is_deleted", width: 220 , formatter: function (cell) {
+                let val = cell.getValue();
+
+                return val === true || val === "true"
+                    ? "<span class='badge bg-danger'>In-Active</span>"
+                    : "<span class='badge bg-success'>Active</span>";
+            }},
+            { title: "Created By", field: "Created_by", width: 150, hozAlign: "center" },
+        ],
+        layout: "fitDataStretch",
+        height: "70vh",
+        selectable: 1,
+        pagination: "local",
+        resizableRows:false,
+        resizableRowGuide:false,
+        resizableColumnGuide:false,
+        resizableColumnGuide:false,
+        columnDefaults:{ resizable:false },
+        movableColumns: false,
+        paginationSize: 10,
+        paginationSizeSelector: [5, 10, 20, 50, 100],
+        locale: true,
+        langs: {
+            "en": {
+                pagination: {
+                    first: "<<",
+                    first_title: "First",
+                    last: ">>", 
+                    last_title: "Last", 
+                    prev: "<", 
+                    prev_title: "Prev",
+                    next: ">", 
+                    next_title: "Next", 
+                    page_size: "Page Size" 
                 }
-             },
-
-            rowClick: function (e, row) {
-              selectedRow = row.getData();
             }
+        },
+        rowClick: function (e, row) {
+            selectedRow = row.getData();
+        }
+    });
+
+    console.log("🔍 Raw shiftMasterData:", shiftMasterData);
+    dataTable.on("dataLoaded", function (data) {
+    $("#recordCount").text("Total Records: " + data.length);
+});
+
+
+    //===============================
+    // Search
+    //===============================
+    $("#searchField").on("input", function () {
+        let search = $(this).val().toLowerCase();
+        dataTable.setFilter((data) => {
+            return Object.values(data).some(v => v?.toString().toLowerCase().includes(search));
+        });
+    });
+
+    //===============================
+    // Modal Logic
+    //===============================
+    const addEditModalEl = $("#addEditModal");
+    const addEditModal = new bootstrap.Modal(addEditModalEl[0]);
+    const form = $("#addEditForm");
+
+    const status = $("#Status_id");
+    const breakContainer = $("#breakContainer");
+    const breakRows = $("#breakRows");
+    let breakCount = 0;
+
+    // Clear breaks when modal closed
+    addEditModalEl.on("hidden.bs.modal", () => {
+        breakRows.html("");
+        breakContainer.hide();
+        breakCount = 0;
+        status.prop("disabled", false);
+    });
+
+    //===============================
+    // Add Mode
+    //===============================
+    $("#add-btn").on("click", () => {
+        currentMode = "Add";
+        form[0].reset();
+        $("#Shift_id").val(0);
+
+        status.prop("disabled", true);
+        if (status.find("option").length > 1) {
+            status.prop("selectedIndex", 1);
+        }
+
+        $("#modalSubmitBtn").text("Add");
+        $("#addEditModalLabel").text("Add Shift Category");
+
+        addEditModal.show();
+    });
+
+    //===============================
+    // Edit Mode
+    //===============================
+    $("#edit-btn").on("click", () => {
+        const row = dataTable.getSelectedData()?.[0];
+        if (!row) {
+            return showAppAlert({
+                icon: 'warning',
+                title: 'No Selection',
+                text: 'Please select a row to edit.'
+            });
+        }
+
+        currentMode = "Edit";
+        $("#addEditModalLabel").text("Edit Shift Category");
+        $("#modalSubmitBtn").text("Update");
+
+        $("#Shift_id").val(row.Shift_id);
+        $("#Shift_name").val(row.Shift_name);
+        $("#Shift_description").val(row.Shift_description);
+
+        if (row.Start_Time) $("#start_time").val(row.Start_Time.substring(0, 5));
+        if (row.End_Time) $("#end_time").val(row.End_Time.substring(0, 5));
+
+        status.prop("disabled", false);
+
+        const $status = $("#Status_id");
+        const isDel = (row.Is_deleted === true) ||
+                        (row.Is_deleted === 1) ||
+                        (row.Is_deleted === "1") ||
+                        (String(row.Is_deleted).toLowerCase() === "true");
+
+        // 1) Try to select by option TEXT first (most robust)
+        let setByText = false;
+        $status.find("option").each(function () {
+            const txt = $(this).text().toLowerCase().replace(/\s+/g, "");
+            const isInactiveText = txt.includes("inactive") || txt.includes("in-active");
+            const isActiveText = txt.includes("active") && !txt.includes("in-");
+
+            if ((isDel && isInactiveText) || (!isDel && isActiveText)) {
+            $status.val($(this).val());
+            setByText = true;
+            return false; // break
+            }
+        });
+
+        // 2) Fallback to common VALUE patterns if text matching didn't work
+        if (!setByText) {
+            // for In-Active try 1 → 2 → true/True
+            // for Active    try 0 → 1 → false/False
+            const tryVals = isDel
+            ? ["1", "2", "true", "True"]
+            : ["0", "1", "false", "False"];
+
+            for (const v of tryVals) {
+            if ($status.find(`option[value="${v}"]`).length) {
+                $status.val(v);
+                break;
+            }
+            }
+        }
+        if (!status.val()) status.prop("selectedIndex", 0);
+
+        breakRows.html("");
+        breakCount = 0;
+        breakContainer.hide();
+
+        if (row.Break_Details) {
+            try {
+                const breaks = JSON.parse(row.Break_Details);
+
+                breaks.forEach((b, idx) => {
+                    breakCount++;
+                    breakContainer.show();
+
+                    const html = `
+                        <div class="row g-2 align-items-center mb-2" id="breakRow_${breakCount}">
+                            <div class="col-md-3">
+                                <input type="time" class="form-control"
+                                       name="Breaks[${breakCount}].In"
+                                       value="${b[`Break${breakCount}In`] ?? ""}" required>
+                            </div>
+                            <div class="col-md-3">
+                                <input type="time" class="form-control"
+                                       name="Breaks[${breakCount}].Out"
+                                       value="${b[`Break${breakCount}Out`] ?? ""}" required>
+                            </div>
+                            <div class="col-md-4">
+                                <input type="text" class="form-control"
+                                       name="Breaks[${breakCount}].Description"
+                                       value="${b[`Break${breakCount}Description`] ?? ""}"
+                                       placeholder="Break Description">
+                            </div>
+                            <div class="col-md-2">
+                                <button type="button" class="btn btn-outline-danger-professional btn-sm removeBreakBtn">
+                                    <span class="material-icons" style="font-size: 16px;">close</span>
+                                </button>
+                            </div>
+                        </div>
+                    `;
+
+                    breakRows.append(html);
+
+                });
+
+                // Attach remove handlers
+                breakRows.find(".removeBreakBtn").on("click", function () {
+                    $(this).closest(".row").remove();
+                    if (!breakRows.children().length) breakContainer.hide();
+                });
+
+            } catch (err) {
+                console.error("Break JSON parse failed:", err);
+            }
+        }
+
+        addEditModal.show();
+    });
+
+    //===============================
+    // Delete
+    //===============================
+    $("#delete-btn").on("click", async () => {
+        const row = dataTable.getSelectedData()?.[0];
+        if (!row) {
+            return showAppAlert({
+                icon: 'warning',
+                title: 'No Selection',
+                text: 'Please select a row to delete.'
+            });
+        }
+
+        const confirm = await showAppAlert({
+            type: "confirm",
+            icon: "question",
+            title: "Delete Confirmation",
+            text: "Are you sure you want to delete this record?"
+        });
+
+        if (!confirm.isConfirmed) return;
+
+        const success = await deleteRecord("/ShiftMaster/Delete", { Shift_id: row.Shift_id });
+        if (success) {
+            setTimeout(() => window.location.href = "/ShiftMaster/Index", 900);
+        }
+    });
+
+    //===============================
+    // Submit (Add / Edit)
+    //===============================
+    form.on("submit", async (e) => {
+        e.preventDefault();
+
+        const raw = new FormData(form[0]);
+        const formData = Object.fromEntries(raw.entries());
+        const statusText = $("#Status_id option:selected").text().trim().toLowerCase();
+        const statusValue = (formData.Status_id || "").toString().toLowerCase();
+
+        formData.is_deleted =
+            statusText.includes("inactive") ||
+            statusText.includes("in-active") ||
+            statusValue === "1" ||
+            statusValue === "true" ||
+            statusValue === "inactive";
+        const temp = {};
+        const breakList = [];
+
+        for (let key of raw.keys()) {
+            if (key.startsWith("Breaks[")) {
+                let m = key.match(/Breaks\[(\d+)\]\.(In|Out|Description)/);
+                if (!m) continue;
+
+                let idx = parseInt(m[1]);
+                let f = m[2];
+
+                if (!temp[idx]) temp[idx] = {};
+                temp[idx][f] = raw.get(key);
+            }
+        }
+
+        let counter = 1;
+        for (let idx in temp) {
+            breakList.push({
+                [`Break${counter}In`]: temp[idx].In,
+                [`Break${counter}Out`]: temp[idx].Out,
+                [`Break${counter}Description`]: temp[idx].Description
+            });
+            counter++;
+        }
+
+        formData.break_details = JSON.stringify(breakList);
+
+        const url = (currentMode === "Add") ? "/ShiftMaster/Create" : "/ShiftMaster/Update";
+        const success = await saveRecord(url, formData, currentMode, addEditModal, form[0]);
+
+        if (success) {
+            setTimeout(() => window.location.href = "/ShiftMaster/Index", 900);
+        }
+    });
+
+    //===============================
+    // Add Break
+    //===============================
+    $("#addBreakBtn").on("click", () => {
+        breakCount++;
+        breakContainer.show();
+
+        const html = `
+            <div class="row g-2 align-items-center mb-2" id="breakRow_${breakCount}">
+                <div class="col-md-3">
+                    <input type="time" class="form-control" name="Breaks[${breakCount}].In" required>
+                </div>
+                <div class="col-md-3">
+                    <input type="time" class="form-control" name="Breaks[${breakCount}].Out" required>
+                </div>
+                <div class="col-md-4">
+                    <input type="text" class="form-control"
+                           name="Breaks[${breakCount}].Description"
+                           placeholder="Break Description" required>
+                </div>
+                <div class="col-md-2">
+                    <button type="button" class="btn btn-outline-danger-professional btn-sm removeBreakBtn">
+                        <span class="material-icons" style="font-size:16px;">close</span>
+                    </button>
+                </div>
+            </div>
+        `;
+
+        breakRows.append(html);
+
+        breakRows.find(".removeBreakBtn").last().on("click", function () {
+            $(this).closest(".row").remove();
+            if (!breakRows.children().length) breakContainer.hide();
+        });
+    });
+     $("#download-btn").on("click", function () {
+            let rowCount = dataTable.getDataCount ? dataTable.getDataCount() : dataTable.getData().length;
+            if (rowCount === 1) {
+              const firstRow = dataTable.getData()[0];
+              if (!firstRow["Shift_id"]) rowCount = 0;
+            }
+
+            if (rowCount === 0) {
+              showAppAlert({ icon: 'warning', title: 'No Data', text: 'No records found to download.' });
+              return;
+            }
+            downloadCsv(dataTable, "ShiftMaster.csv");
           });
 
-        // Command: Live search (visible columns only) for parent table
-        document.getElementById("searchField").addEventListener("input", function () {
-            var searchTerm = this.value.toLowerCase();
-
-            // Command: Collect visible fields
-            var visibleColumns = dataTable.getColumns()
-                                      .filter(col => col.isVisible())
-                                      .map(col => col.getField());
-
-            // Command: Apply per-row predicate filter
-            dataTable.setFilter(function (data) {
-                return visibleColumns.some(field => {
-                    var value = data[field];
-                    return value != null && value.toString().toLowerCase().includes(searchTerm);
-                });
-            });
-        });
-    //         // Record count
-    // dataTable.on("dataFiltered", function(filters, rows){
-    //      document.getElementById("recordCount").innerText = "Total Records: " + rows.length;
-    // });
-    // dataTable.on("dataLoaded", function(data) {
-    //      document.getElementById("recordCount").innerText = "Total Records: " + data.length;
-    // });
-          // Record count for filtered data
-     dataTable.on("dataFiltered", function(filters, rows) {
-           updateRecordCount(dataTable, rows, "Shift_id");  // Pass the field name >>replace with your table primary id column
-     });
-
-     // Record count for loaded data
-     dataTable.on("dataLoaded", function(data) {
-           updateRecordCount(dataTable, data, "Shift_id");  // Pass the field name >>replace with your table primary id column
-     });
-
-
-     dataTable.on("tableBuilt", function(){
-        const hideFields = [
-               "Shift_id",
-              "Status_id",
-              "Is_deleted",
-              "Created_at",
-              "Updated_by",
-              "Updated_at",
-              "Version",
-              "AdditionalProperties"
-        ];
-
-        hideFields.forEach(field => dataTable.hideColumn(field));
-    });
-
-        const addEditModalEl = document.getElementById('addEditModal');
-        const addEditModal = new bootstrap.Modal(addEditModalEl);
-        const form = document.getElementById("addEditForm");
-
-        // ==========================
-        // 🔹 Add Button
-        // ==========================
-        document.getElementById("add-btn").addEventListener("click", () => {
-            currentMode = "Add";
-            form.reset();
-            document.getElementById("addEditModalLabel").textContent = "Add Shift Category";
-            document.getElementById("modalSubmitBtn").textContent = "Add";
-            document.getElementById("Shift_id").value=0;
-            addEditModal.show();
-        });
-
-        // ==========================
-        // 🔹 Edit Button
-        // ==========================
-        document.getElementById("edit-btn").addEventListener("click", () => {
-          const selectedRow = dataTable.getSelectedData()?.[0];
-            if (!selectedRow) {
-                return showAppAlert({ icon: 'warning', title: 'No Selection', text: 'Please select a row to edit.' });
-            }
-
-            currentMode = "Edit";
-            document.getElementById("addEditModalLabel").textContent = "Edit Shift Category";
-            document.getElementById("modalSubmitBtn").textContent = "Update";
-
-            // Populate modal form fields dynamically
-            Object.keys(selectedRow).forEach(field => {
-                const ShiftMasterField = document.getElementById(field);
-                if (ShiftMasterField) {
-                    if (ShiftMasterField.type === "datetime-local" && selectedRow[field]) {
-                        ShiftMasterField.value = new Date(selectedRow[field]).toISOString().slice(0,16);
-                    } else {
-                        ShiftMasterField.value = selectedRow[field] ?? "";
-                    }
-                }
-            });
-
-            addEditModal.show();
-        });
-
-        // ==========================
-        // 🔹 Delete Button
-        // ==========================
-
-        document.getElementById("delete-btn").addEventListener("click", async () => {
-            const selectedRow = dataTable.getSelectedData()?.[0];
-            if (!selectedRow) {
-                return showAppAlert({ icon: "warning", title: "No Selection", text: "Please select a row to delete." });
-            }
-
-            const Shiftid = selectedRow.Shift_id;
-
-            const confirm = await showAppAlert({
-                type: "confirm",
-                icon: "question",
-                title: "Delete Confirmation",
-                text: "Are you sure you want to delete this record?"
-            });
-
-            if (!confirm.isConfirmed) return;
-
-            const success = await deleteRecord("/ShiftMaster/Delete", { Shift_id: Shiftid }); // method defaults to PUT
-            if (success) {
-                // redirect or refresh your table
-                setTimeout(() => { window.location.href = "/ShiftMaster/Index"; }, 900);
-                // or: dataTable.replaceData();
-            }
-        });
-
-        // ==========================
-        // 🔹 Form Submit (Add/Edit)
-        // ==========================
-        form.addEventListener("submit", async (e) => {
-            e.preventDefault();
-            const formData = Object.fromEntries(new FormData(form).entries());
-            console.log(formData);
-
-            const fetchUrl = currentMode === "Add" ? "/ShiftMaster/Create" : "/ShiftMaster/Update";
-
-            const success = await saveRecord(fetchUrl, formData, currentMode, addEditModal, form);
-            if (success) {
-                setTimeout(() => {
-                    window.location.href = "/ShiftMaster/Index";
-                }, 900);
-            }
-        });
-
-       
-    //         document.getElementById("download-btn").addEventListener("click", function () {
-    //   const rowCount = dataTable.getDataCount ? dataTable.getDataCount() : dataTable.getData().length;
-
-    //   if (!rowCount || rowCount === 0) {
-    //     return showAppAlert({
-    //       icon: "info",
-    //       title: "No Data",
-    //       text: "There is no data in the table to download."
-    //     });
-    //   }
-    //    downloadCsv(dataTable, "ShiftMaster.csv");
-    //   // Use Tabulator's built-in CSV export
-    //  // dataTable.download("csv", "DepartmentMaster.csv", { bom: true });
-    // });
-           document.getElementById("download-btn").addEventListener("click", function () {
-
-       let rowCount = dataTable.getDataCount ? dataTable.getDataCount() : dataTable.getData().length;
-
-     if (rowCount === 1) {
-         let firstRowData = dataTable.getData()[0];
-         let firstRowFieldValue = firstRowData ? firstRowData["Shift_id"] : null;
-         if (firstRowFieldValue === null || firstRowFieldValue === 0 || firstRowFieldValue === "") {
-             rowCount = 0;
-         }
-     }
-     if (rowCount === 0) {
-         showAppAlert({
-             icon: 'warning',
-             title: 'No Data',
-             text: 'No records found to download.'
-         });
-         return; // Stop further execution
-     }
-
-        downloadCsv(dataTable, "ShiftCategory.csv");
-    });
-
-    //     // ==========================
-    //     // 🔹 Download Template
-    //     // ==========================
-    //     document.getElementById("download-template-btn").addEventListener("click", () =>
-    //         downloadCsvTemplate(dataTable, "ShiftMasterTemplate")
-    //     );
-
-    //     // ==========================
-    //     // 🔹 Upload Excel
-    //     // ==========================
- 
-
-
-
-    //     // Helper: get anti-forgery token value from hidden form
-    //   function getRequestVerificationToken() {
-    //     const tokenInput = document.querySelector('#afForm input[name="__RequestVerificationToken"]');
-    //     return tokenInput ? tokenInput.value : null;
-    //   }
-
-    //   // Click -> open chooser
-    //   document.getElementById("upload-btn").addEventListener("click", () => {
-    //     document.getElementById("upload-file").click();
-    //   });
-
-    //       // Event listener to handle file selection
-    // document.getElementById("upload-file").addEventListener("change", function (event) {
-    //     const fileInput = event.target;
-    //     if (!fileInput.files || fileInput.files.length === 0) {
-    //         return showAppAlert({ icon: 'warning', title: 'No File', text: 'Please select a file to upload.' });
-    //     }
-
-    //     const file = fileInput.files[0];
-
-    //     // Client-side CSV guards
-    //     const extOk = /\.csv$/i.test(file.name);
-    //     const type = (file.type || '').toLowerCase();
-    //     const typeOk = type.includes('csv') || type === 'application/vnd.ms-excel'; // some browsers
-    //     if (!extOk && !typeOk) {
-    //         showAppAlert({ icon: 'warning', title: 'Invalid File', text: 'Please select a .csv file.' });
-    //         fileInput.value = ''; // Clear the file input
-    //         return;
-    //     }
-
-    //     // Proceed with uploading the file
-    //     const url = '/ShiftMaster/Upload';  // Ensure this matches the controller route
-    //     uploadFile(url, file);
-    // });
-
-    // // Call this function after submitting the form
-    // async function uploadFile(url, file) {
-    //     const formData = new FormData();
-    //     formData.append("file", file);
-
-    //     // Get the CSRF token from the page
-    //     const csrfToken = document.querySelector('input[name="__RequestVerificationToken"]').value;
-
-    //     try {
-    //         const response = await fetch(url, {
-    //             method: 'POST',
-    //             headers: {
-    //                 'RequestVerificationToken': csrfToken // Add CSRF token in the header
-    //             },
-    //             body: formData  // Attach the file to FormData
-    //         });
-
-    //        await handleUploadResponse(response);  // Handle response
-
-    //        console.log(response);
-
-    //     } catch (error) {
-    //         alert('An error occurred while uploading the file.');
-    //     }
-    // }
-
-
-    //     async function handleUploadResponse(response) {
-    //   if (response.ok) {
-    //     const result = await response.json();
-    //     showAppAlert({ icon: 'success', title: result.title, text: result.message });
-
-    //     if (result.invalidRecords) downloadInvalidRecords(result.invalidRecords);
-
-    //     if (result.status === "success") {
-    //       setTimeout(() => { window.location.href = "/ShiftMaster/Index"; }, 900);
-    //     }
-    //   } else {
-    //     let title = "Upload Failed", text = "An unexpected error occurred.";
-    //     try {
-    //       const err = await response.json();
-    //       title = err.title || title;
-    //       text = err.message || text;
-    //       if (err.status === "error") {
-    //         setTimeout(() => { window.location.href = "/ShiftMaster/Index"; }, 1500);
-    //       }
-    //     } catch (_) { /* ignore JSON parse errors */ }
-    //     showAppAlert({ icon: 'error', title, text });
-    //   }
-    // }
-
-
-    // function downloadInvalidRecords(fileData) {
-    //     // Decode the base64 CSV data and create a Blob
-    //     const csvData = atob(fileData); // Decode base64 string to CSV
-    //     const blob = new Blob([csvData], { type: 'text/csv' });  // Create a Blob of CSV data
-    //     const link = document.createElement('a');
-    //     link.href = URL.createObjectURL(blob);  // Create a URL for the Blob
-    //     link.download = 'invalid_records.csv';  // Set the file name
-    //     link.click();  // Trigger the download
-    // }
-
-    });
-    // ==========================
-// 🔹 Break Timings Logic
-// ==========================
-const addBreakBtn = document.getElementById("addBreakBtn");
-const breakContainer = document.getElementById("breakContainer");
-const breakRows = document.getElementById("breakRows");
-
-let breakCount = 0;
-
-addBreakBtn.addEventListener("click", () => {
-  breakCount++;
-  breakContainer.style.display = "block";
-
-  const breakRow = document.createElement("div");
-  breakRow.className = "row g-2 align-items-center mb-2";
-  breakRow.id = `breakRow_${breakCount}`;
-
-  breakRow.innerHTML = `
-    <div class="col-md-4">
-      <input type="time" class="form-control" name="Breaks[${breakCount}].From" required>
-    </div>
-    <div class="col-md-4">
-      <input type="time" class="form-control" name="Breaks[${breakCount}].To" required>
-    </div>
-    <div class="col-md-2">
-      <button type="button" class="btn btn-outline-danger-professional btn-sm removeBreakBtn" title="Remove">
-        <span class="material-icons" style="font-size: 16px;">close</span>
-      </button>
-    </div>
-  `;
-
-  breakRows.appendChild(breakRow);
-
-  // attach remove handler
-  breakRow.querySelector(".removeBreakBtn").addEventListener("click", () => {
-    breakRow.remove();
-    if (breakRows.children.length === 0) breakContainer.style.display = "none";
-  });
 });
 
 </script>
-
-
-
-
-
-

@@ -1,0 +1,127 @@
+﻿
+@{
+    ViewData["Title"] = "FullCalendar Demo";
+}
+
+<script src="~/lib/fullcalendar/index.global.min.js"></script>
+<div class="container mt-4">
+    <h4>📅 FullCalendar with Context Menu</h4>
+    <div id="calendar"></div>
+</div>
+
+<!-- Popup Modal -->
+<div class="modal fade" id="eventModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Add Event</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="eventForm">
+                    <div class="mb-3">
+                        <label class="form-label">Event Title</label>
+                        <input type="text" id="eventTitle" class="form-control" required />
+                    </div>
+                    <input type="hidden" id="eventDate" />
+                    <button type="submit" class="btn btn-primary">Save</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Context Menu -->
+<ul id="contextMenu" class="dropdown-menu" style="position:absolute; display:none;">
+    <li><a class="dropdown-item" href="#" id="addEvent">Add Event</a></li>
+</ul>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const calendarEl = document.getElementById('calendar');
+        const contextMenu = $('#contextMenu');
+        let selectedDate = null;
+
+        const calendar = new FullCalendar.Calendar(calendarEl, {
+            initialView: 'dayGridMonth',
+            navLinks: true, // can click day/week names to navigate views
+      selectable: true,
+      selectMirror: true,
+      select: function(arg) {
+        var title = prompt('Event Title:');
+        if (title) {
+          calendar.addEvent({
+            title: title,
+            start: arg.start,
+            end: arg.end,
+            allDay: arg.allDay
+          })
+        }
+        calendar.unselect()
+      },
+      eventClick: function(arg) {
+        if (confirm('Are you sure you want to delete this event?')) {
+          arg.event.remove()
+        }
+      },
+      editable: true,
+      dayMaxEvents: true, // allow "more" link when too many events
+            events: '/Calendar/GetEvents',
+            dateClick: function (info) {
+                // Left click: select
+                selectedDate = info.dateStr;
+            }
+        });
+        calendar.render();
+
+        // Right-click handler
+        $(calendarEl).on('contextmenu', '.fc-daygrid-day', function (e) {
+            e.preventDefault();
+            const dateStr = $(this).data('date');
+            selectedDate = dateStr;
+
+            contextMenu.css({
+                display: 'block',
+                left: e.pageX,
+                top: e.pageY
+            });
+            return false;
+        });
+
+        // Hide context menu when clicking elsewhere
+        $(document).on('click', function () {
+            contextMenu.hide();
+        });
+
+        // Context menu item click
+        $('#addEvent').on('click', function (e) {
+            e.preventDefault();
+            contextMenu.hide();
+
+            $('#eventDate').val(selectedDate);
+            $('#eventModal').modal('show');
+        });
+
+        // Submit modal form
+        $('#eventForm').on('submit', function (e) {
+            e.preventDefault();
+
+            const title = $('#eventTitle').val();
+            const date = $('#eventDate').val();
+
+            if (title && date) {
+                $.ajax({
+                    url: '/Calendar/AddEvent',
+                    method: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify({ Title: title, Start: date }),
+                    success: function () {
+                        calendar.addEvent({ title: title, start: date });
+                        $('#eventModal').modal('hide');
+                        $('#eventForm')[0].reset();
+                    }
+                });
+            }
+        });
+    });
+</script>

@@ -18,6 +18,8 @@
 
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Rendering;
+using Newtonsoft.Json;
 using OfficeOpenXml;
 using System;
 using System.Collections.Generic;
@@ -65,20 +67,39 @@ namespace YardManagementApplication
                 // - DateTime       => MM/dd/yyyy
                 // - DateTimeOffset => MM/dd/yyyy HH:mm:ss (24h)
                 var jsonOptions = AppJson.CreateDateOnlyOptions();
+                var shiftResult = await _apiClient.GetAllShiftAsync();
+
+                if (shiftResult == null || !shiftResult.Any())
+                {
+                    shiftResult = new List<ShiftModel> { new ShiftModel() };
+                }
+                else
+                {
+                    shiftResult = shiftResult
+                        .Where(s => s.Is_deleted == false)
+                        .ToList();
+                }
+                ViewBag.ShiftList = shiftResult
+                    .Select(s => new SelectListItem
+                    {
+                        Text = s.Shift_name,   // label
+                        Value = s.Shift_id.ToString() // value
+                    })
+                    .ToList();
 
                 string jsonResult = System.Text.Json.JsonSerializer.Serialize(result, jsonOptions);
                 ViewData["TemplateConfiguration"] = jsonResult;
 
                 // Fetch dropdown sources from API
-                var statuses = await _apiClient.TemplateStatusAsync();
-                var shifts = await _apiClient.ShiftAsync();
-                var breaks = await _apiClient.BreakAsync();
-                var plant = await _apiClient.PlantListAsync();
+                //var statuses = await _apiClient.TemplateStatusAsync();
+                //var shifts = await _apiClient.ShiftAsync();
+                //var breaks = await _apiClient.BreakAsync();
+                //var plant = await _apiClient.PlantListAsync();
 
-                ViewBag.StatusList = Utility.PrepareSelectList(statuses);
-                ViewBag.ShiftList = Utility.PrepareSelectList(shifts);
-                ViewBag.BreakList = Utility.PrepareSelectList(breaks);
-                ViewBag.PlantList = Utility.PrepareSelectList(plant);
+                //ViewBag.StatusList = Utility.PrepareSelectList(statuses);
+                //ViewBag.ShiftList = Utility.PrepareSelectList(shifts);
+                //ViewBag.BreakList = Utility.PrepareSelectList(breaks);
+                //ViewBag.PlantList = Utility.PrepareSelectList(plant);
 
                 return View();
             }
@@ -103,28 +124,14 @@ namespace YardManagementApplication
         {
             try
             {
-                model.Created_by = HttpContext.Session.GetString("LoginUser");
+                model.created_by = HttpContext.Session.GetString("LoginUser");
+               
+                
+                Console.WriteLine("Incoming Payload: " + Newtonsoft.Json.JsonConvert.SerializeObject(model));         
 
-                // Cascade audit/ids to children
-                if (model.Shiftdetails != null && model.Shiftdetails.Count > 0)
-                {
-                    foreach (var shift in model.Shiftdetails)
-                    {
-                        shift.Template_id = model.Template_id;
-                        shift.Created_by = model.Created_by;
-
-                        if (shift.Breakdetails != null && shift.Breakdetails.Count > 0)
-                        {
-                            foreach (var breakDetail in shift.Breakdetails)
-                            {
-                                breakDetail.Shift_details_id = shift.Shift_details_id;
-                                breakDetail.Created_by = model.Created_by;
-                            }
-                        }
-                    }
-                }
 
                 var result = await _apiClient.InsertTemplateAsync(model);
+
 
                 return Ok(new
                 {
@@ -149,52 +156,44 @@ namespace YardManagementApplication
         // =====================================================
         // PUT /TemplateConfiguration/Update - Update existing template
         // =====================================================
-        [HttpPut]
-        public async Task<IActionResult> Update([FromBody] TemplateUpdateModel model)
-        {
-            try
+            [HttpPut]
+            public async Task<IActionResult> Update([FromBody] TemplateUpdateModel model)
             {
-                model.Updated_by = HttpContext.Session.GetString("LoginUser");
-
-                if (model.Shiftdetails != null && model.Shiftdetails.Count > 0)
+                try
                 {
-                    foreach (var shift in model.Shiftdetails)
+                    model.updated_by = HttpContext.Session.GetString("LoginUser");
+
+                    // Map MVC model → API model
+                    var apiModel = new TemplateUpdateModel
                     {
-                        shift.Template_id = model.Template_id;
-                        shift.Updated_by = model.Updated_by;
+                        template_name = model.template_name,
+                        updated_by = model.updated_by,
+                        template_description = model.template_description,
+                        updated_at = DateTimeOffset.UtcNow,
+                        shift_id=model.shift_id,
+                        effective_from=model.effective_from
+                    };
 
-                        if (shift.Breakdetails != null && shift.Breakdetails.Count > 0)
-                        {
-                            foreach (var breakDetail in shift.Breakdetails)
-                            {
-                                breakDetail.Shift_details_id = shift.Shift_details_id;
-                                breakDetail.Updated_by = model.Updated_by;
-                            }
-                        }
-                    }
+                    var result = await _apiClient.UpdateTemplateAsync(model.template_id, apiModel);
+
+                    return Ok(new
+                    {
+                        status = result.Status,
+                        title = result.Title ?? "Success",
+                        message = result.Detail ?? "Template updated successfully."
+                    });
                 }
-
-                var result = await _apiClient.UpdateTemplateAsync(model.Template_id, model);
-
-                return Ok(new
+                catch (ApiException<ProblemDetails> ex)
                 {
-                    status = result.Status,
-                    title = result.Title ?? "Success",
-                    message = result.Detail ?? "Template updated successfully."
-                });
+                    var problem = ex.Result;
+                    return StatusCode(problem.Status ?? ex.StatusCode, new
+                    {
+                        status = problem.Status ?? ex.StatusCode,
+                        title = "Error",
+                        message = problem.Detail ?? "An unexpected error occurred."
+                    });
+                }
             }
-            catch (ApiException<ProblemDetails> ex)
-            {
-                var problem = ex.Result;
-
-                return StatusCode(problem.Status ?? ex.StatusCode, new
-                {
-                    status = problem.Status ?? ex.StatusCode,
-                    title = "Error",
-                    message = problem.Detail ?? "An unexpected error occurred."
-                });
-            }
-        }
 
         // =====================================================
         // PUT /TemplateConfiguration/Delete - Soft delete by id
@@ -204,9 +203,9 @@ namespace YardManagementApplication
         {
             try
             {
-                model.Updated_by = HttpContext.Session.GetString("LoginUser");
+                model.updated_by = HttpContext.Session.GetString("LoginUser");
 
-                var result = await _apiClient.DeleteTemplateAsync(model.Template_id);
+                var result = await _apiClient.DeleteTemplateAsync(model.template_id);
 
                 return Ok(new
                 {
