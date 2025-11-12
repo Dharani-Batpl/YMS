@@ -3,10 +3,9 @@
 // =================================================================================================
 // File Name   : DepartmentMasterController.cs
 // Module      : Masters
-// Author      : Sujitha B / Dharani T
+// Author      : Sujitha B
 // Created On  : 2025-10-18
 // Description : Controller for managing Reason master data.
-// Modified On  : 2025-11-11
 // =================================================================================================
 
 // =================================================================================================
@@ -22,7 +21,6 @@ using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
 using OfficeOpenXml;
 using System.ComponentModel.DataAnnotations;
-using System.Net;
 using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
@@ -151,7 +149,7 @@ namespace YardManagementApplication
 
 
         [HttpPut()]
-        public async Task<IActionResult> Update([FromBody] ShiftModel model)
+        public async Task<IActionResult> Update([FromBody] ShiftUpdateModel model)
         {
             try
             {
@@ -184,51 +182,46 @@ namespace YardManagementApplication
 
         }
 
-        [HttpPut]
+
+        [HttpPut()]
         public async Task<IActionResult> Delete([FromBody] ShiftModel model)
         {
-
             try
             {
-                var result = await _apiClient.DeleteShiftAsync(model.Shift_id);
+                model.Updated_by = HttpContext.Session.GetString("LoginUser");
+
+                // Validate that Department_id is provided
+                if (model.Shift_id == null || model.Shift_id <= 0)
+                {
+                    return BadRequest(new
+                    {
+                        status = "error",
+                        title = "Invalid Data",
+                        message = "shift ID is required for delete."
+                    });
+                }
+
+                long id = model.Shift_id;
+
+                var result = await _apiClient.DeleteShiftAsync(id);
 
                 return Ok(new
                 {
                     status = result.Status,
-                    title = "Success",
+                    title =  "Success",
                     message = result.Detail ?? "Record deleted successfully"
                 });
             }
-            catch (ApiException<ResponseModel> ex)
+            catch (ApiException<ProblemDetails> ex)
             {
+                // This catches structured API errors (with JSON body)
                 var problem = ex.Result;
-                int statusCode = problem.Status != 0 ? problem.Status : ex.StatusCode;
 
-                return StatusCode(statusCode, new
+                return StatusCode(problem.Status ?? ex.StatusCode, new
                 {
-                    status = statusCode,
-                    title = problem.Title ?? "Error",
-                    message = problem.Detail ?? "This shift is mapped to an active template and cannot be deleted."
-                });
-            }
-            catch (ApiException ex)
-            {
-                // fallback for other unexpected API exceptions
-                return StatusCode(ex.StatusCode, new
-                {
-                    status = ex.StatusCode,
+                    status = problem.Status ?? ex.StatusCode,
                     title = "Error",
-                    message = ex.Message
-                });
-            }
-            catch (Exception ex)
-            {
-                // fallback for generic .NET exceptions
-                return StatusCode(500, new
-                {
-                    status = 500,
-                    title = "Error",
-                    message = ex.Message
+                    message = problem.Detail ?? "An unexpected error occurred."
                 });
             }
 

@@ -5,7 +5,6 @@ using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
 using YardManagementApplication.Models;
-using YardManagementApplication.Services;
 
 namespace YardManagementApplication.Controllers
 {
@@ -13,12 +12,11 @@ namespace YardManagementApplication.Controllers
     {
         private readonly HttpClient _httpClient;
         private readonly IConfiguration _GPSConfiguration;
-        private readonly IJwtService _jwtService;
-        public LoginController(IHttpClientFactory httpClientFactory, IConfiguration gPSConfiguration, IJwtService jwtService)
+
+        public LoginController(IHttpClientFactory httpClientFactory, IConfiguration gPSConfiguration)
         {
             _httpClient = httpClientFactory.CreateClient();
             _GPSConfiguration = gPSConfiguration;
-            _jwtService = jwtService;
         }
 
         // Render login page
@@ -44,8 +42,6 @@ namespace YardManagementApplication.Controllers
 
             var response = await _httpClient.PostAsync(ServerURL, content);
 
-
-
             if (!response.IsSuccessStatusCode)
             {
                 ModelState.AddModelError("", "Invalid username or password");
@@ -57,7 +53,7 @@ namespace YardManagementApplication.Controllers
             var tokenResponse = JsonSerializer.Deserialize<TokenResponseModel>(
                 respString,
                 new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
-            _jwtService.StoreTokensinCookies(tokenResponse);
+
             HttpContext.Session.SetString("AccessToken", tokenResponse.AccessToken);
 
             //TempData["LoginUser"] = loginModel.Username;
