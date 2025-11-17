@@ -6,7 +6,6 @@
   },
   "servers": [
     {
-      //"url": "http://172.16.10.222:8099/"
       "url": "http://localhost:8099/"
     }
   ],
@@ -2847,17 +2846,17 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/TemplateUpdateModel"
+                "$ref": "#/components/schemas/TemplateModel"
               }
             },
             "text/json": {
               "schema": {
-                "$ref": "#/components/schemas/TemplateUpdateModel"
+                "$ref": "#/components/schemas/TemplateModel"
               }
             },
             "application/*+json": {
               "schema": {
-                "$ref": "#/components/schemas/TemplateUpdateModel"
+                "$ref": "#/components/schemas/TemplateModel"
               }
             }
           },
@@ -3009,6 +3008,115 @@
           },
           "500": {
             "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/api/v1/Template/UploadTemplate": {
+      "post": {
+        "tags": [
+          "Template"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TemplateResponseModel"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TemplateResponseModel"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/TemplateResponseModel"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponseModel"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponseModel"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponseModel"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponseModel"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponseModel"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponseModel"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponseModel"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponseModel"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponseModel"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponseModel"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponseModel"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponseModel"
+                }
+              }
+            }
           }
         }
       }
@@ -3194,7 +3302,7 @@
                 "schema": {
                   "type": "array",
                   "items": {
-                    "$ref": "#/components/schemas/ShiftModel"
+                    "$ref": "#/components/schemas/ShiftMasterModel"
                   }
                 }
               },
@@ -3202,7 +3310,7 @@
                 "schema": {
                   "type": "array",
                   "items": {
-                    "$ref": "#/components/schemas/ShiftModel"
+                    "$ref": "#/components/schemas/ShiftMasterModel"
                   }
                 }
               },
@@ -3210,7 +3318,7 @@
                 "schema": {
                   "type": "array",
                   "items": {
-                    "$ref": "#/components/schemas/ShiftModel"
+                    "$ref": "#/components/schemas/ShiftMasterModel"
                   }
                 }
               }
@@ -3244,17 +3352,17 @@
             "content": {
               "text/plain": {
                 "schema": {
-                  "$ref": "#/components/schemas/ShiftModel"
+                  "$ref": "#/components/schemas/ShiftMasterModel"
                 }
               },
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ShiftModel"
+                  "$ref": "#/components/schemas/ShiftMasterModel"
                 }
               },
               "text/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ShiftModel"
+                  "$ref": "#/components/schemas/ShiftMasterModel"
                 }
               }
             }
@@ -3294,17 +3402,17 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/ShiftModel"
+                "$ref": "#/components/schemas/ShiftMasterModel"
               }
             },
             "text/json": {
               "schema": {
-                "$ref": "#/components/schemas/ShiftModel"
+                "$ref": "#/components/schemas/ShiftMasterModel"
               }
             },
             "application/*+json": {
               "schema": {
-                "$ref": "#/components/schemas/ShiftModel"
+                "$ref": "#/components/schemas/ShiftMasterModel"
               }
             }
           },
@@ -3397,6 +3505,514 @@
           "content": {
             "application/json": {
               "schema": {
+                "$ref": "#/components/schemas/ShiftMasterModel"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ShiftMasterModel"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/ShiftMasterModel"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponseModel"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponseModel"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponseModel"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/api/v1/Shift/UploadShift": {
+      "post": {
+        "tags": [
+          "Shift"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ShiftMasterModel"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ShiftMasterModel"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/ShiftMasterModel"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponseModel"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponseModel"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponseModel"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponseModel"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponseModel"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponseModel"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponseModel"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponseModel"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponseModel"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponseModel"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponseModel"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponseModel"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/Shift/DeleteShift/{id}": {
+      "post": {
+        "tags": [
+          "Shift"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponseModel"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponseModel"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponseModel"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponseModel"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponseModel"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponseModel"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponseModel"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponseModel"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponseModel"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponseModel"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponseModel"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponseModel"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/ShiftControllerOld/GetAllShift": {
+      "get": {
+        "tags": [
+          "ShiftControllerOld"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ShiftModel"
+                  }
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ShiftModel"
+                  }
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ShiftModel"
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/api/v1/ShiftControllerOld/GetShiftById/{id}": {
+      "get": {
+        "tags": [
+          "ShiftControllerOld"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ShiftModel"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ShiftModel"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ShiftModel"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/api/v1/ShiftControllerOld/InsertShift": {
+      "post": {
+        "tags": [
+          "ShiftControllerOld"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ShiftModel"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ShiftModel"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/ShiftModel"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponseModel"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponseModel"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponseModel"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/api/v1/ShiftControllerOld/UpdateShift/{id}": {
+      "post": {
+        "tags": [
+          "ShiftControllerOld"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
                 "$ref": "#/components/schemas/ShiftUpdateModel"
               }
             },
@@ -3480,10 +4096,10 @@
         }
       }
     },
-    "/api/v1/Shift/DeleteShift/{id}": {
+    "/api/v1/ShiftControllerOld/DeleteShift/{id}": {
       "post": {
         "tags": [
-          "Shift"
+          "ShiftControllerOld"
         ],
         "parameters": [
           {
@@ -11783,119 +12399,6 @@
           }
         }
       },
-      "BreakDetailsModel": {
-        "type": "object",
-        "properties": {
-          "break_details_id": {
-            "type": "integer",
-            "format": "int64",
-            "nullable": true
-          },
-          "shift_details_id": {
-            "type": "integer",
-            "format": "int64",
-            "nullable": true
-          },
-          "break_id": {
-            "type": "integer",
-            "format": "int64",
-            "nullable": true
-          },
-          "break_name": {
-            "type": "string",
-            "nullable": true
-          },
-          "break_start_time": {
-            "pattern": "^-?(\\d+\\.)?\\d{2}:\\d{2}:\\d{2}(\\.\\d{1,7})?$",
-            "type": "string",
-            "nullable": true
-          },
-          "break_end_time": {
-            "pattern": "^-?(\\d+\\.)?\\d{2}:\\d{2}:\\d{2}(\\.\\d{1,7})?$",
-            "type": "string",
-            "nullable": true
-          },
-          "is_deleted": {
-            "type": "boolean",
-            "nullable": true
-          },
-          "created_by": {
-            "type": "string",
-            "nullable": true
-          },
-          "created_at": {
-            "type": "string",
-            "format": "date-time",
-            "nullable": true
-          },
-          "updated_by": {
-            "type": "string",
-            "nullable": true
-          },
-          "updated_at": {
-            "type": "string",
-            "format": "date-time",
-            "nullable": true
-          },
-          "version": {
-            "type": "integer",
-            "format": "int32",
-            "nullable": true
-          }
-        }
-      },
-      "BreakDetailsUpdateModel": {
-        "type": "object",
-        "properties": {
-          "break_details_id": {
-            "type": "integer",
-            "format": "int64",
-            "nullable": true
-          },
-          "shift_details_id": {
-            "type": "integer",
-            "format": "int64",
-            "nullable": true
-          },
-          "break_id": {
-            "type": "integer",
-            "format": "int64",
-            "nullable": true
-          },
-          "break_name": {
-            "type": "string",
-            "nullable": true
-          },
-          "break_start_time": {
-            "pattern": "^-?(\\d+\\.)?\\d{2}:\\d{2}:\\d{2}(\\.\\d{1,7})?$",
-            "type": "string",
-            "nullable": true
-          },
-          "break_end_time": {
-            "pattern": "^-?(\\d+\\.)?\\d{2}:\\d{2}:\\d{2}(\\.\\d{1,7})?$",
-            "type": "string",
-            "nullable": true
-          },
-          "is_deleted": {
-            "type": "boolean",
-            "nullable": true
-          },
-          "updated_by": {
-            "type": "string",
-            "nullable": true
-          },
-          "updated_at": {
-            "type": "string",
-            "format": "date-time",
-            "nullable": true
-          },
-          "version": {
-            "type": "integer",
-            "format": "int32",
-            "nullable": true
-          }
-        }
-      },
       "BreakTimeModel": {
         "type": "object",
         "properties": {
@@ -14646,44 +15149,33 @@
           }
         }
       },
-      "ShiftDetailsModel": {
+      "ShiftMasterModel": {
         "type": "object",
         "properties": {
-          "shift_details_id": {
-            "type": "integer",
-            "format": "int64",
-            "nullable": true
-          },
-          "template_id": {
-            "type": "integer",
-            "format": "int64",
-            "nullable": true
-          },
-          "template_name": {
-            "type": "string",
-            "nullable": true
-          },
           "shift_id": {
             "type": "integer",
-            "format": "int64",
-            "nullable": true
+            "format": "int64"
           },
           "shift_name": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
-          "shift_start_time": {
-            "pattern": "^-?(\\d+\\.)?\\d{2}:\\d{2}:\\d{2}(\\.\\d{1,7})?$",
-            "type": "string",
-            "nullable": true
-          },
-          "shift_end_time": {
-            "pattern": "^-?(\\d+\\.)?\\d{2}:\\d{2}:\\d{2}(\\.\\d{1,7})?$",
+          "shift_description": {
             "type": "string",
             "nullable": true
           },
           "is_deleted": {
-            "type": "boolean",
+            "type": "boolean"
+          },
+          "start_time": {
+            "pattern": "^-?(\\d+\\.)?\\d{2}:\\d{2}:\\d{2}(\\.\\d{1,7})?$",
+            "type": "string"
+          },
+          "end_time": {
+            "pattern": "^-?(\\d+\\.)?\\d{2}:\\d{2}:\\d{2}(\\.\\d{1,7})?$",
+            "type": "string"
+          },
+          "break_details": {
+            "type": "string",
             "nullable": true
           },
           "created_by": {
@@ -14703,79 +15195,15 @@
             "type": "string",
             "format": "date-time",
             "nullable": true
-          },
-          "version": {
-            "type": "integer",
-            "format": "int32",
-            "nullable": true
-          },
-          "breakdetails": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/BreakDetailsModel"
-            }
           }
         }
       },
-      "ShiftDetailsUpdateModel": {
+      "ShiftMasterModelDetails": {
         "type": "object",
         "properties": {
-          "shift_details_id": {
-            "type": "integer",
-            "format": "int64",
-            "nullable": true
-          },
-          "template_id": {
-            "type": "integer",
-            "format": "int64",
-            "nullable": true
-          },
-          "template_name": {
-            "type": "string",
-            "nullable": true
-          },
-          "shift_id": {
-            "type": "integer",
-            "format": "int64",
-            "nullable": true
-          },
           "shift_name": {
             "type": "string",
             "nullable": true
-          },
-          "shift_start_time": {
-            "pattern": "^-?(\\d+\\.)?\\d{2}:\\d{2}:\\d{2}(\\.\\d{1,7})?$",
-            "type": "string",
-            "nullable": true
-          },
-          "shift_end_time": {
-            "pattern": "^-?(\\d+\\.)?\\d{2}:\\d{2}:\\d{2}(\\.\\d{1,7})?$",
-            "type": "string",
-            "nullable": true
-          },
-          "is_deleted": {
-            "type": "boolean",
-            "nullable": true
-          },
-          "updated_by": {
-            "type": "string",
-            "nullable": true
-          },
-          "updated_at": {
-            "type": "string",
-            "format": "date-time",
-            "nullable": true
-          },
-          "version": {
-            "type": "integer",
-            "format": "int32",
-            "nullable": true
-          },
-          "breakdetails": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/BreakDetailsUpdateModel"
-            }
           }
         }
       },
@@ -15030,19 +15458,15 @@
             "format": "int64",
             "nullable": true
           },
+          "shift_id": {
+            "type": "integer",
+            "format": "int64",
+            "nullable": true
+          },
           "template_name": {
             "type": "string"
           },
-          "description": {
-            "type": "string",
-            "nullable": true
-          },
-          "status_id": {
-            "type": "integer",
-            "format": "int32",
-            "nullable": true
-          },
-          "status_name": {
+          "template_description": {
             "type": "string",
             "nullable": true
           },
@@ -15068,64 +15492,54 @@
             "format": "date-time",
             "nullable": true
           },
-          "temp_start_time": {
+          "effective_from": {
             "type": "string",
             "format": "date-time",
-            "nullable": true
-          },
-          "temp_end_time": {
-            "type": "string",
-            "format": "date-time",
-            "nullable": true
-          },
-          "plant_id": {
-            "type": "integer",
-            "format": "int32",
-            "nullable": true
-          },
-          "plant_name": {
-            "type": "string",
-            "nullable": true
-          },
-          "version": {
-            "type": "integer",
-            "format": "int32",
             "nullable": true
           },
           "shiftdetails": {
             "type": "array",
             "items": {
-              "$ref": "#/components/schemas/ShiftDetailsModel"
+              "$ref": "#/components/schemas/ShiftMasterModelDetails"
             }
           }
         }
       },
-      "TemplateUpdateModel": {
+      "TemplateResponseModel": {
         "type": "object",
         "properties": {
+          "shift_name": {
+            "type": "string",
+            "nullable": true
+          },
           "template_id": {
             "type": "integer",
-            "format": "int64"
+            "format": "int64",
+            "nullable": true
+          },
+          "shift_id": {
+            "type": "integer",
+            "format": "int64",
+            "nullable": true
           },
           "template_name": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
-          "description": {
-            "type": "string",
-            "nullable": true
-          },
-          "status_id": {
-            "type": "integer",
-            "format": "int32",
-            "nullable": true
-          },
-          "status_name": {
+          "template_description": {
             "type": "string",
             "nullable": true
           },
           "is_deleted": {
             "type": "boolean",
+            "nullable": true
+          },
+          "created_by": {
+            "type": "string",
+            "nullable": true
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
             "nullable": true
           },
           "updated_by": {
@@ -15137,34 +15551,15 @@
             "format": "date-time",
             "nullable": true
           },
-          "temp_start_time": {
+          "effective_from": {
             "type": "string",
             "format": "date-time",
-            "nullable": true
-          },
-          "temp_end_time": {
-            "type": "string",
-            "format": "date-time",
-            "nullable": true
-          },
-          "plant_id": {
-            "type": "integer",
-            "format": "int32",
-            "nullable": true
-          },
-          "plant_name": {
-            "type": "string",
-            "nullable": true
-          },
-          "version": {
-            "type": "integer",
-            "format": "int32",
             "nullable": true
           },
           "shiftdetails": {
             "type": "array",
             "items": {
-              "$ref": "#/components/schemas/ShiftDetailsUpdateModel"
+              "$ref": "#/components/schemas/ShiftMasterModelDetails"
             }
           }
         }
@@ -16200,6 +16595,9 @@
     },
     {
       "name": "Shift"
+    },
+    {
+      "name": "ShiftControllerOld"
     },
     {
       "name": "Route"

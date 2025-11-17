@@ -143,7 +143,7 @@ try
 
 
     builder.Logging.ClearProviders();
-    builder.Logging.AddSerilog();
+    //builder.Logging.AddSerilog();
     builder.Host.UseSerilog();
 
 

@@ -2,216 +2,256 @@
     var templateConfiguration = ViewData["TemplateConfiguration"] ?? "[]";
     Layout = "_Layout";
 }
-
-<head>
-    <!-- Keep head empty -->
-</head>
+<head></head>
 
 <style>
     .main-container {
         margin-left: 5px;
         margin-right: 5px;
     }
-
-
 </style>
 
 <div class="main-container">
 
-    <div class="col-12 text-center py-1 mb-3" style="background: #242424; color: white;">
+    <div class="col-12 text-center py-1 mb-3" style="background:#242424;color:white;">
         <h6 class="mb-0 fw-bold text-uppercase tracking-wide">Shift Template Configuration</h6>
     </div>
 
     <div class="row align-items-center mb-3">
         <div class="col-12 col-md d-flex justify-content-md-end align-items-center gap-2 flex-wrap">
-            <input type="search" id="searchField" class="form-control form-control-sm" placeholder="Search..."
-                   style="max-width: 280px; min-width: 150px;" />
+
+            <input type="search" id="searchField"
+                   class="form-control form-control-sm"
+                   placeholder="Search..."
+                   style="max-width:280px;min-width:150px;" />
+
             <div class="btn-group flex-wrap">
+
                 <button id="add-btn" class="btn btn-primary-professional btn-sm px-3">
                     <span class="material-icons">add</span>
                 </button>
+
                 <button id="edit-btn" class="btn btn-primary-professional btn-sm px-3">
                     <span class="material-icons">edit</span>
                 </button>
-                <button id="delete-btn" class="btn btn-primary-professional btn-sm px-3">
-                    <span class="material-icons">delete</span>
-                </button>
+                            
+
                 <button id="download-btn" class="btn btn-primary-professional btn-sm px-3">
                     <span class="material-icons">download</span>
                 </button>
+
+                <button id="upload-btn" class="btn btn-primary-professional btn-sm px-3" title="Upload">
+                    <span class="material-icons">upload</span>
+                </button>
+                <input type="file" id="upload-file" hidden accept=".xlsx,.xls" />
+
+                <button id="download-template-btn" class="btn btn-primary-professional btn-sm px-3" title="Template">
+                    <span class="material-icons">assignment_returned</span>
+                </button>
+
             </div>
         </div>
     </div>
 
     <div id="templateTable" class="tabulator-bootstrap5"></div>
-
     <div id="recordCount" class="footer-total-records"></div>
 
 </div>
 
-        <!-- Add/Edit Modal -->
-        <div class="modal fade modal-request" id="addEditModal" tabindex="-1" aria-hidden="true">
-            <div class="modal-dialog modal-dialog-centered modal-lg">
-                <div class="modal-content">
+<!-- Add/Edit Modal -->
+<div class="modal fade modal-request" id="addEditModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content">
 
-                    <div class="modal-header">
-                        <h6 class="modal-title" id="addEditModalLabel">Add/Edit Template</h6>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal" style="filter: invert(1);"></button>
+            <div class="modal-header">
+                <h6 class="modal-title" id="addEditModalLabel">Add/Edit Template</h6>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" style="filter:invert(1);"></button>
+            </div>
+
+            <div class="modal-body">
+
+                <form id="addEditForm">
+
+                    <input type="hidden" id="Template_id" name="Template_id" />
+
+                    <div class="row g-3">
+
+                        <div>
+                            <label class="form-label">Template Name</label>
+                            <span class="text-danger">*</span>
+                            <input type="text" id="Template_name" name="Template_name"
+                                   class="form-control" required maxlength="50">
+                        </div>
+
+                        <div>
+                            <label class="form-label">Template Description</label>
+                            <input type="text" id="Description" name="Description"
+                                   class="form-control" maxlength="150">
+                        </div>
+
+                        <div>
+                            <label class="form-label">Shift</label>
+                            <span class="text-danger">*</span>
+                            <select class="form-select" id="Shift_id" name="Shift_id"
+                                    asp-items="@(ViewBag.ShiftList as IEnumerable<SelectListItem>)">
+                                <option disabled selected value="">Select Shift</option>
+                            </select>
+                        </div>
+
+                        <div>
+                            <label class="form-label">Effective From</label>
+                            <span class="text-danger">*</span>
+                            <input type="date" id="Effective_from" name="Effective_from"
+                                   class="form-control" required min="">
+                            <span id="effectiveFromError" class="text-danger" style="display:none;"></span>
+                        </div>
+                    
+                        <div>
+                            <label class="form-label">Status</label>
+                            <span class="text-danger">*</span>
+                            <select class="form-select" id="Status_id" name="Status_id" required>
+                                <option value="0">Active</option>
+                                <option value="1">Inactive</option>
+                            </select>
+                        </div>
                     </div>
 
-                   <div class="modal-body">
-            <form id="addEditForm">
 
-                <input type="hidden" id="Template_id" name="Template_id" />
+                </form>
+            </div>
 
-                <div class="row g-3">
-
-                    <!-- Template Name -->
-                    <div>
-                        <label class="form-label">Template Name</label>
-                        <span class="text-danger">*</span>
-                        <input type="text" id="Template_name" name="Template_name"
-                               class="form-control" required maxlength="50">
-                    </div>
-
-                    <!-- Template Description -->
-                    <div>
-                        <label class="form-label">Template Description</label>
-                        <input type="text" id="Description" name="Description"
-                               class="form-control" maxlength="150">
-                    </div>
-
-                    <!-- Shift Dropdown -->
-                    <div>
-                        <label class="form-label">Shift</label>
-                        <span class="text-danger">*</span>
-                        <select class="form-select" id="Shift_id" name="Shift_id"
-                                asp-items="@(ViewBag.ShiftList as IEnumerable<SelectListItem>)">
-                            <option disabled selected value="">Select Shift</option>
-                        </select>
-                    </div>
-
-                    <!-- Effective From -->
-                    <div>
-                        <label class="form-label">Effective From</label>
-                        <span class="text-danger">*</span>
-                        <input type="date" id="Effective_from" name="Effective_from"
-                               class="form-control" required min="">
-                        <span id="effectiveFromError" class="text-danger" style="display:none;"></span>
-                    </div>
-
-                </div>
-            </form>
-        </div>
-
-
-             <div class="modal-footer">
-
+            <div class="modal-footer">
                 <button type="button" class="btn btn-cancel" data-bs-dismiss="modal">Cancel</button>
                 <button type="submit" class="btn btn-submit" id="modalSubmitBtn" form="addEditForm">Add</button>
             </div>
+
         </div>
     </div>
 </div>
+<form id="afForm" method="post" style="display:none">
+    @Html.AntiForgeryToken()
+</form>
+
 
 <script>
 $(document).ready(function () {
 
     initTooltips();
 
-    const templateConfiguration = JSON.parse('@Html.Raw(templateConfiguration)');
+    const templateConfiguration =
+        JSON.parse('@Html.Raw(templateConfiguration)');
+
     console.log(templateConfiguration);
 
-    // Initialize Template Table
     let selectedRow = null;
 
+    // ----------------------------------------
+    // Table
+    // ----------------------------------------
     const templateTable = new Tabulator("#templateTable", {
+
         data: templateConfiguration,
+
         columns: [
-    { title: "Template Name", field: "template_name", minWidth: 220, headerHozAlign: "center" },
+            {
+                title: "Template Name",
+                field: "Template_name",
+                minWidth: 220,
+                headerHozAlign: "center"
+            },
+            {
+                title: "Shift Name",
+                field: "AdditionalProperties.shift_name",
+                minWidth: 180,
+                headerHozAlign: "center"
+            },
+            {
+                title: "Status",
+                field: "Is_deleted",
+              
+                width: 130,
+                headerHozAlign: "center",
+                formatter: function (cell) {
+                    return cell.getValue()
+                        ? "<span class='badge bg-danger'>Inactive</span>"
+                        : "<span class='badge bg-success'>Active</span>";
+                }
+            },
+            {
+                title: "Effective From",
+                field: "Effective_from",
+               
+                minWidth: 160,
+                headerHozAlign: "center"
+            },
+             
+            {
+                title: "Created By",
+                field: "Created_by",
+               
+                minWidth: 150
+               
+            }
+        ],
 
-    {
-        title: "Shift Name",
-        field: "shift_name",
-        minWidth: 180,
-        headerHozAlign: "center"
-    },
-
-    {
-        title: "Status",
-        field: "is_deleted",
-        hozAlign: "center",
-        width: 130,
-        headerHozAlign: "center",
-        formatter: function (cell) {
-            return cell.getValue()
-                ? "<span class='badge bg-danger'>Inactive</span>"
-                : "<span class='badge bg-success'>Active</span>";
-        }
-    },
-
-    {
-        title: "Effective From",
-        field: "effective_from",
-        hozAlign: "center",
-        minWidth: 160,
-        headerHozAlign: "center"
-    },
-
-    {
-        title: "Created By",
-        field: "created_by",
-        hozAlign: "center",
-        minWidth: 150,
-        headerHozAlign: "center"
-    }
-],
-
-
-       layout: "fitColumns",
+        layout: "fitColumns",
         height: "70vh",
         selectable: 1,
+
         pagination: "local",
-        resizableRows:false,
-        resizableRowGuide:false,
-        resizableColumnGuide:false,
-        resizableColumnGuide:false,
-        columnDefaults:{ resizable:false },
-        movableColumns: false,
         paginationSize: 10,
         paginationSizeSelector: [5, 10, 20, 50, 100],
+
+        resizableRows: false,
+        resizableColumnGuide: false,
+        columnDefaults: { resizable: false },
+        movableColumns: false,
+
         locale: true,
         langs: {
             "en": {
                 pagination: {
                     first: "<<",
                     first_title: "First",
-                    last: ">>", 
-                    last_title: "Last", 
-                    prev: "<", 
+                    last: ">>",
+                    last_title: "Last",
+                    prev: "<",
                     prev_title: "Prev",
-                    next: ">", 
-                    next_title: "Next", 
-                    page_size: "Page Size" 
+                    next: ">",
+                    next_title: "Next",
+                    page_size: "Page Size"
                 }
             }
         },
+
         rowClick: function (e, row) {
             selectedRow = row.getData();
         }
     });
 
-    // ✅ Search
+
+    // ----------------------------------------
+    // Search
+    // ----------------------------------------
     $("#searchField").on("input", function () {
+
         const q = $(this).val().toLowerCase();
-        const visibleCols = templateTable.getColumns().map(col => col.getField());
+        const visibleCols = templateTable.getColumns().map(c => c.getField());
 
         templateTable.setFilter(d =>
-            visibleCols.some(f => (d?.[f] ?? "").toString().toLowerCase().includes(q))
+            visibleCols.some(f =>
+                (d?.[f] ?? "")
+                    .toString()
+                    .toLowerCase()
+                    .includes(q)
+            )
         );
     });
 
-    // ✅ Record Count
+
+    // ----------------------------------------
+    // Record Count
+    // ----------------------------------------
     templateTable.on("dataLoaded", (data) => {
         $("#recordCount").text("Total Records: " + data.length);
     });
@@ -220,153 +260,334 @@ $(document).ready(function () {
         $("#recordCount").text("Total Records: " + rows.length);
     });
 
-    // ✅ Hide unwanted columns
+
+    // ----------------------------------------
+    // Hide unnecessary columns
+    // ----------------------------------------
     templateTable.on("tableBuilt", () => {
+
         const hideFields = [
-            "template_id", "Status_id", "Plant_id", "Version",
-            "Created_at", "Updated_at", "Updated_by", "Shiftdetails", "AdditionalProperties"
+            "template_id",
+            "Status_id",
+            "Plant_id",
+            "Version",
+            "Created_at",
+            "Updated_at",
+            "Updated_by",
+            "Shiftdetails",
+            "AdditionalProperties"
         ];
+
         hideFields.forEach(f => templateTable.hideColumn(f));
     });
 
-    // ✅ Modal
+
+    // ----------------------------------------
+    // Modal handling
+    // ----------------------------------------
     const addEditModal = new bootstrap.Modal($("#addEditModal")[0]);
     let currentMode = "Add";
 
-    // ✅ Add Mode
+
+    // Add
     $("#add-btn").on("click", function () {
+
         currentMode = "Add";
+
         $("#addEditModalLabel").text("Add Shift Template");
         $("#modalSubmitBtn").text("Add");
+
         $("#addEditForm")[0].reset();
-         $("#Template_name").prop("disabled", false);
+          $("#Template_name").prop("readonly", false);
+        $("#Status_id").val("0");
+        $("#Status_id").prop("disabled", true);    
         addEditModal.show();
     });
 
-    // ✅ Edit Mode
-        $("#edit-btn").on("click", function () {
-            const sel = templateTable.getSelectedData()?.[0];
 
-            if (!sel)
-                return showAppAlert({
-                    icon: "warning",
-                    title: "No Selection",
-                    text: "Select a row to edit."
-                });
+    // Edit
+    $("#edit-btn").on("click", function () {
 
-            currentMode = "Edit";
-            $("#addEditModalLabel").text("Edit Shift Template");
-            $("#modalSubmitBtn").text("Update");
-             $("#Template_name").prop("disabled", true);
-            $("#Template_id").val(sel.template_id || "");
-            $("#Template_name").val(sel.template_name || "");
-            $("#Description").val(sel.template_description || "");
-            $("#Shift_id").val(sel.shift_id || "");
-
-           
-            let effDate = "";
-
-            if (sel.effective_from) {
-                if (sel.effective_from.includes("T")) {
-                    // Convert ISO date safely
-                    const d = new Date(sel.effective_from);
-                    effDate = new Date(d.getTime() - (d.getTimezoneOffset() * 60000))
-                                 .toISOString()
-                                 .split("T")[0];
-                } 
-                else if (sel.effective_from.includes("/Date(")) {
-                    // For .NET-style /Date(1731369600000)/
-                    const ms = parseInt(sel.effective_from.replace(/\D/g, ""), 10);
-                    const d = new Date(ms);
-                    effDate = new Date(d.getTime() - (d.getTimezoneOffset() * 60000))
-                                 .toISOString()
-                                 .split("T")[0];
-                } 
-                else {
-                    // Handle normal date string
-                    const d = new Date(sel.effective_from);
-                    if (!isNaN(d)) {
-                        effDate = new Date(d.getTime() - (d.getTimezoneOffset() * 60000))
-                                     .toISOString()
-                                     .split("T")[0];
-                    }
-                }
-            }
-
-            $("#Effective_from").val(effDate);
-
-
-            addEditModal.show();
-        });
-
-
-    // ✅ Delete
-    $("#delete-btn").on("click", async function () {
         const sel = templateTable.getSelectedData()?.[0];
 
-        if (!sel)
+        if (!sel) {
             return showAppAlert({
                 icon: "warning",
                 title: "No Selection",
-                text: "Select a row to delete."
+                text: "Select a row to edit."
             });
+        }
 
-        const confirm = await showAppAlert({
-            type: "confirm",
-            icon: "question",
-            title: "Delete Confirmation",
-            text: "Are you sure?"
-        });
+        currentMode = "Edit";
 
-        if (!confirm.isConfirmed) return;
+        $("#addEditModalLabel").text("Edit Shift Template");
+        $("#modalSubmitBtn").text("Update");
 
-        const ok = await deleteRecord("/TemplateConfiguration/Delete", { template_id: sel.template_id });
-        if (ok) location.reload();
+        $("#Template_name").prop("readonly", true);
+
+
+        $("#Template_id").val(sel.Template_id || "");
+        $("#Template_name").val(sel.Template_name || "");
+        $("#Description").val(sel.Template_description || "");
+        $("#Shift_id").val(sel.Shift_id || "");
+        $("#Status_id").prop("disabled", false);  // Enable selection
+
+        // Load Status
+        $("#Status_id").val(
+            sel.Is_deleted == 1 || sel.Is_deleted === true || sel.Is_deleted === "true"
+                ? "1"
+                : "0"
+        );
+        let effDate = "";
+
+        if (sel.Effective_from) {
+
+            // ISO
+            if (sel.Effective_from.includes("T")) {
+                const d = new Date(sel.Effective_from);
+                effDate = new Date(d.getTime() - d.getTimezoneOffset() * 60000)
+                    .toISOString().split("T")[0];
+            }
+            // /Date(…)
+            else if (sel.Effective_from.includes("/Date(")) {
+                const ms = parseInt(sel.Effective_from.replace(/\D/g, ""), 10);
+                const d = new Date(ms);
+                effDate = new Date(d.getTime() - d.getTimezoneOffset() * 60000)
+                    .toISOString().split("T")[0];
+            }
+            // Normal
+            else {
+                const d = new Date(sel.Effective_from);
+                if (!isNaN(d)) {
+                    effDate = new Date(d.getTime() - d.getTimezoneOffset() * 60000)
+                        .toISOString().split("T")[0];
+                }
+            }
+        }
+
+        $("#Effective_from").val(effDate);
+
+        addEditModal.show();
     });
 
-    // ✅ Submit (Add / Edit)
+
+    // ----------------------------------------
+    // Submit (Add / Edit)
+    // ----------------------------------------
     $("#addEditForm").on("submit", async function (e) {
+
         e.preventDefault();
 
-        const formData = Object.fromEntries(new FormData(this).entries());
+        const formData =
+            Object.fromEntries(new FormData(this).entries());
+         let statusValue = 0;   // Add → always active (0)
 
+           
         const payload = {
-            template_id: currentMode === "Edit" ? Number(formData.Template_id) : 0,
+            template_id:
+                currentMode === "Edit"
+                    ? Number(formData.Template_id)
+                    : 0,
+
             template_name: formData.Template_name,
-              template_description: formData.Description || "",
+            template_description: formData.Description || "",
             shift_id: Number(formData.Shift_id),
-            effective_from: formData.Effective_from
-          
+            effective_from: formData.Effective_from,
+            is_deleted:false
         };
+         if (currentMode === "Edit") {
+            payload.is_deleted = $("#Status_id").val() === "1";  // BOOLEAN ✓
+        }
 
+        const url =
+            currentMode === "Add"
+                ? "/TemplateConfiguration/Create"
+                : "/TemplateConfiguration/Update";
 
-        
-
-        const url = currentMode === "Add"
-            ? "/TemplateConfiguration/Create"
-            : "/TemplateConfiguration/Update";
-
-        const ok = await saveRecord(url, payload, currentMode, addEditModal, this);
+        const ok =
+            await saveRecord(url, payload, currentMode, addEditModal, this);
 
         if (ok) location.reload();
     });
 
-    // ✅ Set minimum date for future selection
+
+    // ----------------------------------------
+    // Download CSV
+    // ----------------------------------------
+    $("#download-btn").on("click", function () {
+
+        let rowCount = templateTable.getDataCount
+            ? templateTable.getDataCount()
+            : templateTable.getData().length;
+
+        if (rowCount === 1) {
+            const firstRow = templateTable.getData()[0];
+            if (!firstRow["Template_id"]) rowCount = 0;
+        }
+
+        if (rowCount === 0) {
+            showAppAlert({
+                icon: 'warning',
+                title: 'No Data',
+                text: 'No records found to download.'
+            });
+            return;
+        }
+
+        downloadCsv(templateTable, "TemplateMaster.csv");
+    });
+
+
+    // ----------------------------------------
+    // Minimum date
+    // ----------------------------------------
     const today = new Date().toISOString().split("T")[0];
     $("#Effective_from").attr("min", today);
-    $("#download-btn").on("click", function () {
-            let rowCount = templateTable.getDataCount ? templateTable.getDataCount() : templateTable.getData().length;
-            if (rowCount === 1) {
-              const firstRow = templateTable.getData()[0];
-              if (!firstRow["Template_id"]) rowCount = 0;
-            }
-
-            if (rowCount === 0) {
-              showAppAlert({ icon: 'warning', title: 'No Data', text: 'No records found to download.' });
-              return;
-            }
-            downloadCsv(templateTable, "TemplateMaster.csv");
-          });
 
 });
+       $("#download-template-btn").on("click", function () {
+         const headers = [
+        "Template Name",
+        "Template Description",
+        "Shift Name",
+        "Effective from"
+    ];
+
+    downloadTemplate(headers, "TemplateMaster");
+    });
+
+    $("#upload-btn").on("click", function () {
+    $("#upload-file").click();
+    });
+
+    $("#upload-file").on("change", function (event) {
+    const file = event.target.files?.[0];
+    if (!file) {
+        return showAppAlert({ icon: 'warning', title: 'No File', text: 'Please select a file to upload.' });
+    }
+    // const isCsv = /\.csv$/i.test(file.name);
+    // if (!isCsv) {
+    //   showAppAlert({ icon: 'warning', title: 'Invalid File', text: 'Please select a .csv file.' });
+    //   return;
+    // }
+        const isExcel = /\.(xlsx|xls)$/i.test(file.name);
+        if (!isExcel) {
+            showAppAlert({
+            icon: 'warning',
+            title: 'Invalid File',
+            text: 'Please select an Excel file (.xlsx or .xls).'
+            });
+            return;
+        }
+
+    uploadFile('/TemplateConfiguration/Upload', file);
+    });
+
+    async function uploadFile(url, file) {
+    const formData = new FormData();
+    formData.append("file", file);
+    const csrf = $('#afForm input[name="__RequestVerificationToken"]').val();
+
+    try {
+        const response = await fetch(url, {
+        method: 'POST',
+        headers: { 'RequestVerificationToken': csrf },
+        body: formData
+        });
+        await handleUploadResponse(response);
+    } catch (err) {
+        showToast({ icon: "error", text: err.message });
+    }
+    }
+
+    async function handleUploadResponse(response) {
+
+        const result = await response.json().catch(() => null);
+
+        // ================================
+        // SUCCESS BLOCK
+        // ================================
+        if (response.ok) {
+
+            showAppAlert({
+                icon: result.status,
+                title: result.title,
+                text: result.message,
+                timer: 2500,
+                showConfirmButton: false
+            });
+
+            // 🔥 AUTO REFRESH PAGE (BEST + SIMPLE)
+            setTimeout(() => location.reload(), 800);
+
+            // allow uploading same file again
+            $("#upload-file").val("");
+
+            return;
+        }
+
+        // ================================
+        // ERROR BLOCK — API RETURNED ERRORS
+        // ================================
+        if (result && result.errors) {
+
+            let msg = "";
+            result.errors.forEach(e => {
+                msg += `Error: ${e.error}\n\n`;
+            });
+
+            showAppAlert({
+                icon: "error",
+                title: "Upload Failed",
+                text: msg,
+                timer: 4500,
+                showConfirmButton: false
+            });
+
+            $("#upload-file").val("");
+            return;
+        }
+
+        // ================================
+        // GENERIC API MESSAGE
+        // ================================
+        if (result && result.message) {
+            showAppAlert({
+                icon: "error",
+                title: "Upload Failed",
+                text: result.message,
+                timer: 3500,
+                showConfirmButton: false
+            });
+
+            $("#upload-file").val("");
+            return;
+        }
+
+        // ================================
+        // UNKNOWN ERROR
+        // ================================
+        showAppAlert({
+            icon: "error",
+            title: "Upload Failed",
+            text: "Unexpected error.",
+            timer: 3500,
+            showConfirmButton: false
+        });
+
+        $("#upload-file").val("");
+    }
+
+
+    function downloadInvalidRecords(fileData) {
+    const csvData = atob(fileData);
+    const blob = new Blob([csvData], { type: 'text/csv' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = 'invalid_records.csv';
+    link.click();
+    }
+
+
+
 </script>
