@@ -10,7 +10,13 @@
     <!--  Keep head empty as per request (no changes to assets/includes) -->
 </head>
 
-<div class="container">
+<style>
+    .main-container {
+        margin-left: 5px;
+        margin-right: 5px;
+    }
+</style>
+<div class="main-container">
     <!--  Page title header -->
 @*     <div id="pageTitle" class="col-12 text-center py-1 mb-3">
         <h6 class="mb-0 fw-bold text-uppercase tracking-wide">Employee Master</h6>
@@ -81,7 +87,8 @@
     <!--  Tabulator grid mount point -->
     <div id="employeeConfigurationTable" class="tabulator-bootstrap5"></div>
 
-    <div id="recordCount" class="text-end mt-2 fw-semibold text-secondary"></div>
+    @* <div id="recordCount" class="text-end mt-2 fw-semibold text-secondary"></div> *@
+     <div id="recordCount" class="footer-total-records"></div>
 
 </div>
 
@@ -397,9 +404,46 @@
             // ==========================
             // 🔹 Initialize Tabulator
             // ==========================
-            const dataTable = initializeTabulator("#employeeConfigurationTable", EmployeeConfigurationData, generateTabulatorColumns(EmployeeConfigurationData),
-                (data) => selectedRow = data[0] || null
-            );
+            // const dataTable = initializeTabulator("#employeeConfigurationTable", EmployeeConfigurationData, generateTabulatorColumns(EmployeeConfigurationData),
+            //     (data) => selectedRow = data[0] || null
+            // );
+            	const dataTable = new Tabulator("#employeeConfigurationTable", {
+	            data: EmployeeConfigurationData,
+	            columns: generateTabulatorColumns(EmployeeConfigurationData),
+	            layout: "fitDataStretch",
+	            height: "80vh",
+	            selectable: 1,
+	            pagination: "local",
+	            resizableRows:false,
+	            resizableRowGuide:false,
+	            resizableColumnGuide:false,
+	            columnDefaults:{
+		            resizable:false,
+	            },           
+	            movableColumns: false,
+	            paginationSize: 10,
+	            paginationSizeSelector: [5, 10, 20, 50, 100],
+	             locale: true,
+	            langs: {
+		            "en": {
+	            pagination: {
+		            first: "<<",
+		            first_title: "First",
+		            last: ">>", 
+		            last_title: "Last", 
+		            prev: "<", 
+		            prev_title: "Prev",
+		            next: ">", 
+		            next_title: "Next", 
+		            page_size: "Page Size" 
+		             }
+		            }
+	             },
+
+	            rowClick: function (e, row) {
+	              selectedRow = row.getData();
+	            }
+	            });
 
             // Record count for filtered data
              dataTable.on("dataFiltered", function(filters, rows) {

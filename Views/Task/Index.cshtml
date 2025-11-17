@@ -26,10 +26,14 @@
                 background-color: #c82333;
                 border-color: #bd2130;
             }
+               .main-container {
+       margin-left: 5px;
+       margin-right: 5px;
+   }
 </style>
 
 
-<div class="container mt-2">
+<div class="main-container mt-2">
     <h5>Yard Management Task Master</h5>
     @* <div class="row">
         <div class="col-12 float-right offset-11">
@@ -63,6 +67,7 @@
                 </div>
             </div>
             <div id="picklistTable" class="tabulator tabulator-bootstrap5" style="width: 100%;"></div>
+             <div id="recordCountPicklist" class="footer-total-records"></div>
         </div>
         <div class="tab-pane fade" id="manual-routing" role="tabpanel" aria-labelledby="manual-routing-tab">
             <div class="d-flex justify-content-between align-items-center mb-3">
@@ -70,10 +75,14 @@
                 <button id="assignRoutesBtn" class="btn btn-primary">Assign Routes</button>
             </div>
             <div id="manualRoutingTable" class="tabulator tabulator-bootstrap5" style="width: 100%;"></div>
+            <div id="recordCountManual" class="footer-total-records"></div>
+
 
         </div>
         <div class="tab-pane fade" id="live-picklist" role="tabpanel" aria-labelledby="live-picklist-tab">
             @await Html.PartialAsync("LivePicklistPartial", Model.Item2)
+            <div id="recordCountLive" class="footer-total-records"></div>
+
 
         </div>
     </div>
@@ -139,6 +148,16 @@
         toast.onmouseleave = Swal.resumeTimer;
       }
     });
+    function bindRecordCount(table, elementId) {
+    const update = () => {
+        const count = table.getDataCount();
+        document.getElementById(elementId).textContent = "Total Records: " + count;
+    };
+
+    table.on("tableBuilt", update);
+    table.on("dataLoaded", update);
+    table.on("dataFiltered", update);
+}
 
         let picklistTable, manualRoutingTable;
 
@@ -197,6 +216,7 @@
             }
         }}
         });
+        bindRecordCount(picklistTable, "recordCountPicklist");
 
         // Initialize Manual Routing Table
         manualRoutingTable = new Tabulator("#manualRoutingTable", {
@@ -227,6 +247,8 @@
             }
         }}
         });
+        bindRecordCount(manualRoutingTable, "recordCountManual");
+
 
         // Initialize Live Picklist Table
       let livepicktable = new Tabulator("#livepickList", {
@@ -330,6 +352,7 @@
                 livepicktable.redraw();
             }
         });
+        bindRecordCount(livepicktable, "recordCountLive");
 
             $("#manualAssignModal").on('hidden.bs.modal', function () {
                 console.log('model is hidden');

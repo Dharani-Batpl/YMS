@@ -9,7 +9,16 @@
 <head>
 </head>
 
-<div class="container">
+
+
+
+<style>
+    .main-container {
+        margin-left: 5px;
+        margin-right: 5px;
+    }
+</style>
+<div class="main-container">
 
     <!--- Page Title Section --->
 @*     <div id="pageTitle" class="col-12 text-center py-1 mb-3">
@@ -71,7 +80,8 @@
 
     <!--- Vehicle Type Master Table --->
     <div id="VehicleTypeMasterTable" class="tabulator-bootstrap5"></div>
-    <div id="recordCount" class="text-end mt-2 fw-semibold text-secondary"></div>
+    @* <div id="recordCount" class="text-end mt-2 fw-semibold text-secondary"></div> *@
+     <div id="recordCount" class="footer-total-records"></div>
 </div>
 
 <!--- Add/Edit Modal --->
@@ -216,9 +226,63 @@
         // ==========================
         // 🔹 Initialize Tabulator
         // ==========================
-        const dataTable = initializeTabulator("#VehicleTypeMasterTable", vehicleTypeMasterData, generateTabulatorColumns(vehicleTypeMasterData),
-            (data) => selectedRow = data[0] || null
-        );
+        // const dataTable = initializeTabulator("#VehicleTypeMasterTable", vehicleTypeMasterData, generateTabulatorColumns(vehicleTypeMasterData),
+        //     (data) => selectedRow = data[0] || null
+        // );
+        	const dataTable = new Tabulator("#VehicleTypeMasterTable", {
+	            data: vehicleTypeMasterData,
+	            
+                columns: [
+                    { title: "Vehicle Type Code", field: "Vehicle_type_code", width: 220 },
+                    { title: "Vehicle Type Name", field: "Vehicle_type_name", width: 220 },
+                    { title: "Brand Name", field: "Brand_name", width: 220 },
+                    { title: "Category Type Name", field: "Category_type_name", width: 220 },
+                    { title: "Fuel Type Name", field: "Fuel_type_name", width: 220 },
+                    { title: "Status", field: "Status_name", width: 120 , formatter: function (cell) {
+                        let val = cell.getValue();
+
+                        return val === true || val === "true"
+                            ? "<span>In-Active</span>"
+                            : "<span>Active</span>";
+                    }},
+                    { title: "Description", field: "Description", width: 150 },
+                    { title: "Created By", field: "Created_by", width: 150 },
+                ],
+	            layout: "fitDataStretch",
+	            height: "80vh",
+	            selectable: 1,
+	            pagination: "local",
+	            resizableRows:false,
+	            resizableRowGuide:false,
+	            resizableColumnGuide:false,
+	            columnDefaults:{
+		            resizable:false,
+	            },           
+	            movableColumns: false,
+	            paginationSize: 10,
+	            paginationSizeSelector: [5, 10, 20, 50, 100],
+	             locale: true,
+	            langs: {
+		            "en": {
+	            pagination: {
+		            first: "<<",
+		            first_title: "First",
+		            last: ">>", 
+		            last_title: "Last", 
+		            prev: "<", 
+		            prev_title: "Prev",
+		            next: ">", 
+		            next_title: "Next", 
+		            page_size: "Page Size" 
+		             }
+		            }
+	             },
+
+	            rowClick: function (e, row) {
+	              selectedRow = row.getData();
+	            }
+	            });
+
 
                 // Command: Live search (visible columns only) for parent table
         document.getElementById("searchField").addEventListener("input", function () {

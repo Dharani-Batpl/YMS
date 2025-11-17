@@ -11,8 +11,13 @@
 </head>
 
 
-<div class="container">
-    <!-- Page title header -->
+<style>
+    .main-container {
+        margin-left: 5px;
+        margin-right: 5px;
+    }
+</style>
+<div class="main-container">    <!-- Page title header -->
 @*     <div id="pageTitle" class="col-12 text-center py-1 mb-3">
         <h6 class="mb-0 fw-bold text-uppercase tracking-wide">User Group Configuration</h6>
     </div> *@
@@ -81,7 +86,8 @@
                 <div class="card-body card-body-compact">
                     <!------- Parent Tabulator mount  + record count ------->
                     <div id="userGroupTable" class="tabulator-bootstrap5"></div>
-                    <div id="recordCount" class="text-end mt-2 fw-semibold text-secondary"></div>
+                    @* <div id="recordCount" class="text-end mt-2 fw-semibold text-secondary"></div> *@
+                     <div id="recordCount" class="footer-total-records"></div>
                 </div>
             </div>
         </div>
@@ -95,7 +101,8 @@
                 <div class="card-body card-body-compact">
                     <!------- Child Tabulator mount + record count ------->
                     <div id="userGroupChildTable" class="tabulator-bootstrap5"></div>
-                    <div id="recordCount1" class="text-end mt-2 fw-semibold text-secondary"></div>
+                    @* <div id="recordCount1" class="text-end mt-2 fw-semibold text-secondary"></div> *@
+                     <div id="recordCount1" class="footer-total-records"></div>
                 </div>
             </div>
         </div>
@@ -287,21 +294,69 @@
       // -----------------------------
       // Parent Tabulator
       // -----------------------------
-      const dataTable = initializeTabulator(
-        "#userGroupTable",
-        userGroupData,
-        generateTabulatorColumns(userGroupData),
-        (data) => {
-          selectedRow = data[0] || null;
-          if (selectedRow && selectedRow.Screens) {
-            childTable.setData(selectedRow.Screens);
-          } else {
-            childTable.clearData();
-          }
-        }
-      );
+      // const dataTable = initializeTabulator(
+      //   "#userGroupTable",
+      //   userGroupData,
+      //   generateTabulatorColumns(userGroupData),
+      //   (data) => {
+      //     selectedRow = data[0] || null;
+      //     if (selectedRow && selectedRow.Screens) {
+      //       childTable.setData(selectedRow.Screens);
+      //     } else {
+      //       childTable.clearData();
+      //     }
+      //   }
+      // );
 
-    
+    	const dataTable = new Tabulator("#userGroupTable", {
+            data: userGroupData,
+              columns: [
+         { title: "User Group Name", field: "User_group_name", width: 220 },
+       
+         { title: "Description", field: "Description", width: 150}
+     ],
+            layout: "fitDataStretch",
+            height: "40vh",
+            selectable: 1,
+            pagination: "local",
+
+            resizableRows:false,
+            resizableRowGuide:false,
+            resizableColumnGuide:false,
+            columnDefaults:{ resizable:false },
+            movableColumns: false,
+            paginationSize: 10,
+            paginationSizeSelector: [5, 10, 20, 50, 100],
+
+            locale: true,
+            langs: {
+                "en": {
+                    pagination: {
+                        first: "<<",
+                        first_title: "First",
+                        last: ">>",
+                        last_title: "Last",
+                        prev: "<",
+                        prev_title: "Prev",
+                        next: ">",
+                        next_title: "Next",
+                        page_size: "Page Size"
+                    }
+                }
+            },
+
+            rowSelectionChanged: function(data) {
+                selectedRow = data[0] || null;
+
+                if (selectedRow && selectedRow.Screens) {
+                    childTable.setData(selectedRow.Screens);
+                } else {
+                    childTable.clearData();
+                }
+            }
+        });
+
+
 
       // Live search on parent
       document.getElementById("searchField").addEventListener("input", function () {

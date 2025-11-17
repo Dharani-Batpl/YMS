@@ -8,8 +8,13 @@
 <head>
     <!--  Keep head empty as per request (no changes to assets/includes) -->
 </head>
-
-<div class="container">
+<style>
+    .main-container {
+        margin-left: 5px;
+        margin-right: 5px;
+    }
+</style>
+<div class="main-container">
 
 
 
@@ -78,7 +83,8 @@
     </form>
 
     <div id="brandMastertable" class="tabulator-bootstrap5"></div>
-    <div id="recordCount" class="text-end mt-2 fw-semibold text-secondary"></div>
+    <div id="recordCount" class="footer-total-records"></div>
+    @* <div id="recordCount" class="text-end mt-2 fw-semibold text-secondary"></div> *@
 </div>
 
 <!--  Add/Edit modal (single form reused for both modes) -->
@@ -215,9 +221,61 @@
         // ==========================
         // 🔹 Initialize Tabulator
         // ==========================
-        const dataTable = initializeTabulator("#brandMastertable", brandMasterData, generateTabulatorColumns(brandMasterData),
-            (data) => selectedRow = data[0] || null
-        );
+        // const dataTable = initializeTabulator("#brandMastertable", brandMasterData, generateTabulatorColumns(brandMasterData),
+        //     (data) => selectedRow = data[0] || null
+        // );
+        const dataTable = new Tabulator("#brandMastertable", {
+            data: brandMasterData,
+             columns: [
+                    { title: "Brand Code", field: "Brand_code", width: 220 },
+                    { title: "Brand Name", field: "Brand_name", width: 220 },                 
+                    { title: "Manufacturer Name", field: "Manufacturer_name", width: 220 },
+                    { title: "Country Name", field: "Country_name", width: 220 },
+                    { title: "Status", field: "Status_name", width: 150 , formatter: function (cell) {
+                        let val = cell.getValue();
+
+                        return val === true || val === "true"
+                            ? "<span>In-Active</span>"
+                            : "<span>Active</span>";
+                    }},
+                    { title: "Description By", field: "Description", width: 150},
+                    { title: "Created By", field: "Created_by", width: 150},
+                ],
+            layout: "fitDataStretch",
+            height: "80vh",
+            selectable: 1,
+            pagination: "local",
+            resizableRows:false,
+            resizableRowGuide:false,
+            resizableColumnGuide:false,
+            columnDefaults:{
+	            resizable:false,
+            },           
+            movableColumns: false,
+            paginationSize: 10,
+            paginationSizeSelector: [5, 10, 20, 50, 100],
+             locale: true,
+            langs: {
+	            "en": {
+            pagination: {
+	            first: "<<",
+	            first_title: "First",
+	            last: ">>", 
+	            last_title: "Last", 
+	            prev: "<", 
+	            prev_title: "Prev",
+	            next: ">", 
+	            next_title: "Next", 
+	            page_size: "Page Size" 
+	             }
+	            }
+             },
+
+            rowClick: function (e, row) {
+              selectedRow = row.getData();
+            }
+            });
+
 
         // Command: Live search (visible columns only) for parent table
         document.getElementById("searchField").addEventListener("input", function () {

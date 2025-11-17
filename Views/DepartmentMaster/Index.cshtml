@@ -9,8 +9,14 @@
     <!--  Keep head empty as per request (no changes to assets/includes) -->
 </head>
 
-<div class="container">
 
+<style>
+    .main-container {
+        margin-left: 5px;
+        margin-right: 5px;
+    }
+</style>
+<div class="main-container">
 
 
     <!--  Page title header -->
@@ -81,7 +87,8 @@
     </form>
 
     <div id="departmentMastertable" class="tabulator-bootstrap5"></div>
-    <div id="recordCount" class="text-end mt-2 fw-semibold text-secondary"></div>
+    @* <div id="recordCount" class="text-end mt-2 fw-semibold text-secondary"></div> *@
+     <div id="recordCount" class="footer-total-records"></div>
 </div>
 
 <!--  Add/Edit modal (single form reused for both modes) -->
@@ -203,10 +210,46 @@
         // ==========================
         // 🔹 Initialize Tabulator
         // ==========================
-        const dataTable = initializeTabulator("#departmentMastertable", departmentMasterData, generateTabulatorColumns(departmentMasterData),
-            (data) => selectedRow = data[0] || null
-        );
+        // const dataTable = initializeTabulator("#departmentMastertable", departmentMasterData, generateTabulatorColumns(departmentMasterData),
+        //     (data) => selectedRow = data[0] || null
+        // );
+        const dataTable = new Tabulator("#departmentMastertable", {
+                data: departmentMasterData,
+                columns: generateTabulatorColumns(departmentMasterData),
+                layout: "fitDataStretch",
+                height: "80vh",
+                selectable: 1,
+                pagination: "local",
+                resizableRows:false,
+                resizableRowGuide:false,
+                resizableColumnGuide:false,
+                columnDefaults:{
+	                resizable:false,
+                },           
+                movableColumns: false,
+                paginationSize: 10,
+                paginationSizeSelector: [5, 10, 20, 50, 100],
+                 locale: true,
+                langs: {
+	                "en": {
+                pagination: {
+	                first: "<<",
+	                first_title: "First",
+	                last: ">>", 
+	                last_title: "Last", 
+	                prev: "<", 
+	                prev_title: "Prev",
+	                next: ">", 
+	                next_title: "Next", 
+	                page_size: "Page Size" 
+	                 }
+	                }
+                 },
 
+                rowClick: function (e, row) {
+                  selectedRow = row.getData();
+                }
+                });
         // Command: Live search (visible columns only) for parent table
         document.getElementById("searchField").addEventListener("input", function () {
             var searchTerm = this.value.toLowerCase();

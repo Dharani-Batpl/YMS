@@ -13,7 +13,13 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tabulator-tables@5.5.0/dist/css/tabulator_bootstrap5.min.css" />
 </head>
 
-<div class="container mt-3">
+<style>
+    .main-container {
+        margin-left: 5px;
+        margin-right: 5px;
+    }
+</style>
+<div class="main-container">
     <div class="col-12 text-center py-1 mb-3" style="background: #242424; color: white;">
         <h6 class="mb-0 fw-bold text-uppercase tracking-wide">Yard Master Configuration</h6>
     </div>
@@ -47,6 +53,7 @@
 
     <!-- Yard Table -->
     <div id="yardTable" class="tabulator-bootstrap5"></div>
+       <div id="recordCount" class="footer-total-records"></div>
 </div>
 
 <input type="file" id="upload-file" style="display:none" accept=".csv" />
@@ -155,12 +162,7 @@
 
                const table = new Tabulator("#yardTable", {
             data: yards,
-            layout: "fitColumns",
-            selectable: 1,
-            placeholder: "No yard records available",
-            pagination: "local",
-            paginationSize: 10,
-            paginationSizeSelector: [5, 10, 20, 50],
+          
            // footerElement: "<div class='text-center p-2'><span id='yardCountFooter'></span></div>",
             columns: [
                 { title: "Yard ID", field: "Yard_id", width: 120 },
@@ -172,6 +174,20 @@
                 { title: "Status", field: "Status_name" },
                 { title: "Area (Acres)", field: "Area_acres", formatter: "money", formatterParams:{precision:2} }
             ],
+            layout: "fitDataStretch",
+	    height: "80vh",
+	    selectable: 1,
+	    pagination: "local",
+	    resizableRows:false,
+	    resizableRowGuide:false,
+	    resizableColumnGuide:false,
+	    columnDefaults:{
+		    resizable:false,
+	    },           
+	    movableColumns: false,
+	    paginationSize: 10,
+	    paginationSizeSelector: [5, 10, 20, 50, 100],
+	 
                   locale: true,
     langs: {
          "default": {
@@ -195,7 +211,14 @@
         // });
         table.on("rowSelected", row => selectedRow = row.getData());
         table.on("rowDeselected", () => selectedRow = null);
+        function updateYardRecordCount() {
+            const total = table.getDataCount();
+            document.getElementById("recordCount").textContent = "Total Records: " + total;
+        }
 
+        table.on("tableBuilt", updateYardRecordCount);
+        table.on("dataLoaded", updateYardRecordCount);
+        table.on("dataFiltered", updateYardRecordCount);
         // Quick search
         document.getElementById("searchField").addEventListener("input", function () {
             const val = this.value?.toLowerCase() || "";

@@ -12,8 +12,14 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tabulator-tables@5.5.0/dist/css/tabulator_bootstrap5.min.css" />
 </head>
-
-<div class="container mt-3">
+<style>
+    .main-container {
+        margin-left: 5px;
+        margin-right: 5px;
+    }
+</style>
+<div class="main-container">
+@* <div class="container mt-3"> *@
     <div class="col-12 text-center py-1 mb-3" style="background: #242424; color: white;">
         <h6 class="mb-0 fw-bold text-uppercase tracking-wide">Plant Master Configuration</h6>
     </div>
@@ -46,6 +52,7 @@
     </div>
 
     <div id="plantTable" class="tabulator-bootstrap5"></div>
+     <div id="recordCount" class="footer-total-records"></div>
 
     <!-- Yard Info + Table Section -->
     <div id="yardSection" class="mt-5" style="display:none;">
@@ -172,23 +179,6 @@
         const table = new Tabulator("#plantTable", {
 
             data: plants,
-
-            layout: "fitColumns",
-
-            placeholder: "No plant master records available",
-
-            selectable: 1,
-
-            pagination: "local",              // enable local pagination
-
-            paginationSize: 10,               // default rows per page
-
-            paginationSizeSelector: [10, 20, 50], // dropdown for page size
-
-            paginationButtonCount: 5,         // number of numeric buttons in footer
-
-            theme: "bootstrap5",
-
             columns: [
 
                 { title: "Plant ID", field: "Plant_id", width: 120 },
@@ -201,12 +191,25 @@
 
                 { title: "Address", field: "Plant_address" },
 
-                { title: "Coordinates", field: "Coordinates" },
+                { title: "Coordinates", field: "Coordinates", width: 220 },
 
                 { title: "Area", field: "Total_area", formatter: cell => cell.getValue() != null ? cell.getValue().toFixed(4) + " km²" : "" }
 
             ],
-
+            layout: "fitDataStretch",
+	        height: "80vh",
+	        selectable: 1,
+	        pagination: "local",
+	        resizableRows:false,
+	        resizableRowGuide:false,
+	        resizableColumnGuide:false,
+	        columnDefaults:{
+		        resizable:false,
+	        },           
+	        movableColumns: false,
+	        paginationSize: 10,
+	        paginationSizeSelector: [5, 10, 20, 50, 100],
+	
             rowSelectionChanged: function(data, rows) {
 
                 selectedRow = data.length > 0 ? data[0] : null;
@@ -258,7 +261,14 @@
         document.getElementById("searchField").addEventListener("keyup", e => {
             table.setFilter("Plant_name", "like", e.target.value);
         });
+        function updatePlantRecordCount() {
+            const total = table.getDataCount();
+            document.getElementById("recordCount").textContent = "Total Records: " + total;
+        }
 
+        table.on("tableBuilt", updatePlantRecordCount);
+        table.on("dataLoaded", updatePlantRecordCount);
+        table.on("dataFiltered", updatePlantRecordCount);
         // -----------------------------
         // LOAD YARDS
         // -----------------------------

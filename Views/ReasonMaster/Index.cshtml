@@ -8,7 +8,14 @@
     <!--  Keep head empty as per request (no changes to assets/includes) -->
 </head>
 
-<div class="container">
+
+<style>
+    .main-container {
+        margin-left: 5px;
+        margin-right: 5px;
+    }
+</style>
+<div class="main-container">
 
 
 
@@ -73,7 +80,8 @@
         <input type="file" id="upload-file" style="display:none" accept=".csv,text/csv" />
     </form>
     <div id="reasonTable" class="tabulator-bootstrap5"></div>
-    <div id="recordCount" class="text-end mt-2 fw-semibold text-secondary"></div>
+    @* <div id="recordCount" class="text-end mt-2 fw-semibold text-secondary"></div> *@
+     <div id="recordCount" class="footer-total-records"></div>
 
 </div>
 <!--  Add/Edit modal (single form reused for both modes) -->
@@ -175,9 +183,60 @@
         // ==========================
         // 🔹 Initialize Tabulator
         // ==========================
-        const dataTable = initializeTabulator("#reasonTable", reasonMasterData, generateTabulatorColumns(reasonMasterData),
-            (data) => selectedRow = data[0] || null
-        );
+        // const dataTable = initializeTabulator("#reasonTable", reasonMasterData, generateTabulatorColumns(reasonMasterData),
+        //     (data) => selectedRow = data[0] || null
+        // );
+        const dataTable = new Tabulator("#reasonTable", {
+	        data: reasonMasterData,
+	        columns: [
+                    { title: "Reason Code", field: "Reason_code", width: 220 },
+                    { title: "Reason Name", field: "Reason_name", width: 250 },                 
+                    
+                    { title: "Status", field: "Status_name", width: 150 , formatter: function (cell) {
+                        let val = cell.getValue();
+
+                        return val === true || val === "true"
+                            ? "<span>In-Active</span>"
+                            : "<span>Active</span>";
+                    }},
+                 
+                    { title: "Created By", field: "Created_by", width: 150},
+                ],
+	        layout: "fitDataStretch",
+	        height: "80vh",
+	        selectable: 1,
+	        pagination: "local",
+	        resizableRows:false,
+	        resizableRowGuide:false,
+	        resizableColumnGuide:false,
+	        columnDefaults:{
+		        resizable:false,
+	        },           
+	        movableColumns: false,
+	        paginationSize: 10,
+	        paginationSizeSelector: [5, 10, 20, 50, 100],
+	         locale: true,
+	        langs: {
+		        "en": {
+	        pagination: {
+		        first: "<<",
+		        first_title: "First",
+		        last: ">>", 
+		        last_title: "Last", 
+		        prev: "<", 
+		        prev_title: "Prev",
+		        next: ">", 
+		        next_title: "Next", 
+		        page_size: "Page Size" 
+		         }
+		        }
+	         },
+
+	        rowClick: function (e, row) {
+	          selectedRow = row.getData();
+	        }
+	        });
+
 
     //               dataTable.on("dataFiltered", function(filters, rows){
     //      document.getElementById("recordCount").innerText = "Total Records: " + rows.length;

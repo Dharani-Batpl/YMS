@@ -9,7 +9,14 @@
     <!-- Keep head empty as requested -->
 </head>
 
-<div class="container">
+
+<style>
+    .main-container {
+        margin-left: 5px;
+        margin-right: 5px;
+    }
+</style>
+<div class="main-container">
     <!-- Page title header -->
 @*     <div id="pageTitle" class="col-12 text-center py-1 mb-3">
         <h6 class="mb-0 fw-bold text-uppercase tracking-wide">Delivery Order Configuration</h6>
@@ -69,7 +76,8 @@
                 <div class="card-header card-header-compact">Delivery Order</div>
                 <div class="card-body card-body-compact">
                     <div id="DeliveryOrderTable" class="tabulator-bootstrap5"></div>
-                    <div id="recordCount" class="text-end mt-2 fw-semibold text-secondary"></div>
+                    @* <div id="recordCount" class="text-end mt-2 fw-semibold text-secondary"></div> *@
+                     <div id="recordCount" class="footer-total-records"></div>
                 </div>
             </div>
         </div>
@@ -82,7 +90,8 @@
                 </div>
                 <div class="card-body card-body-compact">
                     <div id="DeliveryOrderDetailsTable" class="tabulator-bootstrap5"></div>
-                    <div id="recordCount1" class="text-end mt-2 fw-semibold text-secondary"></div>
+                    @* <div id="recordCount1" class="text-end mt-2 fw-semibold text-secondary"></div> *@
+                     <div id="recordCount1" class="footer-total-records"></div>
                 </div>
             </div>
         </div>
@@ -438,19 +447,72 @@
         }
 
         // ---------- Tables ----------
-        const dataTable = initializeTabulator(
-            "#DeliveryOrderTable",
-            deliveryOrderData,
-            generateTabulatorColumns(deliveryOrderData),
-            (data) => {
-                selectedRow = data[0] || null;
-                if (selectedRow && selectedRow.Details) {
-                    childTable.setData(selectedRow.Details);
-                } else {
-                    childTable.clearData();
+        // const dataTable = initializeTabulator(
+        //     "#DeliveryOrderTable",
+        //     deliveryOrderData,
+        //     generateTabulatorColumns(deliveryOrderData),
+        //     (data) => {
+        //         selectedRow = data[0] || null;
+        //         if (selectedRow && selectedRow.Details) {
+        //             childTable.setData(selectedRow.Details);
+        //         } else {
+        //             childTable.clearData();
+        //         }
+        //     }
+        // );
+        const dataTable = new Tabulator("#DeliveryOrderTable", {
+                data: deliveryOrderData,
+                columns: generateTabulatorColumns(deliveryOrderData),
+                  columns: [
+                 { title: "Do Number", field: "Do_number", width: 220 },
+                 { title: "Customer Name", field: "Customer_name", width: 220 },                 
+                 { title: "Delivery Location Name", field: "Delivery_location_name", width: 220 },
+                 { title: "Priority", field: "Priority", width: 220 },
+                 
+             ],
+                rowSelectionChanged: function (data) {
+                    selectedRow = data[0] || null;
+
+                    if (selectedRow && selectedRow.Details) {
+                        childTable.setData(selectedRow.Details);
+                    } else {
+                        childTable.clearData();
+                    }
+                },
+
+                layout: "fitDataStretch",
+                height: "60vh",
+                selectable: 1,
+                pagination: "local",
+                resizableRows:false,
+                resizableRowGuide:false,
+                resizableColumnGuide:false,
+                columnDefaults:{ resizable:false },
+                movableColumns: false,
+                paginationSize: 10,
+                paginationSizeSelector: [5, 10, 20, 50, 100],
+
+                locale: true,
+                langs: {
+                    "en": {
+                        pagination: {
+                            first: "<<",
+                            first_title: "First",
+                            last: ">>",
+                            last_title: "Last",
+                            prev: "<",
+                            prev_title: "Prev",
+                            next: ">",
+                            next_title: "Next",
+                            page_size: "Page Size"
+                        }
+                    }
+                },
+
+                rowClick: function (e, row) {
+                    selectedRow = row.getData();
                 }
-            }
-        );
+            });
 
 
         childTable.on("dataFiltered", function(filters, rows){
