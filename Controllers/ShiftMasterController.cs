@@ -16,6 +16,9 @@
 // -------------------------------------------------------------------------------------------------
 // 1.0     | 2025-10-18 | Sujitha B      | Initial creation based on Department model structure.
 // =================================================================================================
+// 1.1     | 2025-11-13 | Dharani T   | Modified the Upload method to handle Excel file uploads for bulk shift creation.
+// =================================================================================================
+
 
 using FluentValidation;
 using Microsoft.AspNetCore.Mvc;
@@ -33,22 +36,23 @@ using System.Threading.Tasks;
 using YardManagementApplication.Helpers;
 using YardManagementApplication.Models;
 using YardManagementApplication.Utils;
+
 namespace YardManagementApplication
 {
 
     [Route("[controller]/[action]")]
     public class ShiftMasterController : Controller
     {
-        // Inject typed API client
-
+        // -----------------------------------------------------
+        // Dependencies
+        // -----------------------------------------------------
         private readonly v1Client _apiClient;
 
         private readonly CsvUploadService _csvUploadService;
 
         private readonly IValidator<ShiftModel> _validator;
 
-        private readonly ILogger<ShiftMasterController> _logger;
-        // Single constructor to inject both dependencies
+        private readonly ILogger<ShiftMasterController> _logger;       
 
         public ShiftMasterController(CsvUploadService csvUploadService, v1Client apiClient, IValidator<ShiftModel> validator, ILogger<ShiftMasterController> logger)
 
@@ -62,9 +66,13 @@ namespace YardManagementApplication
             _logger = logger;
         }
 
-
+        // =====================================================
+        //  Render main page 
+        // =====================================================
         public async Task<IActionResult> Index()
         {
+
+            // Log action start
             string controller = nameof(ShiftMasterController);
             string action = nameof(Index);
             string user = HttpContext.Session.GetString("LoginUser") ?? "Unknown";
@@ -76,10 +84,10 @@ namespace YardManagementApplication
 
             try
             {
-                ViewData["Title"] = "Shift Master";
-                // Call the generated client method - no URL needed
+
+                // Fetch all Shift records
                 var result = await _apiClient.GetAllShiftAsync();
-                // If no data returned, create a empty row to capture all properties from model
+              
                 if (result == null || !result.Any())
                 {
                     result = new List<ShiftMasterModel>
@@ -93,47 +101,42 @@ namespace YardManagementApplication
                     controller, action, result?.Count() ?? 0
                 );
 
-                // Convert the result object to a JSON string
+               
                 string jsonResult = System.Text.Json.JsonSerializer.Serialize(result);
-
-                // Pass JSON string to the view using ViewData
-
+               
                 ViewData["ShiftMasterData"] = jsonResult;
-                //  Fetch dropdown sources from API
-                var statuses = await _apiClient.ShiftStatusAsync(); // <-- This maps to /api/v1/Dropdown/
-                //var Country = await _apiClient.CountryAsync();
-                //ViewBag.CountryList = Utils.Utility.PrepareSelectList(Country);
+
+                // Fetch Shift Statuses
+                var statuses = await _apiClient.ShiftStatusAsync(); 
+                
                 ViewBag.StatusList = Utils.Utility.PrepareSelectList(statuses);
+               
                 _logger.LogInformation(
                    "[ACTION SUCCESS] {controller}.{action} | Message={msg}",
                    controller, action, "Page loaded successfully"
                 );
+
                 return View();
             }
-            catch (ApiException<ProblemDetails> ex)
+            catch (Exception ex)
             {
-
+                // Log error
                 _logger.LogError(
                      ex,
                      "[ACTION ERROR] {controller}.{action} | Exception={error}",
                      controller, action, ex.Message
                  );
-                // This catches structured API errors (with JSON body)
-                var problem = ex.Result;
-
-                return StatusCode(problem.Status ?? ex.StatusCode, new
-                {
-                    status = problem.Status ?? ex.StatusCode,
-                    title = "Error",
-                    message = problem.Detail ?? "An unexpected error occurred."
-                });
+                return StatusCode(500, ex.Message);
             }
 
         }
-
+        // -----------------------------------------------------
+        // CREATE / Insert new Shift
+        // -----------------------------------------------------
         [HttpPost]
         public async Task<IActionResult> Create([FromBody] ShiftMasterModel model)
         {
+            // Log action start
             string controller = nameof(ShiftMasterController);
             string action = nameof(Index);
             string user = HttpContext.Session.GetString("LoginUser") ?? "Unknown";
@@ -157,9 +160,9 @@ namespace YardManagementApplication
                 }
 
                 model.Created_by = HttpContext.Session.GetString("LoginUser");
-               
 
-               
+                // Insert new Shift record
+
                 var result = await _apiClient.InsertShiftAsync(model);
 
 
@@ -175,34 +178,42 @@ namespace YardManagementApplication
                     message = result.Detail ?? "Record created successfully"
                 });
             }
-           
-            catch (ApiException<ProblemDetails> ex)
+            catch (Exception ex)
             {
+                // Log error
                 _logger.LogError(
                      ex,
                      "[ACTION ERROR] {controller}.{action} | Exception={error}",
                      controller, action, ex.Message
                  );
-                // This catches structured API errors (with JSON body)
-                var problem = ex.Result;
-
-                return StatusCode(problem.Status ?? ex.StatusCode, new
+                if (ex is ApiException<ResponseModel> apiEx && apiEx.Result != null)
                 {
-                    status = problem.Status ?? ex.StatusCode,
+                    return BadRequest(new
+                    {
+                        status = "error",
+                        title = "Error",
+                        message = apiEx.Result.Detail
+                    });
+                }
+
+                return BadRequest(new
+                {
+                    status = "error",
                     title = "Error",
-                    message = problem.Detail ?? "An unexpected error occurred."
+                    message = ex.Message
                 });
-            
-        }
+            }
 
         }
 
-
-
+        // -----------------------------------------------------
+        // UPDATE Shift
+        // -----------------------------------------------------
 
         [HttpPut()]
         public async Task<IActionResult> Update([FromBody] ShiftMasterModel model)
         {
+            // Log action start
             string controller = nameof(ShiftMasterController);
             string action = nameof(Index);
             string user = HttpContext.Session.GetString("LoginUser") ?? "Unknown";
@@ -215,10 +226,9 @@ namespace YardManagementApplication
 
             try
             {
-
                 model.Updated_by = HttpContext.Session.GetString("LoginUser");
 
-
+                // Update Shift record
                 var result = await _apiClient.UpdateShiftAsync(model.Shift_id, model);
 
 
@@ -235,30 +245,42 @@ namespace YardManagementApplication
                     message = result.Detail ?? "Record updated successfully"
                 });
             }
-            catch (ApiException<ProblemDetails> ex)
+            catch (Exception ex)
             {
+                // Log error
 
                 _logger.LogError(
                      ex,
                      "[ACTION ERROR] {controller}.{action} | Exception={error}",
                      controller, action, ex.Message
                  );
-                // This catches structured API errors (with JSON body)
-                var problem = ex.Result;
 
-                return StatusCode(problem.Status ?? ex.StatusCode, new
+                if (ex is ApiException<ResponseModel> apiEx && apiEx.Result != null)
                 {
-                    status = problem.Status ?? ex.StatusCode,
+                    return BadRequest(new
+                    {
+                        status = "error",
+                        title = "Error",
+                        message = apiEx.Result.Detail
+                    });
+                }
+
+                return BadRequest(new
+                {
+                    status = "error",
                     title = "Error",
-                    message = problem.Detail ?? "An unexpected error occurred."
+                    message = ex.Message
                 });
             }
 
         }
-
+        // -----------------------------------------------------
+        // DELETE Shift [Soft Delete]
+        // -----------------------------------------------------
         [HttpPut]
         public async Task<IActionResult> Delete([FromBody] ShiftModel model)
         {
+            // Log action start
             string controller = nameof(EolMasterController);
             string action = nameof(Index);
             string user = HttpContext.Session.GetString("LoginUser") ?? "Unknown";
@@ -270,6 +292,10 @@ namespace YardManagementApplication
 
             try
             {
+                model.Updated_by = HttpContext.Session.GetString("LoginUser");
+                model.Updated_at = DateTimeOffset.Now;
+
+                // Delete Shift record
                 var result = await _apiClient.DeleteShiftAsync(model.Shift_id);
 
 
@@ -286,105 +312,43 @@ namespace YardManagementApplication
                     message = result.Detail ?? "Record deleted successfully"
                 });
             }
-            catch (ApiException<ResponseModel> ex)
-            {
-
-                _logger.LogError(
-                     ex,
-                     "[ACTION ERROR] {controller}.{action} | Exception={error}",
-                     controller, action, ex.Message
-                 );
-                var problem = ex.Result;
-                int statusCode = problem.Status != 0 ? problem.Status : ex.StatusCode;
-
-                return StatusCode(statusCode, new
-                {
-                    status = statusCode,
-                    title = problem.Title ?? "Error",
-                    message = problem.Detail ?? "This shift is mapped to an active template and cannot be deleted."
-                });
-            }
-            catch (ApiException ex)
-            {
-
-                _logger.LogError(
-                     ex,
-                     "[ACTION ERROR] {controller}.{action} | Exception={error}",
-                     controller, action, ex.Message
-                 );
-                // fallback for other unexpected API exceptions
-                return StatusCode(ex.StatusCode, new
-                {
-                    status = ex.StatusCode,
-                    title = "Error",
-                    message = ex.Message
-                });
-            }
             catch (Exception ex)
             {
+                // Log error
 
                 _logger.LogError(
                      ex,
                      "[ACTION ERROR] {controller}.{action} | Exception={error}",
                      controller, action, ex.Message
                  );
-                // fallback for generic .NET exceptions
-                return StatusCode(500, new
+
+                if (ex is ApiException<ResponseModel> apiEx && apiEx.Result != null)
                 {
-                    status = 500,
+                    return BadRequest(new
+                    {
+                        status = "error",
+                        title = "Error",
+                        message = apiEx.Result.Detail
+                    });
+                }
+
+                return BadRequest(new
+                {
+                    status = "error",
                     title = "Error",
                     message = ex.Message
                 });
             }
-
         }
 
-        public IActionResult DownloadShiftMasterTemplate()
-        {
-            string controller = nameof(ShiftMasterController);
-            string action = nameof(Index);
-            string user = HttpContext.Session.GetString("LoginUser") ?? "Unknown";
-
-            _logger.LogInformation(
-                "[ACTION START] {controller}.{action} | User={user}",
-                controller, action, user
-            );
-
-
-            var stream = new MemoryStream();
-
-            using (var package = new ExcelPackage(stream))
-            {
-                var worksheet = package.Workbook.Worksheets.Add("ShiftMasterTemplate");
-
-                // Set headers based on your model properties
-                string[] headers = new string[]
-                {
-
-                        "Shift_name",
-                        "Shidt_description", "Status_name","Created_by","Created_at","Updated_by","Updated_at"
-                };
-
-                for (int i = 0; i < headers.Length; i++)
-                {
-                    worksheet.Cells[1, i + 1].Value = headers[i];
-                    worksheet.Column(i + 1).AutoFit();
-                }
-
-                // Optionally: Add some data validation or formatting (e.g., dropdowns, date format)
-
-                package.Save();
-            }
-
-            stream.Position = 0;
-            string excelName = $"ShiftMasterTemplate-{DateTime.Now:yyyyMMddHHmmss}.xlsx";
-
-            return File(stream, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", excelName);
-        }
+        // -----------------------------------------------------
+        // UPLOAD SHIFT DATA VIA EXCEL
+        // -----------------------------------------------------
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Upload(IFormFile file)
         {
+            // Log action start
             string controller = nameof(ShiftMasterController);
             string action = nameof(Index);
             string user = HttpContext.Session.GetString("LoginUser") ?? "Unknown";
@@ -394,6 +358,7 @@ namespace YardManagementApplication
 
             try
             {
+                // Validate file
                 if (file == null || file.Length == 0)
                     return BadRequest("No file uploaded.");
 
@@ -401,10 +366,11 @@ namespace YardManagementApplication
                 if (ext != ".xlsx" && ext != ".xls")
                     return BadRequest("Only Excel files (.xlsx/.xls) allowed.");
 
-                // ---------------- READ EXCEL ----------------
+             
                 List<Dictionary<string, string>> excelRows = new();
                 List<string> headers = new();
 
+                // Read Excel file
                 using (var stream = file.OpenReadStream())
                 {
                     IWorkbook wb = ext == ".xlsx" ? new XSSFWorkbook(stream) : new HSSFWorkbook(stream);
@@ -431,7 +397,7 @@ namespace YardManagementApplication
                                 continue;
                             }
 
-                            // Handle Excel datetime/time cells
+                            
                             if (cell.CellType == CellType.Numeric && DateUtil.IsCellDateFormatted(cell))
                             {
                                 dict[headers[c]] = cell.DateCellValue.Value.ToString("HH:mm:ss");
@@ -446,7 +412,7 @@ namespace YardManagementApplication
                     }
                 }
 
-                // ---------------- Helper: Parse Time ----------------
+              
                 TimeSpan ParseTime(string t)
                 {
                     if (string.IsNullOrWhiteSpace(t)) return TimeSpan.Zero;
@@ -457,7 +423,7 @@ namespace YardManagementApplication
                 string currentUser = HttpContext.Session.GetString("LoginUser") ?? "System";
                 var allItems = new List<ShiftMasterModel>();
 
-                // ---------------- MAP EXCEL TO MODEL ----------------
+                // Map Excel rows to ShiftMasterModel
                 foreach (var row in excelRows)
                 {
                     string norm(string x) =>
@@ -474,7 +440,7 @@ namespace YardManagementApplication
                     string startTime = Get("starttime");
                     string endTime = Get("endtime");
 
-                    // Breaks
+                    
                     string b1in = Get("break1in");
                     string b1out = Get("break1out");
                     string b1desc = Get("break1description");
@@ -495,7 +461,7 @@ namespace YardManagementApplication
                     string b5out = Get("break5out");
                     string b5desc = Get("break5description");
 
-                    // ------------- FIX: MULTIPLE BREAKS JSON ----------------
+                  
                     string FormatToHHmm(string t)
                     {
                         if (string.IsNullOrWhiteSpace(t)) return "";
@@ -534,7 +500,7 @@ namespace YardManagementApplication
                         ? JsonConvert.SerializeObject(breakArray)
                         : null;
 
-                    // ---------------- MODEL ----------------
+                 
                     var model = new ShiftMasterModel
                     {
                         Shift_name = shiftName,
@@ -549,55 +515,73 @@ namespace YardManagementApplication
                     allItems.Add(model);
                 }
 
-                // ---------------- CALL API ----------------
-                var errors = new List<object>();
-                int success = 0;
+                // Upload each shift via API
+                var apiErrors = new List<object>();
+                int successCount = 0;
 
                 foreach (var item in allItems)
                 {
                     try
                     {
                         await _apiClient.UploadShiftAsync(item);
-                        success++;
-                    }
-                    catch (ApiException<ResponseModel> ex)
-                    {
-                        errors.Add(new { name = item.Shift_name, error = ex.Result?.Detail ?? ex.Message });
+                        successCount++;
                     }
                     catch (Exception ex)
                     {
-                        errors.Add(new { name = item.Shift_name, error = ex.Message });
+                        // Log general exception
+                        _logger.LogError(
+                             ex,
+                             "[ACTION ERROR] {controller}.{action} | Exception={error}",
+                             controller, action, ex.Message
+                         );
+
+                        apiErrors.Add(new
+                        {
+
+                            error = ex.Message
+                        });
                     }
                 }
 
-                if (errors.Count > 0)
+
+                if (apiErrors.Count > 0)
                 {
+                    // Return errors if any
                     return BadRequest(new
                     {
                         status = "error",
-                        title = "Upload Completed With Errors",
-                        message = $"{errors.Count} record(s) failed.",
-                        errors
+                        title = "Upload Failed",
+                        message = $"{apiErrors.Count} record(s) failed.",
+                        errors = apiErrors
                     });
                 }
 
                 return Ok(new
                 {
                     status = "success",
-                    title = "Upload Completed",
-                    message = $"{success} records added successfully.",
-                    successCount = success
+                    title = "Success",
+                    message = $"{successCount} records added successfully.",
+                    successCount
                 });
             }
             catch (Exception ex)
             {
+                // Log error
+                _logger.LogError(
+                     ex,
+                     "[ACTION ERROR] {controller}.{action} | Exception={error}",
+                     controller, action, ex.Message
+                 );
+
                 return BadRequest(new
                 {
                     status = "error",
+                    title = "Error",
                     message = ex.Message
                 });
             }
         }
+
 
     }
 

@@ -70,6 +70,7 @@ try
     builder.Services.AddHttpClient<v1Client>(client =>
     {
         client.BaseAddress = new Uri(apiuri);
+      
     })
     .AddHttpMessageHandler<JwtAuthorizationMessageHandler>()
     .AddTypedClient((httpClient, sp) =>

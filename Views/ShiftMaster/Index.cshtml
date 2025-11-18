@@ -1,7 +1,9 @@
-﻿@{
+﻿<!-- Get View Data -->
+@{
     var shiftMasterData = ViewData["ShiftMasterData"] ?? "[]";
     Layout = "_Layout";
 }
+
 <head></head>
 
 <style>
@@ -13,36 +15,51 @@
 
 <div class="main-container">
 
+     <!------- Page Title Section ------->
     <div class="col-12 text-center py-1 mb-3" style="background:#242424;color:white;">
         <h6 class="mb-0 fw-bold text-uppercase tracking-wide">Shift Category</h6>
     </div>
 
+     <!------- Toolbar: Search + Actions ------->
     <div class="row align-items-center mb-3">
+
+         <!-- Spacer on xs devices -->
         <div class="w-100 d-md-none"></div>
 
         <div class="col-12 col-md d-flex justify-content-md-end align-items-center gap-2 flex-wrap">
 
-            <input type="search" id="searchField"
-                   class="form-control form-control-sm"
-                   placeholder="Search..."
-                   style="max-width:280px;min-width:150px;" />
+             <!-- Search input -->
+             <input type="search" id="searchField" class="form-control form-control-sm" placeholder="Search..." style="max-width: 280px; min-width: 150px;" />
 
+             <!-- Action buttons group -->
             <div class="btn-group flex-wrap">
+
+                 <!-- Add -->
                 <button id="add-btn" class="btn btn-primary-professional btn-sm px-3" title="Add">
                     <span class="material-icons">add</span>
                 </button>
+               
+                 <!-- Edit -->
                 <button id="edit-btn" class="btn btn-primary-professional btn-sm px-3" title="Edit">
                     <span class="material-icons">edit</span>
                 </button>
+
+                  <!-- Delete -->
                 <button id="delete-btn" class="btn btn-primary-professional btn-sm px-3" title="Delete">
                     <span class="material-icons">delete</span>
                 </button>
+                
+                  <!-- Download -->
                 <button id="download-btn" class="btn btn-primary-professional btn-sm px-3" title="Download">
                     <span class="material-icons">download</span>
                 </button>
+
+                  <!-- Upload -->
                 <button id="upload-btn" class="btn btn-primary-professional btn-sm px-3" title="Upload">
                     <span class="material-icons">upload</span>
                 </button>
+
+                 <!-- Download Template -->
                 <button id="download-template-btn" class="btn btn-primary-professional btn-sm px-3" title="Template">
                     <span class="material-icons">assignment_returned</span>
                 </button>
@@ -51,11 +68,7 @@
         </div>
     </div>
 
-    <form id="afForm" style="display:none" method="post">
-        @Html.AntiForgeryToken()
-        <input type="file" id="upload-file" style="display:none" accept=".csv,text/csv" />
-    </form>
-
+      <!------- Data grid + record count ------->
     <div id="shiftMastertable" class="tabulator-bootstrap5"></div>
     <div id="recordCount" class="footer-total-records"></div>
 </div>
@@ -78,12 +91,14 @@
 
                     <div class="row g-3 mt-1 mb-2">
 
+                         <!-- Shift name -->
                         <div>
                             <label class="form-label">Shift Name <span class="text-danger">*</span></label>
                             <input type="text" id="Shift_name" name="Shift_name" class="form-control"
                                    required maxlength="15"style="width: 150px;">
                         </div>
 
+                         <!-- Shift Description -->
                         <div>
                             <label class="form-label">Description</label>
                             <input type="text" id="Shift_description" name="Shift_description"
@@ -94,16 +109,19 @@
 
                     <div class="row g-3 align-items-end mt-2">
 
+                         <!-- Start time -->
                         <div>
                             <label class="form-label">From Time <span class="text-danger">*</span></label>
                             <input type="time" class="form-control" id="start_time" name="start_time" required>
                         </div>
 
+                         <!-- End time -->
                         <div>
                             <label class="form-label">To Time <span class="text-danger">*</span></label>
                             <input type="time" class="form-control" id="end_time" name="end_time" required>
                         </div>
 
+                         <!-- Add Break -->
                        <div class="d-flex align-items-center" style="margin-left:10px;">
                             <button type="button" id="addBreakBtn"
                                     style="background:#007bff;color:white;border:1px solid #007bff;">
@@ -112,7 +130,7 @@
                         </div>
 
                     </div>
-
+                     <!-- Break container -->
                     <div id="breakContainer" class="mt-3 border rounded-3 p-3" style="display:none;">
                         <label class="form-label fw-bold mb-2">Break Timings</label>
                         <div id="breakRows"></div>
@@ -121,8 +139,10 @@
                 </form>
             </div>
 
+              <!-- Footer -->
             <div class="modal-footer">
 
+                 <!-- Buttons -->
                 <button class="btn btn-cancel" data-bs-dismiss="modal">Cancel</button>
                 <button type="submit" id="modalSubmitBtn" form="addEditForm" class="btn btn-submit">Add</button>
             </div>
@@ -130,26 +150,38 @@
         </div>
     </div>
 </div>
+
+ <!------- Hidden file input for CSV upload ------->
+<form id="afForm" style="display:none" method="post">
+    @Html.AntiForgeryToken()
+    <input type="file" id="upload-file" style="display:none" accept=".csv,text/csv" />
+</form>
+
+ <!-- Scrips -->
 <script>
 $(document).ready(function () {
 
+    // ================================================================
+    //  Init tooltip + load initial data
+    // ================================================================
     initTooltips();
 
     const shiftMasterData = @Html.Raw(shiftMasterData);
     let selectedRow = null;
     let currentMode = "";
 
-    // ================================
-    // Tabulator
-    // ================================
+
+    // ================================================================
+    //  Tabulator table setup
+    // ================================================================
     const dataTable = new Tabulator("#shiftMastertable", {
         data: shiftMasterData,
         columns: [
-            { title: "Shift Name", field: "Shift_name", width: 220 },
-            { title: "Shift Description", field: "Shift_description", width: 220 },
-            { title: "Start Time", field: "Start_time", width: 220 },
-            { title: "End Time", field: "End_time", width: 220 },
-            { title: "Created By", field: "Created_by", width: 150},
+            { title: "Shift Name", field: "Shift_name", width: 220,headerHozAlign: "center" },
+            { title: "Shift Description", field: "Shift_description", width: 220,headerHozAlign: "center" },
+            { title: "Start Time", field: "Start_time", width: 220 ,headerHozAlign: "center"},
+            { title: "End Time", field: "End_time", width: 220,headerHozAlign: "center" },
+            { title: "Created By", field: "Created_by", width: 150,headerHozAlign: "center"},
         ],
         layout: "fitDataStretch",
         height: "70vh",
@@ -166,9 +198,10 @@ $(document).ready(function () {
         $("#recordCount").text("Total Records: " + data.length)
     );
 
-    // ================================
-    // Search
-    // ================================
+
+    // ================================================================
+    //  Search functionality
+    // ================================================================
     $("#searchField").on("input", function () {
         let s = $(this).val().toLowerCase();
         dataTable.setFilter(d =>
@@ -176,9 +209,10 @@ $(document).ready(function () {
         );
     });
 
-    // ================================
-    // Modal Elements
-    // ================================
+
+    // ================================================================
+    //  Modal setup
+    // ================================================================
     const modalEl = $("#addEditModal");
     const addEditModal = new bootstrap.Modal(modalEl[0]);
     const form = $("#addEditForm");
@@ -193,9 +227,10 @@ $(document).ready(function () {
         breakCount = 0;
     });
 
-    // ================================
-    // Add Mode
-    // ================================
+
+    // ================================================================
+    //  Add mode
+    // ================================================================
     $("#add-btn").on("click", () => {
         currentMode = "Add";
         form[0].reset();
@@ -207,9 +242,10 @@ $(document).ready(function () {
         addEditModal.show();
     });
 
-    // ================================
-    // Edit Mode
-    // ================================
+
+    // ================================================================
+    //  Edit mode
+    // ================================================================
     $("#edit-btn").on("click", () => {
         const row = dataTable.getSelectedData()?.[0];
         if (!row)
@@ -280,9 +316,10 @@ $(document).ready(function () {
         addEditModal.show();
     });
 
-    // ================================
-    // Delete
-    // ================================
+
+    // ================================================================
+    //  Delete record
+    // ================================================================
     $("#delete-btn").on("click", async () => {
         const row = dataTable.getSelectedData()?.[0];
         if (!row)
@@ -301,9 +338,10 @@ $(document).ready(function () {
         if (success) setTimeout(() => location.reload(), 900);
     });
 
-    // ================================
-    // Submit Form
-    // ================================
+
+    // ================================================================
+    //  Submit form (add/update)
+    // ================================================================
     form.on("submit", async e => {
         e.preventDefault();
 
@@ -345,9 +383,10 @@ $(document).ready(function () {
         if (success) setTimeout(() => location.reload(), 900);
     });
 
-    // ================================
-    // Add Break
-    // ================================
+
+    // ================================================================
+    //  Add break
+    // ================================================================
     $("#addBreakBtn").on("click", () => {
         breakCount++;
         breakContainer.show();
@@ -372,8 +411,7 @@ $(document).ready(function () {
                         <span class="material-icons" style="font-size:16px;">close</span>
                     </button>
                 </div>
-            </div>
-        `;
+            </div>`;
 
         breakRows.append(html);
 
@@ -383,9 +421,10 @@ $(document).ready(function () {
         });
     });
 
-    // ================================
-    // Download CSV
-    // ================================
+
+    // ================================================================
+    //  Download CSV
+    // ================================================================
     $("#download-btn").on("click", () => {
         let count = dataTable.getData()?.length || 0;
         if (count === 0)
@@ -394,88 +433,101 @@ $(document).ready(function () {
         downloadCsv(dataTable, "ShiftMaster.csv");
     });
 
-    $("#download-template-btn").on("click", function () {
-         const headers = [
-        "Shift Name",
-        "Shift Description",
-        "Start Time",
-        "End Time",
-        "Break1In",
-        "Break1Out",
-       "Break1Description",
-       "Break2In",
-       "Break2Out",
-       "Break2Description",
-       "Break3In",
-       "Break3Out",
-       "Break3Description",
-       "Break4In",
-       "Break4Out",
-       "Break4Description",
-        "Break5In",
-       "Break5Out",
-       "Break5Description"
-    
-    ];
 
-    downloadTemplate(headers, "ShiftMaster");
+    // ================================================================
+    //  Download template
+    // ================================================================
+    $("#download-template-btn").on("click", function () {
+        const headers = [
+            "Shift Name",
+            "Shift Description",
+            "Start Time",
+            "End Time",
+            "Break1In",
+            "Break1Out",
+            "Break1Description",
+            "Break2In",
+            "Break2Out",
+            "Break2Description",
+            "Break3In",
+            "Break3Out",
+            "Break3Description",
+            "Break4In",
+            "Break4Out",
+            "Break4Description",
+            "Break5In",
+            "Break5Out",
+            "Break5Description"
+        ];
+
+        downloadTemplate(headers, "ShiftMaster");
     });
 
-    // ================================
-    // UPLOAD FILE
-    // ================================
 
-      $("#upload-btn").on("click", function () {
-    $("#upload-file").click();
+    // ================================================================
+    //  Upload file
+    // ================================================================
+    $("#upload-btn").on("click", function () {
+        $("#upload-file").click();
     });
 
     $("#upload-file").on("change", function (event) {
-    const file = event.target.files?.[0];
-    if (!file) {
-        return showAppAlert({ icon: 'warning', title: 'No File', text: 'Please select a file to upload.' });
-    }
-    // const isCsv = /\.csv$/i.test(file.name);
-    // if (!isCsv) {
-    //   showAppAlert({ icon: 'warning', title: 'Invalid File', text: 'Please select a .csv file.' });
-    //   return;
-    // }
+        const file = event.target.files?.[0];
+
+        if (!file) {
+            return showAppAlert({
+                icon: 'warning',
+                title: 'No File',
+                text: 'Please select a file to upload.'
+            });
+        }
+
         const isExcel = /\.(xlsx|xls)$/i.test(file.name);
         if (!isExcel) {
             showAppAlert({
-            icon: 'warning',
-            title: 'Invalid File',
-            text: 'Please select an Excel file (.xlsx or .xls).'
+                icon: 'warning',
+                title: 'Invalid File',
+                text: 'Please select an Excel file (.xlsx or .xls).'
             });
             return;
         }
 
-    uploadFile('/ShiftMaster/Upload', file);
+        uploadFile('/ShiftMaster/Upload', file);
     });
 
+
+    // ================================================================
+    //  Upload function
+    // ================================================================
     async function uploadFile(url, file) {
-    const formData = new FormData();
-    formData.append("file", file);
-    const csrf = $('#afForm input[name="__RequestVerificationToken"]').val();
+        const formData = new FormData();
+        formData.append("file", file);
 
-    try {
-        const response = await fetch(url, {
-        method: 'POST',
-        headers: { 'RequestVerificationToken': csrf },
-        body: formData
-        });
-        await handleUploadResponse(response);
-    } catch (err) {
-        showToast({ icon: "error", text: err.message });
-    }
+        const csrf = $('#afForm input[name="__RequestVerificationToken"]').val();
+
+        try {
+            const response = await fetch(url, {
+                method: 'POST',
+                headers: { 'RequestVerificationToken': csrf },
+                body: formData
+            });
+
+            await handleUploadResponse(response);
+
+        } catch (err) {
+            showToast({ icon: "error", text: err.message });
+        }
     }
 
+
+    // ================================================================
+    //  Handle upload response
+    // ================================================================
     async function handleUploadResponse(response) {
 
         const result = await response.json().catch(() => null);
 
-        // ================================
-        // SUCCESS BLOCK
-        // ================================
+        // SUCCESS
         if (response.ok) {
 
             showAppAlert({
@@ -486,18 +538,12 @@ $(document).ready(function () {
                 showConfirmButton: false
             });
 
-            // 🔥 AUTO REFRESH PAGE (BEST + SIMPLE)
             setTimeout(() => location.reload(), 800);
-
-            // allow uploading same file again
             $("#upload-file").val("");
-
             return;
         }
 
-        // ================================
-        // ERROR BLOCK — API RETURNED ERRORS
-        // ================================
+        // VALIDATION API ERRORS
         if (result && result.errors) {
 
             let msg = "";
@@ -517,9 +563,7 @@ $(document).ready(function () {
             return;
         }
 
-        // ================================
-        // GENERIC API MESSAGE
-        // ================================
+      // GENERIC API MESSAGE
         if (result && result.message) {
             showAppAlert({
                 icon: "error",
@@ -533,9 +577,7 @@ $(document).ready(function () {
             return;
         }
 
-        // ================================
         // UNKNOWN ERROR
-        // ================================
         showAppAlert({
             icon: "error",
             title: "Upload Failed",
@@ -548,14 +590,17 @@ $(document).ready(function () {
     }
 
 
+    // ================================================================
+    //  Download invalid records (if backend returns it)
+    // ================================================================
     function downloadInvalidRecords(fileData) {
-    const csvData = atob(fileData);
-    const blob = new Blob([csvData], { type: 'text/csv' });
-    const link = document.createElement('a');
-    link.href = URL.createObjectURL(blob);
-    link.download = 'invalid_records.csv';
-    link.click();
+        const csvData = atob(fileData);
+        const blob = new Blob([csvData], { type: 'text/csv' });
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = 'invalid_records.csv';
+        link.click();
     }
-});
 
+});
 </script>

@@ -1,7 +1,10 @@
-﻿@using Microsoft.AspNetCore.Mvc.Rendering @{ var eolMasterData = ViewData["EolMasterData"] ?? "[]"; Layout = "_Layout"; }
+﻿<!-- Get View Data -->
+@{
+    var eolMasterData = ViewData["EolMasterData"] ?? "[]";
+    Layout = "_Layout"; 
+}
 
-<head>
-</head>
+<head></head>
 
 <style>
     .main-container {
@@ -24,7 +27,7 @@
         <!-- Spacer on xs devices -->
         <div class="w-100 d-md-none"></div>
 
-        <!-- Right-aligned toolbar container -->
+        <!-- Toolbar container -->
         <div class="col-12 col-md d-flex justify-content-md-end align-items-center gap-2 flex-wrap">
 
             <!-- Search input -->
@@ -66,14 +69,6 @@
         </div>
     </div>
 
-    <!------- Hidden file input for CSV upload ------->
-    <form id="afForm" style="display:none" method="post">
-        @Html.AntiForgeryToken()
-       <input type="file" id="upload-file" style="display:none" accept=".xlsx,.xls,.csv" />
-
-    </form>
-
-
     <!------- Data grid + record count ------->
     <div id="eolTable" class="tabulator-bootstrap5"></div>
 
@@ -87,6 +82,7 @@
 <div class="modal fade modal-request" id="addEditModal" tabindex="-1" aria-labelledby="addEditModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
+            
             <!-- Header -->
             <div class="modal-header">
                 <h5 class="modal-title" id="addEditModalLabel">Request Part: <span id="modalPartTitle">EOL Master</span></h5>
@@ -195,530 +191,599 @@
             <!-- Footer -->
             <div class="modal-footer">
 
+                 <!-- Buttons -->
                 <button type="button" class="btn btn-cancel" data-bs-dismiss="modal">Cancel</button>
                 <button type="submit" class="btn btn-submit" id="modalSubmitBtn" form="addEditForm">Add</button>
             </div>
         </div>
     </div>
 </div>
+<!------- Hidden file input for CSV upload ------->
+<form id="afForm" style="display:none" method="post">
+    @Html.AntiForgeryToken()
+    <input type="file" id="upload-file" style="display:none" accept=".xlsx,.xls,.csv" />
+
+</form>
+ <!-- Scrips -->
 <script>
-        $(document).ready(function () {
+$(document).ready(function () {
 
-          // ====== Utility: Trim & Validate Text Inputs ======
-          function isBlankOrSpaces(v) {
-            return !v || $.trim(v).length === 0;
-          }
+    // ================================================================
+    //  Utility: Check if value is blank or spaces only
+    // ================================================================
+    function isBlankOrSpaces(v) {
+        return !v || $.trim(v).length === 0;
+    }
 
-          function normalizeAndValidateField($el) {
-            if (!$el.is('input[type="text"], textarea')) return true;
+    // ================================================================
+    //  Normalize and validate input fields
+    // ================================================================
+    function normalizeAndValidateField($el) {
+        if (!$el.is('input[type="text"], textarea')) return true;
 
-            const trimmed = $el.val().replace(/\s+/g, ' ').trim();
-            $el.val(trimmed);
+        // Replace multiple spaces → single space & trim ends
+        const trimmed = $el.val().replace(/\s+/g, ' ').trim();
+        $el.val(trimmed);
 
-            $el[0].setCustomValidity("");
+        // Reset HTML5 validation
+        $el[0].setCustomValidity("");
 
-            if ($el.is('[required]') && isBlankOrSpaces($el.val())) {
-              $el[0].setCustomValidity("This field cannot be empty or only spaces.");
-              return false;
-            }
-            return true;
-          }
+        // Required field check
+        if ($el.is('[required]') && isBlankOrSpaces($el.val())) {
+            $el[0].setCustomValidity("This field cannot be empty or only spaces.");
+            return false;
+        }
 
-          const $form = $("#addEditForm");
+        return true;
+    }
 
-          // Live input validation
-          $form.on("input", 'input[type="text"], textarea', function () {
-            this.setCustomValidity("");
-          });
+    // ================================================================
+    //  Form input auto-validation
+    // ================================================================
+    const $form = $("#addEditForm");
 
-          // On blur validation
-          $form.on("blur", 'input[type="text"], textarea', function () {
-            normalizeAndValidateField($(this));
-          });
+    $form.on("input", 'input[type="text"], textarea', function () {
+        this.setCustomValidity("");
+    });
 
-          window.validateNoSpaceOnlyInputs = function (formEl) {
-            let ok = true;
-            $(formEl).find('input[type="text"], textarea').each(function () {
-              if (!normalizeAndValidateField($(this))) {
+    $form.on("blur", 'input[type="text"], textarea', function () {
+        normalizeAndValidateField($(this));
+    });
+
+    // Global validator for form submit
+    window.validateNoSpaceOnlyInputs = function (formEl) {
+        let ok = true;
+        $(formEl).find('input[type="text"], textarea').each(function () {
+            if (!normalizeAndValidateField($(this))) {
                 this.reportValidity();
                 this.focus();
                 ok = false;
                 return false;
-              }
-            });
-            return ok;
-          };
-
-          // ====== Dropdown Handling ======
-          function populateDropdown(selector, items, defaultText) {
-            const $dropdown = $(selector);
-            $dropdown.empty();
-
-            $('<option>', {
-              text: defaultText,
-              value: '',
-              disabled: true,
-              selected: true
-            }).appendTo($dropdown);
-
-            if (items && items.length > 0) {
-              $.each(items, function (_, item) {
-                $('<option>', {
-                  value: item.id,
-                  text: item.name
-                }).appendTo($dropdown);
-              });
             }
-          }
+        });
+        return ok;
+    };
 
-          function ensureOption($select, value, label) {
-            const val = String(value ?? "");
-            if (!val) return;
+    // ================================================================
+    //  Dropdown Helpers
+    // ================================================================
+    function populateDropdown(selector, items, defaultText) {
+        const $dropdown = $(selector);
+        $dropdown.empty();
 
-            if ($select.find(`option[value="${CSS.escape(val)}"]`).length === 0) {
-              $('<option>', {
+        $('<option>', {
+            text: defaultText,
+            value: '',
+            disabled: true,
+            selected: true
+        }).appendTo($dropdown);
+
+        if (items && items.length > 0) {
+            $.each(items, function (_, item) {
+                $('<option>', {
+                    value: item.id,
+                    text: item.name
+                }).appendTo($dropdown);
+            });
+        }
+    }
+
+    // Ensure dropdown has a given option (for edit mode)
+    function ensureOption($select, value, label) {
+        const val = String(value ?? "");
+        if (!val) return;
+
+        if ($select.find(`option[value="${CSS.escape(val)}"]`).length === 0) {
+            $('<option>', {
                 value: val,
                 text: label ?? val
-              }).appendTo($select);
-            }
-          }
+            }).appendTo($select);
+        }
+    }
 
-          async function fetchVehicleTypes(brandId) {
-            try {
-              const data = await $.getJSON(`/EolMaster/GetVehicleType`, { brandId });
-              return data.vehicletypeList ?? [];
-            } catch {
-              return [];
-            }
-          }
+    // ==============================
+    // AJAX: Fetch dependent dropdowns
+    // ==============================
+    async function fetchVehicleTypes(brandId) {
+        try {
+            const data = await $.getJSON(`/EolMaster/GetVehicleType`, { brandId });
+            return data.vehicletypeList ?? [];
+        } catch {
+            return [];
+        }
+    }
 
-          async function fetchVariants(vehicleTypeId) {
-            try {
-              const data = await $.getJSON(`/EolMaster/GetVariant`, { vehicleTypeId });
-              return data.variantList ?? [];
-            } catch {
-              return [];
-            }
-          }
+    async function fetchVariants(vehicleTypeId) {
+        try {
+            const data = await $.getJSON(`/EolMaster/GetVariant`, { vehicleTypeId });
+            return data.variantList ?? [];
+        } catch {
+            return [];
+        }
+    }
 
-          function resetSelect($select, placeholder) {
-            $select.empty().append($('<option>', {
-              value: '',
-              text: placeholder,
-              disabled: true,
-              selected: true
-            }));
-          }
+    function resetSelect($select, placeholder) {
+        $select.empty().append($('<option>', {
+            value: '',
+            text: placeholder,
+            disabled: true,
+            selected: true
+        }));
+    }
 
-          window.bindDropdownsFromRow = async function (row) {
-            const $brandSel = $('#Brand_id');
-            const $typeSel = $('#Vehicle_type_id');
-            const $variantSel = $('#Variant_id');
-            const $colorSel = $('#Color_id');
+    // ================================================================
+    //  Bind dropdowns when editing an existing row
+    // ================================================================
+    window.bindDropdownsFromRow = async function (row) {
+        const $brandSel = $('#Brand_id');
+        const $typeSel = $('#Vehicle_type_id');
+        const $variantSel = $('#Variant_id');
+        const $colorSel = $('#Color_id');
 
-            const brandId = row.Brand_id;
-            const brandName = row.Brand_name;
-            const vehicleTypeId = row.Vehicle_type_id;
-            const vehicleTypeNm = row.Vehicle_type_name || row.Vehicle_type;
-            const variantId = row.Variant_id;
-            const variantName = row.Variant_name || row.Variant;
-            const colorId = row.Color_id;
+        const brandId = row.Brand_id;
+        const brandName = row.Brand_name;
+        const vehicleTypeId = row.Vehicle_type_id;
+        const vehicleTypeNm = row.Vehicle_type_name || row.Vehicle_type;
+        const variantId = row.Variant_id;
+        const variantName = row.Variant_name || row.Variant;
+        const colorId = row.Color_id;
 
-            ensureOption($brandSel, brandId, brandName);
-            $brandSel.val(String(brandId ?? ""));
+        // Brand
+        ensureOption($brandSel, brandId, brandName);
+        $brandSel.val(String(brandId ?? ""));
 
-            resetSelect($typeSel, "Loading types…");
-            const types = brandId ? await fetchVehicleTypes(brandId) : [];
-            populateDropdown('#Vehicle_type_id', types, "Select Type");
-            if (vehicleTypeId) ensureOption($typeSel, vehicleTypeId, vehicleTypeNm);
-            $typeSel.val(String(vehicleTypeId ?? ""));
+        // Vehicle Type
+        resetSelect($typeSel, "Loading types…");
+        const types = brandId ? await fetchVehicleTypes(brandId) : [];
+        populateDropdown('#Vehicle_type_id', types, "Select Type");
+        if (vehicleTypeId) ensureOption($typeSel, vehicleTypeId, vehicleTypeNm);
+        $typeSel.val(String(vehicleTypeId ?? ""));
 
-            resetSelect($variantSel, "Loading variants…");
-            const variants = vehicleTypeId ? await fetchVariants(vehicleTypeId) : [];
-            populateDropdown('#Variant_id', variants, "Select Variant");
-            if (variantId) ensureOption($variantSel, variantId, variantName);
-            $variantSel.val(String(variantId ?? ""));
+        // Variant
+        resetSelect($variantSel, "Loading variants…");
+        const variants = vehicleTypeId ? await fetchVariants(vehicleTypeId) : [];
+        populateDropdown('#Variant_id', variants, "Select Variant");
+        if (variantId) ensureOption($variantSel, variantId, variantName);
+        $variantSel.val(String(variantId ?? ""));
 
-            if (colorId != null) $colorSel.val(String(colorId));
-          };
+        // Color
+        if (colorId != null) $colorSel.val(String(colorId));
+    };
 
-          // ====== Dropdown Change Events ======
-          $('#Brand_id').on('change', function () {
-            const brandId = $(this).val();
-            $.getJSON(`/EolMaster/GetVehicleType`, { brandId })
-              .done(function (data) {
+    // ================================================================
+    //  On Change → Cascade Dropdowns
+    // ================================================================
+    $('#Brand_id').on('change', function () {
+        const brandId = $(this).val();
+        $.getJSON(`/EolMaster/GetVehicleType`, { brandId })
+            .done(function (data) {
                 populateDropdown('#Vehicle_type_id', data.vehicletypeList, 'Select Type');
                 populateDropdown('#Variant_id', [], 'Select Variant');
-              });
-          });
+            });
+    });
 
-          $('#Vehicle_type_id').on('change', function () {
-            const vehicleTypeId = $(this).val();
-            $.getJSON(`/EolMaster/GetVariant`, { vehicleTypeId })
-              .done(function (data) {
+    $('#Vehicle_type_id').on('change', function () {
+        const vehicleTypeId = $(this).val();
+        $.getJSON(`/EolMaster/GetVariant`, { vehicleTypeId })
+            .done(function (data) {
                 populateDropdown('#Variant_id', data.variantList, 'Select Variant');
-              });
-          });
+            });
+    });
 
-          // ====== Tabulator Setup ======
-          const eolMasterData = JSON.parse('@Html.Raw(eolMasterData)');
-          let selectedRow = null;
-          let currentMode = "";
+    // ================================================================
+    //  TABULATOR TABLE SETUP
+    // ================================================================
+    const eolMasterData = JSON.parse('@Html.Raw(eolMasterData)');
+    let selectedRow = null;
+    let currentMode = "";
 
-          const dataTable = new Tabulator("#eolTable", {
-            data: eolMasterData,
-            columns: generateTabulatorColumns(eolMasterData),
-            layout: "fitDataStretch",
-            height: "80vh",
-            selectable: 1,
-            pagination: "local",
-            resizableRows:false,
-            resizableRowGuide:false,
-            resizableColumnGuide:false,
-            columnDefaults:{
-                resizable:false,
-            },           
-            movableColumns: false,
-            paginationSize: 10,
-            paginationSizeSelector: [5, 10, 20, 50, 100],
-             locale: true,
-            langs: {
-                "en": {
-            pagination: {
-                first: "<<",
-                first_title: "First",
-                last: ">>", 
-                last_title: "Last", 
-                prev: "<", 
-                prev_title: "Prev",
-                next: ">", 
-                next_title: "Next", 
-                page_size: "Page Size" 
-                 }
+    const dataTable = new Tabulator("#eolTable", {
+        data: eolMasterData,
+        columns: generateTabulatorColumns(eolMasterData),
+        layout: "fitDataStretch",
+        height: "80vh",
+        selectable: 1,
+        pagination: "local",
+
+        // Disable resizing & dragging
+        resizableRows: false,
+        resizableRowGuide: false,
+        resizableColumnGuide: false,
+        columnDefaults: { resizable: false },
+        movableColumns: false,
+
+        paginationSize: 10,
+        paginationSizeSelector: [5, 10, 20, 50, 100],
+
+        locale: true,
+        langs: {
+            "en": {
+                pagination: {
+                    first: "<<",
+                    first_title: "First",
+                    last: ">>",
+                    last_title: "Last",
+                    prev: "<",
+                    prev_title: "Prev",
+                    next: ">",
+                    next_title: "Next",
+                    page_size: "Page Size"
                 }
-             },
-
-            rowClick: function (e, row) {
-              selectedRow = row.getData();
             }
-          });
-          // 🔍 ENABLE SEARCH FILTER
-            $("#searchField").on("keyup", function () {
-                const value = $(this).val().toLowerCase();
+        },
 
-                if (value === "") {
-                    dataTable.clearFilter(); 
-                    return;
-                }
+        // Track selected row
+        rowClick: function (e, row) {
+            selectedRow = row.getData();
+        }
+    });
 
-                dataTable.setFilter(function (data) {
-                    return Object.values(data)
-                        .join(" ")
-                        .toLowerCase()
-                        .includes(value);
-                });
-            });
+    // ================================================================
+    //  Search Filter
+    // ================================================================
+    $("#searchField").on("keyup", function () {
+        const value = $(this).val().toLowerCase();
 
-          // ====== Customize table behavior ======
+        if (value === "") {
+            dataTable.clearFilter();
+            return;
+        }
 
-            // When data is loaded, update record count
-            dataTable.on("dataLoaded", function (data) {
-              updateRecordCount(dataTable, data, "Eol_production_id");  // use your primary key
-            });
+        dataTable.setFilter(function (data) {
+            return Object.values(data)
+                .join(" ")
+                .toLowerCase()
+                .includes(value);
+        });
+    });
 
-            // When table is built, hide columns and rename headers
-            dataTable.on("tableBuilt", function () {
-              // Columns to hide
-              const hideFields = [
-                "Eol_production_id",
-                "Shift_id",
-                // "Product_description",
-                "Eol_quality_inspector_name",
-                "Color_id",
-                "Shift_name",
-                "Quality_status",
-                "Transit_status",
-                "Quality_status_id",
-                "Brand_id",
-                "Vehicle_type_id",
-                "Variant_id",
-                "Updated_by",
-                "Is_deleted",
-                "Created_at",
-                "Updated_at",
-                "Version",
-                "AdditionalProperties"
-              ];
+    // ================================================================
+    //  Table Events (hide columns, rename headers)
+    // ================================================================
+    dataTable.on("dataLoaded", function (data) {
+        updateRecordCount(dataTable, data, "Eol_production_id");
+    });
 
-              // Header rename mapping
-              const columnRenameMap = {
-                "Vin": "VIN",
-                "Line_id": "Line ID",
-                "Eol_quality_inspector_id": "EOL Quality Inspector ID",
-                "Production_order_id": "Production Order ID",
-                "Certificate_id": "Certificate ID",
-                "Shop_id": "Shop ID"
-              };
+    dataTable.on("tableBuilt", function () {
 
-              // Hide unwanted columns
-              hideFields.forEach(field => {
-                if (dataTable.getColumn(field)) {
-                  dataTable.hideColumn(field);
-                }
-              });
+        // Fields to hide
+        const hideFields = [
+            "Eol_production_id",
+            "Shift_id",
+            "Eol_quality_inspector_name",
+            "Color_id",
+            "Shift_name",
+            "Quality_status",
+            "Transit_status",
+            "Quality_status_id",
+            "Brand_id",
+            "Vehicle_type_id",
+            "Variant_id",
+            "Updated_by",
+            "Is_deleted",
+            "Created_at",
+            "Updated_at",
+            "Version",
+            "AdditionalProperties"
+        ];
 
-              // Rename columns for clarity
-              Object.entries(columnRenameMap).forEach(([field, newTitle]) => {
-                const col = dataTable.getColumn(field);
-                if (col) {
-                  col.updateDefinition({ title: newTitle });
-                }
-              });
-            });
+        // Rename mapping
+        const columnRenameMap = {
+            "Vin": "VIN",
+            "Line_id": "Line ID",
+            "Eol_quality_inspector_id": "EOL Quality Inspector ID",
+            "Production_order_id": "Production Order ID",
+            "Certificate_id": "Certificate ID",
+            "Shop_id": "Shop ID"
+        };
 
-          // ====== Modal Setup ======
-          const $addEditModalEl = $('#addEditModal');
-          const addEditModal = new bootstrap.Modal($addEditModalEl[0]);
+        // Hide columns
+        hideFields.forEach(field => {
+            if (dataTable.getColumn(field)) {
+                dataTable.hideColumn(field);
+            }
+        });
 
-          // ====== Add Button ======
-          $('#add-btn').on('click', function () {
-            currentMode = "Add";
-            $form[0].reset();
-            resetSelect($('#Vehicle_type_id'), "Select Type");
-            resetSelect($('#Variant_id'), "Select Variant");
+        // Rename columns
+        Object.entries(columnRenameMap).forEach(([field, newTitle]) => {
+            const col = dataTable.getColumn(field);
+            if (col) col.updateDefinition({ title: newTitle });
+        });
+    });
 
-            $('#addEditModalLabel').text("Add EOL Master");
-            $('#modalSubmitBtn').text("Add");
-            $('#Eol_production_id').val(0);
+    // ================================================================
+    //  MODAL SETUP
+    // ================================================================
+    const $addEditModalEl = $('#addEditModal');
+    const addEditModal = new bootstrap.Modal($addEditModalEl[0]);
 
-            $('#Brand_id, #Vehicle_type_id, #Variant_id, #Vin').prop('disabled', false);
-            addEditModal.show();
-          });
+    // ================================================================
+    //  ADD RECORD
+    // ================================================================
+    $('#add-btn').on('click', function () {
+        currentMode = "Add";
+        $form[0].reset();
 
-          // ====== Edit Button ======
-          $('#edit-btn').on('click', async function () {
-            const row = dataTable.getSelectedData()?.[0];
-            if (!row) {
-              return showAppAlert({
+        resetSelect($('#Vehicle_type_id'), "Select Type");
+        resetSelect($('#Variant_id'), "Select Variant");
+
+        $('#addEditModalLabel').text("Add EOL Master");
+        $('#modalSubmitBtn').text("Add");
+        $('#Eol_production_id').val(0);
+
+        $('#Brand_id, #Vehicle_type_id, #Variant_id, #Vin').prop('disabled', false);
+
+        addEditModal.show();
+    });
+
+    // ================================================================
+    //  EDIT RECORD
+    // ================================================================
+    $('#edit-btn').on('click', async function () {
+
+        const row = dataTable.getSelectedData()?.[0];
+        if (!row) {
+            return showAppAlert({
                 icon: 'warning',
                 title: 'No Selection',
                 text: 'Please select a row to edit.'
-              });
-            }
+            });
+        }
 
-            currentMode = "Edit";
-            $('#addEditModalLabel').text("Edit EOL Master");
-            $('#modalSubmitBtn').text("Update");
+        currentMode = "Edit";
+        $('#addEditModalLabel').text("Edit EOL Master");
+        $('#modalSubmitBtn').text("Update");
 
-            $.each(row, function (field, value) {
-              const $el = $('#' + field);
-              if ($el.length === 0) return;
+        // Populate form
+        $.each(row, function (field, value) {
+            const $el = $('#' + field);
+            if ($el.length === 0) return;
 
-              if ($el.attr('type') === "datetime-local" && value) {
+            if ($el.attr('type') === "datetime-local" && value) {
                 const dt = new Date(value);
                 const iso = dt.toISOString().slice(0, 16);
                 $el.val(iso);
-              } else {
+            } else {
                 $el.val(value ?? "");
-              }
-            });
+            }
+        });
 
-            await bindDropdownsFromRow(row);
-            $('#Brand_id, #Vehicle_type_id, #Variant_id, #Vin').prop('disabled', true);
-            addEditModal.show();
-          });
+        await bindDropdownsFromRow(row);
 
-          // ====== Delete Button ======
-          $("#delete-btn").on("click", async function () {
-            const row = dataTable.getSelectedData()?.[0];
-            if (!row) {
-              return showAppAlert({
+        $('#Brand_id, #Vehicle_type_id, #Variant_id, #Vin').prop('disabled', true);
+
+        addEditModal.show();
+    });
+
+    // ================================================================
+    //  DELETE RECORD
+    // ================================================================
+    $("#delete-btn").on("click", async function () {
+
+        const row = dataTable.getSelectedData()?.[0];
+        if (!row) {
+            return showAppAlert({
                 icon: "warning",
                 title: "No Selection",
                 text: "Please select a row to delete."
-              });
-            }
-
-            const confirm = await showAppAlert({
-              type: "confirm",
-              icon: "question",
-              title: "Delete Confirmation",
-              text: "Are you sure you want to delete this record?"
             });
+        }
 
-            if (!confirm.isConfirmed) return;
+        const confirm = await showAppAlert({
+            type: "confirm",
+            icon: "question",
+            title: "Delete Confirmation",
+            text: "Are you sure you want to delete this record?"
+        });
 
-            const success = await deleteRecord("/EolMaster/Delete", { Vin: row.Vin });
-            if (success) setTimeout(() => window.location.href = "/EolMaster/Index", 900);
-          });
+        if (!confirm.isConfirmed) return;
 
-          // ====== Form Submit ======
-          $form.on("submit", async function (e) {
-            e.preventDefault();
-            if (!validateNoSpaceOnlyInputs(this)) return;
+        const success = await deleteRecord("/EolMaster/Delete", { Vin: row.Vin });
 
-            const formData = Object.fromEntries(new FormData(this).entries());
-            $(this).find(":disabled").each(function () {
-              if (this.name) formData[this.name] = this.value;
+        if (success) setTimeout(() => window.location.href = "/EolMaster/Index", 900);
+    });
+
+    // ================================================================
+    //  FORM SUBMIT (Add / Update)
+    // ================================================================
+    $form.on("submit", async function (e) {
+        e.preventDefault();
+        if (!validateNoSpaceOnlyInputs(this)) return;
+
+        const formData = Object.fromEntries(new FormData(this).entries());
+
+        // Include disabled fields
+        $(this).find(":disabled").each(function () {
+            if (this.name) formData[this.name] = this.value;
+        });
+
+        const fetchUrl =
+            currentMode === "Add"
+                ? "/EolMaster/Create"
+                : "/EolMaster/Update";
+
+        const success = await saveRecord(fetchUrl, formData, currentMode, addEditModal, this);
+
+        if (success) setTimeout(() => window.location.href = "/EolMaster/Index", 900);
+    });
+
+    // ================================================================
+    //  DOWNLOAD CSV
+    // ================================================================
+    $("#download-btn").on("click", function () {
+        let rowCount = dataTable.getDataCount ? dataTable.getDataCount() : dataTable.getData().length;
+
+        if (rowCount === 1) {
+            const firstRow = dataTable.getData()[0];
+            if (!firstRow["Eol_production_id"]) rowCount = 0;
+        }
+
+        if (rowCount === 0) {
+            showAppAlert({
+                icon: 'warning',
+                title: 'No Data',
+                text: 'No records found to download.'
             });
+            return;
+        }
 
-            const fetchUrl = currentMode === "Add" ? "/EolMaster/Create" : "/EolMaster/Update";
-            const success = await saveRecord(fetchUrl, formData, currentMode, addEditModal, this);
-            if (success) setTimeout(() => window.location.href = "/EolMaster/Index", 900);
-          });
+        downloadCsv(dataTable, "EolMaster.csv");
+    });
 
-          // ====== Download / Upload (kept same) ======
-          $("#download-btn").on("click", function () {
-            let rowCount = dataTable.getDataCount ? dataTable.getDataCount() : dataTable.getData().length;
-            if (rowCount === 1) {
-              const firstRow = dataTable.getData()[0];
-              if (!firstRow["Eol_production_id"]) rowCount = 0;
-            }
+    // ================================================================
+    //  UPLOAD HANDLER
+    // ================================================================
+    $("#upload-btn").on("click", function () {
+        $("#upload-file").click();
+    });
 
-            if (rowCount === 0) {
-              showAppAlert({ icon: 'warning', title: 'No Data', text: 'No records found to download.' });
-              return;
-            }
-            downloadCsv(dataTable, "EolMaster.csv");
-          });
+    $("#upload-file").on("change", function (event) {
 
-         
+        const file = event.target.files?.[0];
+        if (!file) {
+            return showAppAlert({
+                icon: 'warning',
+                title: 'No File',
+                text: 'Please select a file to upload.'
+            });
+        }
 
-          $("#upload-btn").on("click", function () {
-            $("#upload-file").click();
-          });
+        const isExcel = /\.(xlsx|xls)$/i.test(file.name);
+        if (!isExcel) {
+            showAppAlert({
+                icon: 'warning',
+                title: 'Invalid File',
+                text: 'Please select an Excel file (.xlsx or .xls).'
+            });
+            return;
+        }
 
-          $("#upload-file").on("change", function (event) {
-            const file = event.target.files?.[0];
-            if (!file) {
-              return showAppAlert({ icon: 'warning', title: 'No File', text: 'Please select a file to upload.' });
-            }
-            // const isCsv = /\.csv$/i.test(file.name);
-            // if (!isCsv) {
-            //   showAppAlert({ icon: 'warning', title: 'Invalid File', text: 'Please select a .csv file.' });
-            //   return;
-            // }
-             const isExcel = /\.(xlsx|xls)$/i.test(file.name);
-                if (!isExcel) {
-                  showAppAlert({
-                    icon: 'warning',
-                    title: 'Invalid File',
-                    text: 'Please select an Excel file (.xlsx or .xls).'
-                  });
-                  return;
-                }
+        uploadFile('/EolMaster/Upload', file);
+    });
 
-            uploadFile('/EolMaster/Upload', file);
-          });
+    // Upload POST call
+    async function uploadFile(url, file) {
+        const formData = new FormData();
+        formData.append("file", file);
 
-          async function uploadFile(url, file) {
-            const formData = new FormData();
-            formData.append("file", file);
-            const csrf = $('#afForm input[name="__RequestVerificationToken"]').val();
+        const csrf = $('#afForm input[name="__RequestVerificationToken"]').val();
 
-            try {
-              const response = await fetch(url, {
+        try {
+            const response = await fetch(url, {
                 method: 'POST',
                 headers: { 'RequestVerificationToken': csrf },
                 body: formData
-              });
-              await handleUploadResponse(response);
-            } catch (err) {
-              showToast({ icon: "error", text: err.message });
-            }
-          }
+            });
 
-         async function handleUploadResponse(response) {
+            await handleUploadResponse(response);
+        } catch (err) {
+            showToast({ icon: "error", text: err.message });
+        }
+    }
 
-                const result = await response.json().catch(() => null);
+    // Handle API Response from Upload
+    async function handleUploadResponse(response) {
 
-                // ================================
-                // SUCCESS BLOCK
-                // ================================
-                if (response.ok) {
+        const result = await response.json().catch(() => null);
 
-                    showAppAlert({
-                        icon: result.status,
-                        title: result.title,
-                        text: result.message,
-                        timer: 2500,
-                        showConfirmButton: false
-                    });
+        // SUCCESS
+        if (response.ok) {
 
-                    // 🔥 AUTO REFRESH PAGE (BEST + SIMPLE)
-                    setTimeout(() => location.reload(), 800);
+            showAppAlert({
+                icon: result.status,
+                title: result.title,
+                text: result.message,
+                timer: 2500,
+                showConfirmButton: false
+            });
 
-                    // allow uploading same file again
-                    $("#upload-file").val("");
+            setTimeout(() => location.reload(), 800);
+            $("#upload-file").val("");
+            return;
+        }
 
-                    return;
-                }
+        // FIELD ERRORS
+        if (result && result.errors) {
+            let msg = "";
+            result.errors.forEach(e => {
+                msg += `VIN: ${e.vin}\nError: ${e.error}\n\n`;
+            });
 
-                // ================================
-                // ERROR BLOCK — API RETURNED ERRORS
-                // ================================
-                if (result && result.errors) {
+            showAppAlert({
+                icon: "error",
+                title: "Upload Failed",
+                text: msg,
+                timer: 4500,
+                showConfirmButton: false
+            });
 
-                    let msg = "";
-                    result.errors.forEach(e => {
-                        msg += `VIN: ${e.vin}\nError: ${e.error}\n\n`;
-                    });
+            $("#upload-file").val("");
+            return;
+        }
 
-                    showAppAlert({
-                        icon: "error",
-                        title: "Upload Failed",
-                        text: msg,
-                        timer: 4500,
-                        showConfirmButton: false
-                    });
+        // GENERIC API MESSAGE
+        if (result && result.message) {
+            showAppAlert({
+                icon: "error",
+                title: "Upload Failed",
+                text: result.message,
+                timer: 3500,
+                showConfirmButton: false
+            });
 
-                    $("#upload-file").val("");
-                    return;
-                }
+            $("#upload-file").val("");
+            return;
+        }
 
-                // ================================
-                // GENERIC API MESSAGE
-                // ================================
-                if (result && result.message) {
-                    showAppAlert({
-                        icon: "error",
-                        title: "Upload Failed",
-                        text: result.message,
-                        timer: 3500,
-                        showConfirmButton: false
-                    });
-
-                    $("#upload-file").val("");
-                    return;
-                }
-
-                // ================================
-                // UNKNOWN ERROR
-                // ================================
-                showAppAlert({
-                    icon: "error",
-                    title: "Upload Failed",
-                    text: "Unexpected error.",
-                    timer: 3500,
-                    showConfirmButton: false
-                });
-
-                $("#upload-file").val("");
-            }
-
-
-          function downloadInvalidRecords(fileData) {
-            const csvData = atob(fileData);
-            const blob = new Blob([csvData], { type: 'text/csv' });
-            const link = document.createElement('a');
-            link.href = URL.createObjectURL(blob);
-            link.download = 'invalid_records.csv';
-            link.click();
-          }
-
+        // UNKNOWN ERROR
+        showAppAlert({
+            icon: "error",
+            title: "Upload Failed",
+            text: "Unexpected error.",
+            timer: 3500,
+            showConfirmButton: false
         });
-       $("#download-template-btn").on("click", function () {
-         const headers = [
+
+        $("#upload-file").val("");
+    }
+
+    function downloadInvalidRecords(fileData) {
+        const csvData = atob(fileData);
+        const blob = new Blob([csvData], { type: 'text/csv' });
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = 'invalid_records.csv';
+        link.click();
+    }
+
+});
+
+// ================================================================
+// Download Template 
+// ================================================================
+$("#download-template-btn").on("click", function () {
+
+    const headers = [
         "Vin",
         "Production Order Id",
         "Product Description",
@@ -740,5 +805,4 @@
 
     downloadTemplate(headers, "EolMasterTemplate");
 });
-
 </script>

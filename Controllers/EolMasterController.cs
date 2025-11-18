@@ -15,6 +15,9 @@
 // -------------------------------------------------------------------------------------------------
 // 1.0     | 2025-10-14 | Dhanalakshmi D   | Initial creation based on EOL model structure.
 // =================================================================================================
+// 1.1     | 2025-11-13 | Dharani T   | Modified the Upload method to handle Excel file uploads for bulk eol creation.
+// =================================================================================================
+
 using FluentValidation;
 using Microsoft.AspNetCore.Http.Json;
 using Microsoft.AspNetCore.Mvc;
@@ -46,18 +49,16 @@ namespace YardManagementApplication
     [Route("[controller]/[action]")]
     public class EolMasterController : Controller
     {
-        // Inject typed API client
+        // -----------------------------------------------------
+        // Dependencies
+        // -----------------------------------------------------
         private readonly v1Client _apiClient;
 
-        //  Constructor DI
         private readonly CsvUploadService _csvUploadService;
 
         private readonly IValidator<EolProductionModel> _validator;
 
         private readonly ILogger<EolMasterController> _logger;
-
-
-        // Single constructor to inject both dependencies
 
         public EolMasterController(CsvUploadService csvUploadService, v1Client apiClient, IValidator<EolProductionModel> validator, ILogger<EolMasterController> logger)
 
@@ -74,12 +75,12 @@ namespace YardManagementApplication
         }
 
         // =====================================================
-        //  Render main page with grid data + dropdowns
+        //  Render main page 
         // =====================================================
         public async Task<IActionResult> Index()
         {
-           
 
+            // Log action start
             string controller = nameof(EolMasterController);
             string action = nameof(Index);
             string user = HttpContext.Session.GetString("LoginUser") ?? "Unknown";
@@ -90,16 +91,15 @@ namespace YardManagementApplication
             );
 
             try
-            {
-               
-                //  Fetch users list from API
+            {                   
+                // Fetch EOL Production Data
                 var result = await _apiClient.GetAllEolProductionAsync();
 
                 _logger.LogInformation(
                     "[ACTION INFO] {controller}.{action} | RecordsFetched={count}",
                     controller, action, result?.Count() ?? 0
                 );
-                // If no data returned, create a empty row to capture all properties from model
+                
                 if (result == null || !result.Any())
                 {
                     result = new List<EolProductionModel>
@@ -107,21 +107,19 @@ namespace YardManagementApplication
                         new EolProductionModel()
                     };
                 }
-                //  Serialize data for the view (Tabulator expects JSON)
+                
                 var jsonOptions = AppJson.CreateUiOptions();
 
                 string jsonResult = System.Text.Json.JsonSerializer.Serialize(result, jsonOptions);
 
-
-                //  Pass JSON to view
+                // Pass data to ViewData
                 ViewData["EolMasterData"] = jsonResult;
 
-                //  Fetch dropdown sources from API
                 var brand = await _apiClient.VehicleBrandAsync();
                 var color = await _apiClient.ColorAsync();
                 var QualityStatus = await _apiClient.VehicleQualityStatusAsync();
 
-                // Convert API lists to SelectList for UI controls
+                // Prepare Select Lists
                 ViewBag.BrandList = Utils.Utility.PrepareSelectList(brand);
                 ViewBag.ColorList = Utils.Utility.PrepareSelectList(color);
                 ViewBag.QualityStatusList = Utils.Utility.PrepareSelectList(QualityStatus);
@@ -134,6 +132,7 @@ namespace YardManagementApplication
             }
             catch (Exception ex)
             {
+                // Log error
                 _logger.LogError(
                      ex,
                      "[ACTION ERROR] {controller}.{action} | Exception={error}",
@@ -143,9 +142,13 @@ namespace YardManagementApplication
             }
         }
 
+        // -----------------------------------------------------
+        // Get Vehicle Type based on Brand ID 
+        // -----------------------------------------------------
         [HttpGet]
         public async Task<IActionResult> GetVehicleType(long brandId)
         {
+            // Log action start
             string controller = nameof(EolMasterController);
             string action = nameof(Index);
             string user = HttpContext.Session.GetString("LoginUser") ?? "Unknown";
@@ -158,33 +161,32 @@ namespace YardManagementApplication
 
             try
             {
-                // Assuming _apiClient.VehicleTypeAsync fetches the vehicle types based on brandId
+                // Fetch Vehicle Types
                 var vehicleTypes = await _apiClient.VehicleTypeAsync(brandId);
-
 
                 _logger.LogInformation(
                     "[ACTION INFO] {controller}.{action} | RecordsFetched={count}",
                     controller, action, vehicleTypes?.Count() ?? 0
                 );
-                // If vehicle types are found, return the data in the required format
+               
                 if (vehicleTypes != null)
                 {
                     return Ok(new
                     {
                         vehicletypeList = vehicleTypes.Select(vt => new
                         {
-                            vt.Id,        // Assuming the vehicle type has an Id
-                            vt.Name       // Assuming the vehicle type has a Name
+                            vt.Id,       
+                            vt.Name     
                         }).ToList()
                     });
                 }
 
-                // If no vehicle types are found, return an empty list
+              
                 return Ok(new { vehicletypeList = new List<object>() });
             }
             catch (Exception ex)
             {
-
+                // Log error
                 _logger.LogError(
                      ex,
                      "[ACTION ERROR] {controller}.{action} | Exception={error}",
@@ -196,7 +198,7 @@ namespace YardManagementApplication
                     {
                         status = "error",
                         title = "Error",
-                        message = apiEx.Result.Detail // <- Pass Detail here
+                        message = apiEx.Result.Detail
                     });
                 }
 
@@ -209,9 +211,13 @@ namespace YardManagementApplication
             }
         }
 
+        // -----------------------------------------------------
+        // Get Variant based on Vehicle Type ID
+        // -----------------------------------------------------
         [HttpGet]
         public async Task<IActionResult> GetVariant(long vehicleTypeId)
         {
+            // Log action start
             string controller = nameof(EolMasterController);
             string action = nameof(Index);
             string user = HttpContext.Session.GetString("LoginUser") ?? "Unknown";
@@ -223,7 +229,7 @@ namespace YardManagementApplication
 
             try
             {
-                // Assuming _apiClient.VehicleTypeAsync fetches the vehicle types based on brandId
+                // Fetch Variants
                 var vehicleTypes = await _apiClient.VehicleVariantAsync(vehicleTypeId);
 
                 _logger.LogInformation(
@@ -231,25 +237,25 @@ namespace YardManagementApplication
                     controller, action, vehicleTypes?.Count() ?? 0
                 );
 
-
-                // If vehicle types are found, return the data in the required format
+                
                 if (vehicleTypes != null)
                 {
                     return Ok(new
                     {
                         variantList = vehicleTypes.Select(vt => new
                         {
-                            vt.Id,        // Assuming the vehicle type has an Id
-                            vt.Name       // Assuming the vehicle type has a Name
+                            vt.Id,        
+                            vt.Name     
                         }).ToList()
                     });
                 }
 
-                // If no vehicle types are found, return an empty list
+              
                 return Ok(new { variantList = new List<object>() });
             }
             catch (Exception ex)
             {
+                // Log error
                 _logger.LogError(
                     ex,
                     "[ACTION ERROR] {controller}.{action} | Exception={error}",
@@ -274,13 +280,14 @@ namespace YardManagementApplication
             }
         }
 
-        // =====================================================
-        //  Create EOL data (HTTP POST)
-        // =====================================================
+        // -----------------------------------------------------
+        // CREATE / Insert new EOL data 
+        // -----------------------------------------------------
 
         [HttpPost]
         public async Task<IActionResult> Create([FromBody] EolProductionModel model)
         {
+            // Log action start
             string controller = nameof(EolMasterController);
             string action = nameof(Index);
             string user = HttpContext.Session.GetString("LoginUser") ?? "Unknown";
@@ -293,9 +300,9 @@ namespace YardManagementApplication
 
             try
             {
-                model.Created_by = HttpContext.Session.GetString("LoginUser");
+
+                model.Created_by = HttpContext.Session.GetString("LoginUser");           
               
-                //DateTime completionDate = DateTime.ParseExact(model.Completion_at.ToString("yyyy/MM/dd"), "yyyy/MM/dd", null);
                 string formattedCompletionDate = model.Completion_at.Value.ToString("yyyy/MM/dd");
                 DateTime completionDate = DateTime.ParseExact(formattedCompletionDate, "yyyy/MM/dd", null);
                 DateTime productionDate = DateTime.Today;
@@ -303,7 +310,7 @@ namespace YardManagementApplication
                 model.Completion_at = new DateTimeOffset(completionDate);
                 model.Date_of_production = productionDate;
 
-                //Call API for EOL insert
+                // Insert EOL Production Data
                 var result = await _apiClient.InsertEolProductionAsync(model);
 
                 _logger.LogInformation(
@@ -311,7 +318,7 @@ namespace YardManagementApplication
                     controller, action, result.Status
                 );
 
-                // Return JSON for common JS toast
+                
                 return Ok(new
                 {
                     status = result.Status,
@@ -321,6 +328,7 @@ namespace YardManagementApplication
             }
             catch (Exception ex)
             {
+                // Log error
                 _logger.LogError(
                      ex,
                      "[ACTION ERROR] {controller}.{action} | Exception={error}",
@@ -332,7 +340,7 @@ namespace YardManagementApplication
                     {
                         status = "error",
                         title = "Error",
-                        message = apiEx.Result.Detail // <- Pass Detail here
+                        message = apiEx.Result.Detail 
                     });
                 }
 
@@ -344,12 +352,14 @@ namespace YardManagementApplication
                 });
             }
         }
-        // =====================================================
-        //  update EOL data (HTTP PUT)
-        // =====================================================
+
+        // -----------------------------------------------------
+        // UPDATE EOL data 
+        // -----------------------------------------------------
         [HttpPut()]
         public async Task<IActionResult> Update([FromBody] EolProductionUpdateModel model)
         {
+            // Log action start
             string controller = nameof(EolMasterController);
             string action = nameof(Index);
             string user = HttpContext.Session.GetString("LoginUser") ?? "Unknown";
@@ -364,13 +374,15 @@ namespace YardManagementApplication
             {
                 model.Updated_by = HttpContext.Session.GetString("LoginUser");
 
-                //Call API for EOL insert
+                // Update EOL Production Data
+
                 var result = await _apiClient.UpdateEolProductionAsync(model.Vin,model);
+                
                 _logger.LogInformation(
                  "[ACTION INFO] {controller}.{action} | {Status}",
                  controller, action, result.Status
              );
-                // Return JSON for common JS toast
+             
                 return Ok(new
                 {
                     status = result.Status,
@@ -380,6 +392,7 @@ namespace YardManagementApplication
             }
             catch (Exception ex)
             {
+                // Log error
 
                 _logger.LogError(
                      ex,
@@ -393,7 +406,7 @@ namespace YardManagementApplication
                     {
                         status = "error",
                         title = "Error",
-                        message = apiEx.Result.Detail // <- Pass Detail here
+                        message = apiEx.Result.Detail 
                     });
                 }
 
@@ -406,12 +419,14 @@ namespace YardManagementApplication
             }
         }
 
-        // =====================================================
-        //  delete EOL data (HTTP PUT)
-        // =====================================================
+        // -----------------------------------------------------
+        // DELETE EOL [Soft Delete]
+        // -----------------------------------------------------
         [HttpPut()]
         public async Task<IActionResult> Delete([FromBody] EolMasterDeleteModel model)
         {
+
+            // Log action start
             string controller = nameof(EolMasterController);
             string action = nameof(Index);
             string user = HttpContext.Session.GetString("LoginUser") ?? "Unknown";
@@ -425,14 +440,15 @@ namespace YardManagementApplication
             {
                 model.Updated_by = HttpContext.Session.GetString("LoginUser");
                 model.Updated_at=DateTimeOffset.Now;
-                //Call API for EOL insert
+
+                // Delete EOL Production Data
                 var result = await _apiClient.DeleteEolProductionAsync(model.Vin);
                 _logger.LogInformation(
                    "[ACTION INFO] {controller}.{action} | {Status}",
                    controller, action, result.Status
                 );
 
-                // Return JSON for common JS toast
+              
                 return Ok(new
                 {
                     status = result.Status,
@@ -442,6 +458,7 @@ namespace YardManagementApplication
             }
             catch (Exception ex)
             {
+                // Log error
 
                 _logger.LogError(
                      ex,
@@ -455,7 +472,7 @@ namespace YardManagementApplication
                     {
                         status = "error",
                         title = "Error",
-                        message = apiEx.Result.Detail // <- Pass Detail here
+                        message = apiEx.Result.Detail 
                     });
                 }
 
@@ -467,135 +484,14 @@ namespace YardManagementApplication
                 });
             }
         }
-
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> UploadOld(IFormFile file)
-        {
-            string controller = nameof(EolMasterController);
-            string action = nameof(Index);
-            string user = HttpContext.Session.GetString("LoginUser") ?? "Unknown";
-
-            _logger.LogInformation(
-                "[ACTION START] {controller}.{action} | User={user}",
-                controller, action, user
-            );
-
-            try
-            {
-                // 0) Guards
-                if (file == null || file.Length == 0)
-                    return BadRequest("No file uploaded.");
-                var nameOk = Path.GetExtension(file.FileName).Equals(".csv", StringComparison.OrdinalIgnoreCase);
-                var type = (file.ContentType ?? "").ToLowerInvariant();
-                var typeOk = type.Contains("csv") || type == "application/vnd.ms-excel";
-                if (!nameOk && !typeOk)
-                    return BadRequest("Only CSV files are allowed.");
-                // 1) Parse + validate CSV
-                var res = _csvUploadService.ProcessCsvFile<EolProductionModel>(file, _validator);
-                // 2) Insert valid rows; collect API failures (no row numbers)
-                var apiFailures = new List<(EolProductionModel Record, string Error)>();
-                var successCount = 0;
-                foreach (var item in res.ValidItems)
-                {
-                    try
-                    {
-                        await _apiClient.UploadEolProductionAsync(item);
-                        successCount++;
-                    }
-                    catch (Exception ex)
-                    {
-                        var msg = ex is ApiException<ResponseModel> apiEx && apiEx.Result != null
-                            ? (apiEx.Result.Detail ?? apiEx.Message)
-                            : ex.Message;
-                        apiFailures.Add((item, msg ?? "API insert error"));
-                    }
-                }
-                // 3) Build ONE CSV for all failures (validation + API),
-                //    but include ONLY the columns that were uploaded (plus ErrorMessages)
-                string invalidCsv = _csvUploadService.CreateUnifiedInvalidCsv(
-                    res.InvalidItems,
-                    apiFailures,
-                    res.UploadedHeaders // << key: only uploaded columns are exported
-                );
-                // Encode to Base64 only if we have any failures
-                string invalidBase64 = string.IsNullOrWhiteSpace(invalidCsv)
-                    ? null
-                    : Convert.ToBase64String(Encoding.UTF8.GetBytes(invalidCsv));
-                // 4) Prepare response
-                var status = successCount > 0 ? "success" : "error";
-                var title = successCount > 0 ? "Success" : "No Records";
-                var message = successCount > 0
-                    ? $"{successCount} records added successfully"
-                    : "No valid records to insert.";
-
-                _logger.LogInformation(
-                   "[ACTION INFO] {controller}.{action} | Success count: {Status}",
-                   controller, action, status
-               );
-                return Ok(new
-                {
-                    status,
-                    title,
-                    message,
-                    successCount,
-                    validationFailedCount = res.InvalidCount,
-                    apiFailedCount = apiFailures.Count,
-                    invalidRecords = invalidBase64 // unified CSV (ErrorMessages + only uploaded columns)
-                });
-            }
-            catch (OperationCanceledException)
-            {
-                
-
-                _logger.LogError(
-                     "error",
-                     "[ACTION ERROR] {controller}.{action} | Exception={error}",
-                     controller, action, "The upload was cancelled."
-                 );
-                return StatusCode(499, new
-                {
-                    status = "error",
-                    title = "Client Closed Request",
-                    message = "The upload was cancelled."
-                });
-            }
-            
-
-            catch (Exception ex)
-            {
-
-
-                _logger.LogError(
-                     ex,
-                     "[ACTION ERROR] {controller}.{action} | Exception={error}",
-                     controller, action, ex.Message
-                 );
-                if (ex is ApiException<ResponseModel> apiEx && apiEx.Result != null)
-                {
-                    return BadRequest(new
-                    {
-                        status = "error",
-                        title = "Error",
-                        message = apiEx.Result.Detail // <- Pass Detail here
-                    });
-                }
-
-                return BadRequest(new
-                {
-                    status = "error",
-                    title = "Error",
-                    message = ex.Message
-                });
-            }
-
-          
-        }
-
+        // -----------------------------------------------------
+        // UPLOAD EOL DATA VIA EXCEL
+        // -----------------------------------------------------
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Upload(IFormFile file)
         {
+            // Log action start
             string controller = nameof(EolMasterController);
             string action = nameof(Index);
             string user = HttpContext.Session.GetString("LoginUser") ?? "Unknown";
@@ -608,9 +504,7 @@ namespace YardManagementApplication
 
             try
             {
-                // -----------------------------------------------------------------------
-                // 0) Validate file
-                // -----------------------------------------------------------------------
+                // Validate file
                 if (file == null || file.Length == 0)
                     return BadRequest("No file uploaded.");
 
@@ -618,12 +512,10 @@ namespace YardManagementApplication
                 if (ext != ".xlsx" && ext != ".xls")
                     return BadRequest("Only Excel files (.xlsx/.xls) are allowed.");
 
-                // -----------------------------------------------------------------------
-                // 1) Parse Excel
-                // -----------------------------------------------------------------------
                 List<Dictionary<string, string>> excelRows = new();
                 List<string> uploadedHeaders = new();
 
+                // Read Excel file
                 using (var stream = file.OpenReadStream())
                 {
                     IWorkbook workbook = ext == ".xlsx"
@@ -654,19 +546,17 @@ namespace YardManagementApplication
                     }
                 }
 
-                // Current logged-in user
+                
                 string currentUser = HttpContext.Session.GetString("LoginUser") ?? "System";
 
-                // -----------------------------------------------------------------------
-                // 2) Map Excel → API model using JSON property names
-                // -----------------------------------------------------------------------
-                var allItems = new List<EolProductionModel>();
+                 var allItems = new List<EolProductionModel>();
 
+                // Map Excel rows to EolProductionModel
                 foreach (var rowDict in excelRows)
                 {
                     var mapped = new Dictionary<string, string>();
 
-                    // Normalize & map columns
+                  
                     foreach (var kv in rowDict)
                     {
                         string norm = kv.Key.Trim().ToLower()
@@ -705,7 +595,7 @@ namespace YardManagementApplication
 
                     var model = new EolProductionModel();
 
-                    // Assign values using JsonProperty names
+                   
                     foreach (var prop in typeof(EolProductionModel).GetProperties())
                     {
                         var jsonAttr = prop.GetCustomAttribute<JsonPropertyAttribute>();
@@ -747,9 +637,7 @@ namespace YardManagementApplication
                     allItems.Add(model);
                 }
 
-                // -----------------------------------------------------------------------
-                // 3) CALL API FOR EACH ROW + CAPTURE EXACT ERRORS
-                // -----------------------------------------------------------------------
+                // Upload each item and collect results
                 int successCount = 0;
                 var apiErrors = new List<object>();
 
@@ -769,7 +657,7 @@ namespace YardManagementApplication
                
                     catch (ApiException<ResponseModel> ex)
                     {
-
+                        // Log API exception
                         _logger.LogError(
                              ex,
                              "[ACTION ERROR] {controller}.{action} | Exception={error}",
@@ -784,7 +672,7 @@ namespace YardManagementApplication
                     }
                     catch (Exception ex)
                     {
-
+                        // Log general exception
                         _logger.LogError(
                              ex,
                              "[ACTION ERROR] {controller}.{action} | Exception={error}",
@@ -799,11 +687,10 @@ namespace YardManagementApplication
                     }
                 }
 
-                // -----------------------------------------------------------------------
-                // 4) RETURN PROPER HTTP STATUS
-                // -----------------------------------------------------------------------
+             
                 if (apiErrors.Count > 0)
                 {
+                    // Return errors if any
                     return BadRequest(new
                     {
                         status = "error",
@@ -823,7 +710,7 @@ namespace YardManagementApplication
             }
             catch (Exception ex)
             {
-
+                // Log error
                 _logger.LogError(
                      ex,
                      "[ACTION ERROR] {controller}.{action} | Exception={error}",

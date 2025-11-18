@@ -34,9 +34,11 @@ namespace YardManagementApplication.Controllers
         public async Task<IActionResult> Login(LoginModel loginModel)
         {
             if (!ModelState.IsValid)
+            
                 return View(loginModel);
 
             var json = JsonSerializer.Serialize(loginModel);
+
             var content = new StringContent(json, Encoding.UTF8, "application/json");
 
             /* gps */
@@ -49,6 +51,7 @@ namespace YardManagementApplication.Controllers
             if (!response.IsSuccessStatusCode)
             {
                 ModelState.AddModelError("", "Invalid username or password");
+
                 return View(loginModel);
             }
 
@@ -57,7 +60,9 @@ namespace YardManagementApplication.Controllers
             var tokenResponse = JsonSerializer.Deserialize<TokenResponseModel>(
                 respString,
                 new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+           
             _jwtService.StoreTokensinCookies(tokenResponse);
+            
             HttpContext.Session.SetString("AccessToken", tokenResponse.AccessToken);
 
             //TempData["LoginUser"] = loginModel.Username;

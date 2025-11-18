@@ -15,6 +15,8 @@
 // -------------------------------------------------------------------------------------------------
 // 1.0     | 2025-10-14 | Srinithi G   | Initial creation based on Template Configuration Model structure.
 // =================================================================================================
+// 1.1     | 2025-11-13 | Dharani T   | Modified the Upload method to handle Excel file uploads for bulk template creation.
+// =================================================================================================
 
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -53,10 +55,11 @@ namespace YardManagementApplication
         }
 
         // =====================================================
-        // GET /TemplateConfiguration/Index - Load page & seed ViewData/ViewBag
+        //  Render main page 
         // =====================================================
         public async Task<IActionResult> Index()
         {
+            // Log action start
             string controller = nameof(TemplateConfigurationController);
             string action = nameof(Index);
             string user = HttpContext.Session.GetString("LoginUser") ?? "Unknown";
@@ -67,12 +70,10 @@ namespace YardManagementApplication
             );
 
             try
-            {
-                ViewData["Title"] = "TemplateConfiguration";
-
+            {     
+                // Fetch all templates from API
                 var result = await _apiClient.GetAllTemplatesAsync();
-
-                // Seed an empty row so the grid shows all columns on first load
+              
                 if (result == null || !result.Any())
                 {
                     result = new List<TemplateModel> { new TemplateModel() };
@@ -84,10 +85,7 @@ namespace YardManagementApplication
                     controller, action, result?.Count() ?? 0
                 );
 
-
-                // Use common utility for consistent date formatting:
-                // - DateTime       => MM/dd/yyyy
-                // - DateTimeOffset => MM/dd/yyyy HH:mm:ss (24h)
+                // Fetch all shifts for dropdown
                 var jsonOptions = AppJson.CreateDateOnlyOptions();
                 var shiftResult = await _apiClient.GetAllShiftAsync();
 
@@ -104,24 +102,15 @@ namespace YardManagementApplication
                 ViewBag.ShiftList = shiftResult
                     .Select(s => new SelectListItem
                     {
-                        Text = s.Shift_name,   // label
-                        Value = s.Shift_id.ToString() // value
+                        Text = s.Shift_name,   
+                        Value = s.Shift_id.ToString() 
                     })
                     .ToList();
 
                 string jsonResult = System.Text.Json.JsonSerializer.Serialize(result, jsonOptions);
                 ViewData["TemplateConfiguration"] = jsonResult;
 
-                // Fetch dropdown sources from API
-                //var statuses = await _apiClient.TemplateStatusAsync();
-                //var shifts = await _apiClient.ShiftAsync();
-                //var breaks = await _apiClient.BreakAsync();
-                //var plant = await _apiClient.PlantListAsync();
-
-                //ViewBag.StatusList = Utility.PrepareSelectList(statuses);
-                //ViewBag.ShiftList = Utility.PrepareSelectList(shifts);
-                //ViewBag.BreakList = Utility.PrepareSelectList(breaks);
-                //ViewBag.PlantList = Utility.PrepareSelectList(plant);
+            
                 _logger.LogInformation(
                    "[ACTION SUCCESS] {controller}.{action} | Message={msg}",
                    controller, action, "Page loaded successfully"
@@ -129,30 +118,25 @@ namespace YardManagementApplication
 
                 return View();
             }
-            catch (ApiException<ProblemDetails> ex)
+            catch (Exception ex)
             {
+                // Log error
                 _logger.LogError(
                      ex,
                      "[ACTION ERROR] {controller}.{action} | Exception={error}",
                      controller, action, ex.Message
                  );
-                var problem = ex.Result;
-
-                return StatusCode(problem.Status ?? ex.StatusCode, new
-                {
-                    status = problem.Status ?? ex.StatusCode,
-                    title = "Error",
-                    message = problem.Detail ?? "An unexpected error occurred."
-                });
+                return StatusCode(500, ex.Message);
             }
         }
 
-        // =====================================================
-        // POST /TemplateConfiguration/Create - Create new template
-        // =====================================================
+        // -----------------------------------------------------
+        // CREATE / Insert new template
+        // -----------------------------------------------------
         [HttpPost]
         public async Task<IActionResult> Create([FromBody] TemplateModel model)
         {
+            // Log action start
             string controller = nameof(TemplateConfigurationController);
             string action = nameof(Index);
             string user = HttpContext.Session.GetString("LoginUser") ?? "Unknown";
@@ -165,11 +149,8 @@ namespace YardManagementApplication
             try
             {
                 model.Created_by = HttpContext.Session.GetString("LoginUser");
-               
-                
-                Console.WriteLine("Incoming Payload: " + Newtonsoft.Json.JsonConvert.SerializeObject(model));         
 
-
+                // Insert new template via API
                 var result = await _apiClient.InsertTemplateAsync(model);
 
                 _logger.LogInformation(
@@ -184,31 +165,40 @@ namespace YardManagementApplication
                     message = result.Detail ?? "Template created successfully."
                 });
             }
-            catch (ApiException<ProblemDetails> ex)
+            catch (Exception ex)
             {
-
+                // Log error
                 _logger.LogError(
                      ex,
                      "[ACTION ERROR] {controller}.{action} | Exception={error}",
                      controller, action, ex.Message
                  );
-                var problem = ex.Result;
-
-                return StatusCode(problem.Status ?? ex.StatusCode, new
+                if (ex is ApiException<ResponseModel> apiEx && apiEx.Result != null)
                 {
-                    status = problem.Status ?? ex.StatusCode,
+                    return BadRequest(new
+                    {
+                        status = "error",
+                        title = "Error",
+                        message = apiEx.Result.Detail
+                    });
+                }
+
+                return BadRequest(new
+                {
+                    status = "error",
                     title = "Error",
-                    message = problem.Detail ?? "An unexpected error occurred."
+                    message = ex.Message
                 });
             }
         }
 
-        // =====================================================
-        // PUT /TemplateConfiguration/Update - Update existing template
-        // =====================================================
-            [HttpPut]
+        // -----------------------------------------------------
+        // UPDATE template
+        // -----------------------------------------------------
+        [HttpPut]
             public async Task<IActionResult> Update([FromBody] TemplateUpdateModel model)
             {
+                // Log action start
                 string controller = nameof(TemplateConfigurationController);
                 string action = nameof(Index);
                 string user = HttpContext.Session.GetString("LoginUser") ?? "Unknown";
@@ -220,7 +210,7 @@ namespace YardManagementApplication
 
             try
             {
-                //model.updated_by = HttpContext.Session.GetString("LoginUser");
+                model.updated_by = HttpContext.Session.GetString("LoginUser");
 
                 // Map MVC model → API model
                 var apiModel = new TemplateUpdateModel
@@ -233,7 +223,7 @@ namespace YardManagementApplication
                     is_deleted = model.is_deleted
                 };
 
-
+                // Update template via API
                 var result = await _apiClient.UpdateTemplateAsync(model.template_id, apiModel);
 
                 _logger.LogInformation(
@@ -248,29 +238,46 @@ namespace YardManagementApplication
                         message = result.Detail ?? "Template updated successfully."
                     });
                 }
-                catch (ApiException<ProblemDetails> ex)
-                {
+            catch (Exception ex)
+            {
+                // Log error
 
-                    _logger.LogError(
-                         ex,
-                         "[ACTION ERROR] {controller}.{action} | Exception={error}",
-                         controller, action, ex.Message
-                     );
-                    var problem = ex.Result;
-                    return StatusCode(problem.Status ?? ex.StatusCode, new
+                _logger.LogError(
+                     ex,
+                     "[ACTION ERROR] {controller}.{action} | Exception={error}",
+                     controller, action, ex.Message
+                 );
+
+                if (ex is ApiException<ResponseModel> apiEx && apiEx.Result != null)
+                {
+                    return BadRequest(new
                     {
-                        status = problem.Status ?? ex.StatusCode,
+                        status = "error",
                         title = "Error",
-                        message = problem.Detail ?? "An unexpected error occurred."
+                        message = apiEx.Result.Detail
                     });
                 }
-            }
 
-      
+                return BadRequest(new
+                {
+                    status = "error",
+                    title = "Error",
+                    message = ex.Message
+                });
+            }
+        }
+
+        // NO DELETE METHOD AS ACTIVE/INACTIVE UPDATE IS USED
+
+        // -----------------------------------------------------
+        // UPLOAD TEMPLATE DATA VIA EXCEL
+        // -----------------------------------------------------
+
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Upload(IFormFile file)
         {
+            //Log action start
             string controller = nameof(TemplateConfigurationController);
             string action = nameof(Index);
             string user = HttpContext.Session.GetString("LoginUser") ?? "Unknown";
@@ -282,7 +289,7 @@ namespace YardManagementApplication
 
             try
             {
-                // ---------------- VALIDATION ----------------
+                // Validate file
                 if (file == null || file.Length == 0)
                     return BadRequest("No file uploaded.");
 
@@ -290,10 +297,11 @@ namespace YardManagementApplication
                 if (ext != ".xlsx" && ext != ".xls")
                     return BadRequest("Only Excel files (.xlsx/.xls) allowed.");
 
-                // ---------------- READ EXCEL ----------------
+
                 List<Dictionary<string, string>> excelRows = new();
                 List<string> headers = new();
 
+                // Read Excel file
                 using (var stream = file.OpenReadStream())
                 {
                     IWorkbook wb = ext == ".xlsx" ? new XSSFWorkbook(stream) : new HSSFWorkbook(stream);
@@ -318,9 +326,10 @@ namespace YardManagementApplication
 
                 string currentUser = HttpContext.Session.GetString("LoginUser") ?? "System";
 
-                // ---------------- MAP EXCEL → MODEL ----------------
+
                 var allItems = new List<TemplateResponseModel>();
 
+                // Map Excel rows to TemplateResponseModel
                 foreach (var row in excelRows)
                 {
                     string norm(string x) =>
@@ -355,78 +364,83 @@ namespace YardManagementApplication
                     allItems.Add(model);
                 }
 
-                // ---------------- CALL API ----------------
-                var errors = new List<object>();
-                int success = 0;
+                // Upload each template via API
+                int successCount = 0;
+                var apiErrors = new List<object>();
 
                 foreach (var item in allItems)
                 {
                     try
                     {
-                        await _apiClient.UploadTemplateAsync(item); // API endpoint for insert
-                        success++;
+                        await _apiClient.UploadTemplateAsync(item);
+                        successCount++;
                     }
                     catch (ApiException<ResponseModel> ex)
                     {
-
+                        // Log API exception
                         _logger.LogError(
                              ex,
                              "[ACTION ERROR] {controller}.{action} | Exception={error}",
                              controller, action, ex.Message
                          );
-                        errors.Add(new
+
+                        apiErrors.Add(new
                         {
-                            name = item.Template_name,
+                           
                             error = ex.Result?.Detail ?? ex.Message
                         });
                     }
                     catch (Exception ex)
                     {
-
+                        // Log general exception
                         _logger.LogError(
                              ex,
                              "[ACTION ERROR] {controller}.{action} | Exception={error}",
                              controller, action, ex.Message
                          );
-                        errors.Add(new
+
+                        apiErrors.Add(new
                         {
-                            name = item.Template_name,
+                          
                             error = ex.Message
                         });
                     }
                 }
 
-                // ---------------- RETURN RESULT ----------------
-                if (errors.Count > 0)
+
+                if (apiErrors.Count > 0)
                 {
+                    // Return errors if any
                     return BadRequest(new
                     {
                         status = "error",
-                        title = "Upload Completed With Errors",
-                        message = $"{errors.Count} record(s) failed.",
-                        errors
+                        title = "Upload Failed",
+                        message = $"{apiErrors.Count} record(s) failed.",
+                        errors = apiErrors
                     });
                 }
 
                 return Ok(new
                 {
                     status = "success",
-                    title = "Upload Completed",
-                    message = $"{success} records added successfully.",
-                    successCount = success
+                    title = "Success",
+                    message = $"{successCount} records added successfully.",
+                    successCount
                 });
             }
             catch (Exception ex)
             {
-
+                // Log error
                 _logger.LogError(
                      ex,
                      "[ACTION ERROR] {controller}.{action} | Exception={error}",
                      controller, action, ex.Message
                  );
+
                 return BadRequest(new
                 {
                     status = "error",
+                    title = "Error",
                     message = ex.Message
                 });
             }

@@ -1,0 +1,137 @@
+﻿<!-- Get View Data -->
+@model YardManagementApplication.Models.ShiftCalendarViewModel
+
+@{
+   
+    Layout = "_Layout";
+}
+
+<style>
+    .main-container {
+        margin-left: 5px !important;
+        margin-right: 5px !important;
+    }
+
+    #calendar {
+        max-height: 600px;
+    }
+
+    .filter-label {
+        font-weight: 600;
+        font-size: 0.85rem;
+        margin-bottom: 3px;
+    }
+
+    .form-select, .form-control {
+        border-radius: 4px !important;
+        height: 36px !important;
+    }
+
+    .form-label {
+        font-size: 0.8rem;
+        font-weight: 600;
+    }
+
+    .form-select-sm, .form-control-sm {
+        padding: 3px 6px;
+        height: 32px;
+    }
+
+    .btn-sm {
+        height: 32px;
+        font-size: 0.8rem;
+    }
+</style>
+
+<div class="main-container">
+
+    <!-- Page Title -->
+    <div class="col-12 text-center py-1 mb-3" style="background:#242424;color:white;">
+        <h6 class="mb-0 fw-bold text-uppercase tracking-wide">SHIFT CALENDAR</h6>
+    </div>
+
+    <div class="row g-2 align-items-end mb-3">
+
+        <!-- Plant -->
+        <div class="col-xl-2 col-lg-3 col-md-3">
+            <label class="form-label">Select Plant</label>
+            <select id="plantDropdown" class="form-select form-select-sm"></select>
+        </div>
+
+        <!-- Start Date -->
+        <div class="col-xl-2 col-lg-3 col-md-3">
+            <label class="form-label">Start Date</label>
+            <input type="date" id="startDate" class="form-control form-control-sm" />
+        </div>
+
+        <!-- End Date -->
+        <div class="col-xl-2 col-lg-3 col-md-3">
+            <label class="form-label">End Date</label>
+            <input type="date" id="endDate" class="form-control form-control-sm" />
+        </div>
+
+        <!-- Template -->
+        <div class="col-xl-2 col-lg-3 col-md-3">
+            <label class="form-label">Select Template</label>
+            <select id="templateDropdown" class="form-select form-select-sm"></select>
+        </div>
+
+        <!-- Buttons Group -->
+        <div class="col-xl-4 col-lg-12 d-flex gap-2 justify-content-end flex-wrap mt-2">
+            <button id="assignShiftBtn" class="btn btn-danger btn-sm px-4">Assign Shifts</button>
+            <button id="addHolidayBtn" class="btn btn-success btn-sm px-4">+ Add Holiday</button>
+        </div>
+
+    </div>
+
+    <!-- Calendar -->
+    <div class="card p-3" style="border-radius:10px;">
+        <div id="calendar"></div>
+    </div>
+
+</div>
+
+<!-- FullCalendar -->
+<script src="~/lib/fullcalendar/index.global.min.js"></script>
+
+<script>
+$(document).ready(function () {
+
+    // =============================================================
+    // 1) Directly use Razor Model to populate Plant dropdown
+    // =============================================================
+    $("#plantDropdown").append('<option value="" disabled selected>Select Plant</option>');
+   @foreach (var p in Model.Plants)
+    {
+    <text>
+        $("#plantDropdown").append(`<option value="@p.Plant_id">@p.Plant_name</option>`);
+    </text>
+    }
+
+    // =============================================================
+    // 2) Directly use Razor Model to populate Template dropdown
+    // =============================================================
+    $("#templateDropdown").append('<option value="" disabled selected>Select Template</option>');
+    @foreach (var t in Model.Templates)
+    {
+    <text>
+        $("#templateDropdown").append(`<option value="@t.Template_id">@t.Template_name</option>`);
+    </text>
+    }
+
+    // =============================================================
+    // 3) FullCalendar initialization
+    // =============================================================
+    const calendarEl = document.getElementById('calendar');
+
+    const calendar = new FullCalendar.Calendar(calendarEl, {
+        initialView: 'dayGridMonth',
+        selectable: true,
+        editable: true,
+        events: '/Calendar/GetEvents'
+    });
+
+    calendar.render();
+
+});
+</script>
