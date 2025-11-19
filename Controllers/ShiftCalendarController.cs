@@ -133,10 +133,78 @@ namespace YardManagementApplication
         }
 
         [HttpPost]
-        public JsonResult AddEvent([FromBody] CalendarEvent newEvent)
+        public async Task<IActionResult> Create([FromBody] ShiftCalendarModel model)
         {
-            // Save to database or memory here
-            return Json(new { success = true, message = "Event added!" });
+            // Log action start
+            string controller = nameof(ShiftCalendarController);
+            string action = nameof(Index);
+            string user = HttpContext.Session.GetString("LoginUser") ?? "Unknown";
+
+            _logger.LogInformation(
+                "[ACTION START] {controller}.{action} | User={user}",
+                controller, action, user
+            );
+
+
+            try
+            {
+                if (model == null)
+                {
+                    return BadRequest(new
+                    {
+                        status = "error",
+                        title = "Invalid Request",
+                        message = "Request body cannot be empty."
+                    });
+                }
+
+                model.Created_by = HttpContext.Session.GetString("LoginUser");
+
+                Console.WriteLine("Received ShiftCalendarModel:", JsonConvert.SerializeObject(model));
+
+                // Insert new Shift record
+
+                var result = await _apiClient.InsertShiftCalendarAsync(model);
+
+
+                _logger.LogInformation(
+                    "[ACTION INFO] {controller}.{action} | Result {result}",
+                    controller, action, result
+                );
+
+                return Ok(new
+                {
+                    status = result.Status,
+                    title = "Success",
+                    message = result.Detail ?? "Record created successfully"
+                });
+            }
+            catch (Exception ex)
+            {
+                // Log error
+                _logger.LogError(
+                     ex,
+                     "[ACTION ERROR] {controller}.{action} | Exception={error}",
+                     controller, action, ex.Message
+                 );
+                if (ex is ApiException<ResponseModel> apiEx && apiEx.Result != null)
+                {
+                    return BadRequest(new
+                    {
+                        status = "error",
+                        title = "Error",
+                        message = apiEx.Result.Detail
+                    });
+                }
+
+                return BadRequest(new
+                {
+                    status = "error",
+                    title = "Error",
+                    message = ex.Message
+                });
+            }
+
         }
     }
 

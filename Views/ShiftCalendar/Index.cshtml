@@ -439,15 +439,94 @@ $("#showShiftDetailsBtn").click(function () {
 // -----------------------------------------------
 // SAVE SHIFT
 // -----------------------------------------------
-$("#saveShiftBtn").click(function () {
-    const days = $("#freqButtons .freq-btn.active")
+// ------------------------------------------------------------
+// SAVE SHIFT  (Assign Shift → Save button)
+// ------------------------------------------------------------
+$("#saveShiftBtn").click(async function () {
+
+    const plantId = $("#plantDropdown").val();
+    const templateId = $("#templateDropdown").val();
+    const startDate = $("#modalStartDate").val();
+    const endDate = $("#modalEndDate").val();
+
+    const selectedDays = $("#freqButtons .freq-btn.active")
         .map(function () { return $(this).data("day"); }).get();
 
-    if (days.length === 0)
+    if (!plantId) return showToast({ icon: "error", text: "Select plant" });
+    if (!templateId) return showToast({ icon: "error", text: "Select template" });
+    if (!startDate) return showToast({ icon: "error", text: "Start date missing" });
+    if (!endDate) return showToast({ icon: "error", text: "End date missing" });
+
+    if (selectedDays.length === 0)
         return showToast({ icon: "error", text: "Select at least one frequency day" });
 
-    showToast({ icon: "success", text: "Saved Successfully" });
+
+    // ------------------------------------------
+    // BUILD PAYLOAD (ShiftCalendarModel)
+    // ------------------------------------------
+    const payload = {
+            assignment_id: 0,
+            plant_id: parseInt(plantId),
+            template_id: parseInt(templateId),
+
+            
+            start_date: startDate + "T00:00:00+05:30",
+            end_date: endDate + "T00:00:00+05:30",
+
+            sun: selectedDays.includes(0),
+            mon: selectedDays.includes(1),
+            tue: selectedDays.includes(2),
+            wed: selectedDays.includes(3),
+            thu: selectedDays.includes(4),
+            fri: selectedDays.includes(5),
+            sat: selectedDays.includes(6),
+
+            is_active: true,
+            created_by: $("#loggedInUser").val() || "system"
+    };
+
+    console.log("Payload for Create:", payload);
+
+    // ------------------------------------------
+    // SEND TO CONTROLLER
+    // ------------------------------------------
+    try {
+
+        const modal = bootstrap.Modal.getInstance(
+            document.getElementById("assignShiftModal")
+        );
+
+        const response = await fetch("/ShiftCalendar/Create", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload)
+        });
+
+        const result = await response.json();
+
+
+        if (response.ok && result.status == "success") {
+
+            showToast({ icon: "success", text: "Shift Assigned Successfully" });
+
+            modal.hide();
+
+            // reload UI
+            setTimeout(() => location.reload(), 900);
+        }
+        else {
+            showToast({
+                icon: "error",
+                text: result.message || "Failed to assign shift"
+            });
+        }
+
+    } catch (err) {
+        console.error(err);
+        showToast({ icon: "error", text: "Server error" });
+    }
 });
+
 
 // -----------------------------------------------
 // Add Holiday
