@@ -2459,7 +2459,7 @@
                 "schema": {
                   "type": "array",
                   "items": {
-                    "$ref": "#/components/schemas/TemplateModel"
+                    "$ref": "#/components/schemas/TemplateResponseModel"
                   }
                 }
               },
@@ -2467,7 +2467,7 @@
                 "schema": {
                   "type": "array",
                   "items": {
-                    "$ref": "#/components/schemas/TemplateModel"
+                    "$ref": "#/components/schemas/TemplateResponseModel"
                   }
                 }
               },
@@ -2475,7 +2475,7 @@
                 "schema": {
                   "type": "array",
                   "items": {
-                    "$ref": "#/components/schemas/TemplateModel"
+                    "$ref": "#/components/schemas/TemplateResponseModel"
                   }
                 }
               }
@@ -2846,17 +2846,17 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/TemplateModel"
+                "$ref": "#/components/schemas/TemplateUpdateModel"
               }
             },
             "text/json": {
               "schema": {
-                "$ref": "#/components/schemas/TemplateModel"
+                "$ref": "#/components/schemas/TemplateUpdateModel"
               }
             },
             "application/*+json": {
               "schema": {
-                "$ref": "#/components/schemas/TemplateModel"
+                "$ref": "#/components/schemas/TemplateUpdateModel"
               }
             }
           },
@@ -3021,17 +3021,17 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/TemplateResponseModel"
+                "$ref": "#/components/schemas/TemplateModel"
               }
             },
             "text/json": {
               "schema": {
-                "$ref": "#/components/schemas/TemplateResponseModel"
+                "$ref": "#/components/schemas/TemplateModel"
               }
             },
             "application/*+json": {
               "schema": {
-                "$ref": "#/components/schemas/TemplateResponseModel"
+                "$ref": "#/components/schemas/TemplateModel"
               }
             }
           },
@@ -3285,6 +3285,64 @@
         "responses": {
           "200": {
             "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/v1/ShiftCalendar/GetAllShiftCalendar": {
+      "get": {
+        "tags": [
+          "ShiftCalendar"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ShiftCalendarModel"
+                  }
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ShiftCalendarModel"
+                  }
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ShiftCalendarModel"
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponseModel"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponseModel"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponseModel"
+                }
+              }
+            }
           }
         }
       }
@@ -15149,6 +15207,55 @@
           }
         }
       },
+      "ShiftCalendarModel": {
+        "type": "object",
+        "properties": {
+          "assignment_id": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "plant_id": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "template_id": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "start_date": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "end_date": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "sun": {
+            "type": "boolean"
+          },
+          "mon": {
+            "type": "boolean"
+          },
+          "tue": {
+            "type": "boolean"
+          },
+          "wed": {
+            "type": "boolean"
+          },
+          "thu": {
+            "type": "boolean"
+          },
+          "fri": {
+            "type": "boolean"
+          },
+          "sat": {
+            "type": "boolean"
+          },
+          "is_active": {
+            "type": "boolean"
+          }
+        }
+      },
       "ShiftMasterModel": {
         "type": "object",
         "properties": {
@@ -15194,15 +15301,6 @@
           "updated_at": {
             "type": "string",
             "format": "date-time",
-            "nullable": true
-          }
-        }
-      },
-      "ShiftMasterModelDetails": {
-        "type": "object",
-        "properties": {
-          "shift_name": {
-            "type": "string",
             "nullable": true
           }
         }
@@ -15497,11 +15595,9 @@
             "format": "date-time",
             "nullable": true
           },
-          "shiftdetails": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/ShiftMasterModelDetails"
-            }
+          "shift_name": {
+            "type": "string",
+            "nullable": true
           }
         }
       },
@@ -15555,12 +15651,44 @@
             "type": "string",
             "format": "date-time",
             "nullable": true
+          }
+        }
+      },
+      "TemplateUpdateModel": {
+        "type": "object",
+        "properties": {
+          "template_id": {
+            "type": "integer",
+            "format": "int64"
           },
-          "shiftdetails": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/ShiftMasterModelDetails"
-            }
+          "shift_id": {
+            "type": "integer",
+            "format": "int64",
+            "nullable": true
+          },
+          "template_name": {
+            "type": "string"
+          },
+          "updated_by": {
+            "type": "string"
+          },
+          "template_description": {
+            "type": "string",
+            "nullable": true
+          },
+          "effective_from": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "is_deleted": {
+            "type": "boolean",
+            "nullable": true
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
           }
         }
       },

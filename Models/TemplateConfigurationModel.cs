@@ -12,6 +12,7 @@
         public string? updated_by { get; set; }
         public DateTimeOffset? updated_at { get; set; }
         public DateTime? effective_from { get; set; }
+
         //public string? shift_name { get; set; }
 
     }

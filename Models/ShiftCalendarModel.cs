@@ -32,6 +32,11 @@
     {
         public List<YardManagementApplication.TemplateModel> Templates { get; set; }
         public List<YardManagementApplication.PlantMasterModel> Plants { get; set; }
+        public List<YardManagementApplication.DropdownModel> Holidays { get; set; }
+        public List<YardManagementApplication.HolidayModel> HolidayList { get; set; }
+        public List<YardManagementApplication.ShiftMasterModel> ShiftData {get; set; }
+
+        public List<YardManagementApplication.ShiftCalendarModel> ShiftCalendarData { get; set; }
     }
 
 }

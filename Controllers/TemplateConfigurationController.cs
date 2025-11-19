@@ -76,7 +76,7 @@ namespace YardManagementApplication
               
                 if (result == null || !result.Any())
                 {
-                    result = new List<TemplateModel> { new TemplateModel() };
+                    result = new List<TemplateResponseModel> { new TemplateResponseModel() };
                 }
 
 
@@ -210,21 +210,23 @@ namespace YardManagementApplication
 
             try
             {
-                model.updated_by = HttpContext.Session.GetString("LoginUser");
+                
 
                 // Map MVC model → API model
                 var apiModel = new TemplateUpdateModel
                 {
-                    template_id = model.template_id,
-                    template_name = model.template_name,
-                    template_description = model.template_description,
-                    shift_id = model.shift_id,
-                    effective_from = model.effective_from,
-                    is_deleted = model.is_deleted
+                    Template_id = model.Template_id,
+                    Template_name = model.Template_name,
+                    Template_description = model.Template_description,
+                    Shift_id = model.Shift_id,
+                    Effective_from = model.Effective_from,
+                    Is_deleted = model.Is_deleted
                 };
+                apiModel.Updated_by = HttpContext.Session.GetString("LoginUser");
+                apiModel.Updated_at = DateTimeOffset.Now;
 
                 // Update template via API
-                var result = await _apiClient.UpdateTemplateAsync(model.template_id, apiModel);
+                var result = await _apiClient.UpdateTemplateAsync(model.Template_id, apiModel);
 
                 _logger.LogInformation(
                         "[ACTION INFO] {controller}.{action} | result={count}",
@@ -327,7 +329,7 @@ namespace YardManagementApplication
                 string currentUser = HttpContext.Session.GetString("LoginUser") ?? "System";
 
 
-                var allItems = new List<TemplateResponseModel>();
+                var allItems = new List<TemplateModel>();
 
                 // Map Excel rows to TemplateResponseModel
                 foreach (var row in excelRows)
@@ -349,7 +351,7 @@ namespace YardManagementApplication
                         }
                     }
 
-                    var model = new TemplateResponseModel
+                    var model = new TemplateModel
                     {
                         Template_name = mapped.GetValueOrDefault("template_name"),
                         Template_description = mapped.GetValueOrDefault("template_description"),

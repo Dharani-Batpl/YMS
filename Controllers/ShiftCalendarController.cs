@@ -76,12 +76,36 @@ namespace YardManagementApplication
 
                 var templates = await _apiClient.GetAllTemplatesAsync();
                 var plants = await _apiClient.GetAllPlantAsync();
+                var holidayType = await _apiClient.HolidayTypeAsync();
+                var holidayList = await _apiClient.GetAllHolidayAsync();
+                var shiftData = await _apiClient.GetAllShiftAsync();
+                var shiftCalendarData = await _apiClient.GetAllShiftCalendarAsync();
 
                 var vm = new ShiftCalendarViewModel
                 {
-                    Templates = templates?.ToList() ?? new List<TemplateModel>(),
-                    Plants = plants?.ToList() ?? new List<PlantMasterModel>()
+                    Templates = templates?
+                        .Select(t => new TemplateModel
+                        {
+                            Template_id = t.Template_id,
+                            Template_name = t.Template_name,
+                            Shift_id = t.Shift_id,
+                            Template_description = t.Template_description,
+                            Is_deleted = t.Is_deleted
+                        })
+                        .ToList()
+                        ?? new List<TemplateModel>(),
+
+                    Plants = plants?.ToList() ?? new List<PlantMasterModel>(),
+
+                    Holidays = holidayType?.ToList() ?? new List<DropdownModel>(),
+
+                    HolidayList = holidayList?.ToList() ?? new List<HolidayModel>(),
+
+                    ShiftData = shiftData?.ToList() ?? new List<ShiftMasterModel>(),
+
+                    ShiftCalendarData = shiftCalendarData?.ToList() ?? new List<ShiftCalendarModel>()
                 };
+
 
                 return View(vm);
             }

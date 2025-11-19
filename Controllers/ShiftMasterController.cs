@@ -412,13 +412,24 @@ namespace YardManagementApplication
                     }
                 }
 
-              
+
+                //TimeSpan ParseTime(string t)
+                //{
+                //    if (string.IsNullOrWhiteSpace(t)) return TimeSpan.Zero;
+                //    if (TimeSpan.TryParse(t, out var ts)) return ts;
+                //    return TimeSpan.Zero;
+                //}
                 TimeSpan ParseTime(string t)
                 {
-                    if (string.IsNullOrWhiteSpace(t)) return TimeSpan.Zero;
-                    if (TimeSpan.TryParse(t, out var ts)) return ts;
+                    if (string.IsNullOrWhiteSpace(t))
+                        return TimeSpan.Zero;
+
+                    if (TimeSpan.TryParse(t, out var ts))
+                        return ts;
+
                     return TimeSpan.Zero;
                 }
+
 
                 string currentUser = HttpContext.Session.GetString("LoginUser") ?? "System";
                 var allItems = new List<ShiftMasterModel>();
@@ -505,8 +516,8 @@ namespace YardManagementApplication
                     {
                         Shift_name = shiftName,
                         Shift_description = shiftDesc,
-                        Start_time = ParseTime(startTime),
-                        End_time = ParseTime(endTime),
+                        Start_time = (startTime),
+                        End_time = (endTime),
                         Break_details = breakDetails,
                         Is_deleted = false,
                         Created_by = currentUser
