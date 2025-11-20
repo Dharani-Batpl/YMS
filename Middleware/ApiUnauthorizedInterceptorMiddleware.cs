@@ -1,4 +1,4 @@
-namespace YardManagementApplication.Middlewares
+﻿namespace YardManagementApplication.Middlewares
 {
     public class ApiUnauthorizedInterceptorMiddleware
     {
@@ -35,7 +35,7 @@ namespace YardManagementApplication.Middlewares
 
                 context.Response.Clear();
                 context.Response.StatusCode = 302; // Redirect
-                context.Response.Headers["Location"] = "/Login/Login?tokenexpire";
+                context.Response.Headers["Location"] = "/Login/Login";
                 return;
             }
 
@@ -48,17 +48,17 @@ namespace YardManagementApplication.Middlewares
             // Check if status code is 200 but body contains 401
             if (!string.IsNullOrEmpty(responseBody))
             {
-                if (responseBody.Contains("Token is invalid or expired", StringComparison.OrdinalIgnoreCase) ||
-                    responseBody.Contains("Unauthorized", StringComparison.OrdinalIgnoreCase) ||
-                    responseBody.Contains("Access denied", StringComparison.OrdinalIgnoreCase))
+                if (responseBody.Contains("Token is invalid or expired"))
                 {
                     return true;
                 }
                 // Check for 401 in JSON response
-                if (responseBody.Contains("\"status\":401") ||
+                if (responseBody.Contains("\"Status\":401") ||
                     responseBody.Contains("\"statusCode\":401") ||
-                    responseBody.Contains("\"code\":401") ||
-                    responseBody.Contains("401"))
+                    responseBody.Contains("\"code\":401") 
+                    //||
+                    //responseBody.Contains("401")
+                    )
                 {
                     return true;
                 }
