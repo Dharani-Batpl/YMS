@@ -81,6 +81,9 @@ namespace YardManagementApplication
                 var shiftData = await _apiClient.GetAllShiftAsync();
                 var shiftCalendarData = await _apiClient.GetAllShiftCalendarAsync();
 
+
+                Console.WriteLine("shiftCalendarData: " + JsonConvert.SerializeObject(shiftCalendarData));
+
                 var vm = new ShiftCalendarViewModel
                 {
                     Templates = templates?

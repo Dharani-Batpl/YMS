@@ -29,7 +29,7 @@
         font-size: 0.8rem;
     }
 
-    /* Frequency buttons */
+   
     .freq-btn.active {
         background-color: #0d6efd !important;
         color: white !important;
@@ -57,6 +57,27 @@
         border-radius: 6px;
         margin-bottom: 10px;
     }
+        .calendar-legend-container {
+    display: flex;
+    gap: 18px;
+    align-items: center;
+    font-size: 0.85rem;
+    padding-left: 4px;
+}
+
+.legend-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.legend-color {
+    width: 14px;
+    height: 14px;
+    border-radius: 4px;
+    border: 1px solid #999;
+}
+
 </style>
 
 <div class="main-container">
@@ -93,7 +114,17 @@
         </div>
     </div>
 
-    <div class="card p-3" style="border-radius:10px;">
+       <div id="calendarLegend" class="calendar-legend-container mb-2">
+          
+            <span class="legend-item">
+                <span class="legend-color" style="background:#CFE9FF;"></span> Holiday
+            </span>
+            <span class="legend-item">
+                <span style="font-size:16px;">📝</span> Template
+            </span>
+    </div>
+
+
         <div id="calendar"></div>
     </div>
 
@@ -220,10 +251,10 @@
 const existingHolidayDates = [
     @foreach (var h in Model.HolidayList)
     {
-        var date = h.Holiday_date.HasValue
-            ? h.Holiday_date.Value.Date.ToString("yyyy-MM-dd")
-            : "";
-        <text>"@date",</text>
+        if (h.Holiday_date.HasValue)
+        {
+            <text>"@h.Holiday_date.Value.Date.ToString("yyyy-MM-dd")",</text>
+        }
     }
 ];
 
@@ -232,7 +263,8 @@ const existingHolidayDates = [
 // -----------------------------------------------
 const allShiftData = @Html.Raw(Newtonsoft.Json.JsonConvert.SerializeObject(Model.ShiftData));
 const allTemplates = @Html.Raw(Newtonsoft.Json.JsonConvert.SerializeObject(Model.Templates));
-
+const shiftCalendarData  = @Html.Raw(Newtonsoft.Json.JsonConvert.SerializeObject(Model.ShiftCalendarData));
+console.log("Loaded Shift Data:", shiftCalendarData );
 let calendar;
 let selectedDate = null;
 
@@ -308,7 +340,7 @@ $(document).ready(function () {
             title: "@h.Holiday_name",
             start: "@dt",
             display: "background",
-            backgroundColor: "#FFA500",
+            backgroundColor: "#cfe9ff",
             borderColor: "#cc8400",
             textColor: "black"
         },
@@ -317,15 +349,17 @@ $(document).ready(function () {
     ];
 
     // Calendar init
-    calendar = new FullCalendar.Calendar(document.getElementById('calendar'), {
-        initialView: 'dayGridMonth',
-        eventSources: [
-            { url: '/Calendar/GetEvents', method: 'GET' },
-            { events: holidayEvents }
-        ]
-    });
+   calendar = new FullCalendar.Calendar(document.getElementById('calendar'), {
+    initialView: 'dayGridMonth',
+    eventSources: [
+        { url: '/Calendar/GetEvents', method: 'GET' },
+        { events: holidayEvents }
+    ]
+});
+
 
     calendar.render();
+    
 
     // Calendar click
     calendar.on('dateClick', function (info) {
@@ -350,6 +384,86 @@ $(document).ready(function () {
     });
 
 }); // end ready
+
+$("#plantDropdown").change(function () {
+
+    let plantId = $(this).val();
+
+    if (!plantId) return;
+
+    // Filter shifts for selected plant
+    const filtered = shiftCalendarData.filter(x => x.plant_id == plantId);
+
+    // Clear previous template events
+    calendar.getEvents().forEach(e => {
+        if (e.extendedProps.type === "template") e.remove();
+    });
+
+    // Add new template events
+    addTemplateEvents(filtered);
+});
+function addTemplateEvents(data) {
+
+    console.log("Adding template events for:", data);
+
+    data.forEach(rec => {
+
+        const template = allTemplates.find(t => t.template_id == rec.template_id);
+        const templateName = template ? template.template_name : "Template";
+
+        const dayFlags = {
+            0: rec.sun == 1,
+            1: rec.mon == 1,
+            2: rec.tue == 1,
+            3: rec.wed == 1,
+            4: rec.thu == 1,
+            5: rec.fri == 1,
+            6: rec.sat == 1
+        };
+
+        // ------------ FIX: Remove time part ----------------
+        let start = new Date(rec.start_date.split("T")[0] + "T00:00:00");
+        let end   = new Date(rec.end_date.split("T")[0] + "T00:00:00");
+
+        console.log("START:", start, "END:", end);
+
+        while (start <= end) {
+
+            let iso = start.toLocaleDateString("en-CA");  // yyyy-mm-dd
+            let day = start.getDay();
+
+            if (!dayFlags[day]) {
+                start.setDate(start.getDate() + 1);
+                continue;
+            }
+
+            if (existingHolidayDates.includes(iso)) {
+                start.setDate(start.getDate() + 1);
+                continue;
+            }
+
+            calendar.addEvent({
+               title: "📝 " + templateName,
+                start: iso,
+                allDay: true,
+                display: "auto",
+                extendedProps: { type: "template" },
+                eventDidMount: function(info) {
+                    info.el.style.fontSize = "14px";
+                    info.el.style.fontWeight = "700";
+                    info.el.style.color = "#0056b3";
+                    info.el.style.backgroundColor = "transparent";
+                    info.el.style.border = "none";
+                    info.el.style.paddingLeft = "2px";
+                }
+            });
+
+            start.setDate(start.getDate() + 1);
+        }
+
+    });
+}
+
 
 // -----------------------------------------------
 // Assign Shift Modal
@@ -436,9 +550,6 @@ $("#showShiftDetailsBtn").click(function () {
     $("#shiftDetailsContent").html(html);
 });
 
-// -----------------------------------------------
-// SAVE SHIFT
-// -----------------------------------------------
 // ------------------------------------------------------------
 // SAVE SHIFT  (Assign Shift → Save button)
 // ------------------------------------------------------------
@@ -487,6 +598,7 @@ $("#saveShiftBtn").click(async function () {
 
     console.log("Payload for Create:", payload);
 
+
     // ------------------------------------------
     // SEND TO CONTROLLER
     // ------------------------------------------
@@ -504,22 +616,29 @@ $("#saveShiftBtn").click(async function () {
 
         const result = await response.json();
 
+        console.log("Create Response:", result);
+        console.log("Create Response:", response);
 
-        if (response.ok && result.status == "success") {
+       if (response.ok && result.title?.toLowerCase() === "success") {
 
-            showToast({ icon: "success", text: "Shift Assigned Successfully" });
+            showToast({ icon: "success", text: result.message || "Shift Assigned Successfully" });
 
-            modal.hide();
+            // Safe modal close
+            var modalEl = document.getElementById("assignShiftModal");
+            var modalInstance = bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl);
+            modalInstance.hide();
 
-            // reload UI
-            setTimeout(() => location.reload(), 900);
+            setTimeout(() => {
+                window.location.href = "/ShiftCalendar/Index";
+            }, 300);
+            }
+    else {
+        showToast({
+            icon: "error",
+            text: (result.message || "Failed to assign shift").replace(/\n/g, " ")
+        });
         }
-        else {
-            showToast({
-                icon: "error",
-                text: result.message || "Failed to assign shift"
-            });
-        }
+
 
     } catch (err) {
         console.error(err);
@@ -527,6 +646,12 @@ $("#saveShiftBtn").click(async function () {
     }
 });
 
+function isTemplateAssigned(dateStr) {
+    return calendar.getEvents().some(ev =>
+        ev.extendedProps.type === "template" &&
+        ev.startStr === dateStr
+    );
+}
 
 // -----------------------------------------------
 // Add Holiday
@@ -535,6 +660,14 @@ $("#addHolidayBtn").click(function () {
 
     if (!selectedDate)
         return showToast({ icon: "error", text: "Select a date first" });
+
+    // Check if template already exists
+    if (isTemplateAssigned(selectedDate)) {
+        return showToast({
+            icon: "error",
+            text: "Cannot add holiday. Shift already assigned for this date."
+        });
+    }
 
     if (existingHolidayDates.includes(selectedDate))
         return showToast({ icon: "error", text: "Holiday already exists" });
@@ -576,5 +709,7 @@ $("#saveHolidayBtn").click(async function () {
         setTimeout(() => location.href = "/ShiftCalendar/Index", 900);
     }
 });
+
+
 </script>
 
