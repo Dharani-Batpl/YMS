@@ -85,7 +85,7 @@
             </div>
 
             <div class="modal-body">
-                <form id="addEditForm">
+                <form id="addEditForm" autocomplete="off">
 
                     <input type="hidden" id="Shift_id" name="Shift_id" />
 
@@ -95,14 +95,14 @@
                         <div>
                             <label class="form-label">Shift Name <span class="text-danger">*</span></label>
                             <input type="text" id="Shift_name" name="Shift_name" class="form-control"
-                                   required maxlength="15"style="width: 150px;">
+                                   required maxlength="15"style="width: 150px;" autocomplete="off">
                         </div>
 
                          <!-- Shift Description -->
                         <div>
                             <label class="form-label">Description</label>
                             <input type="text" id="Shift_description" name="Shift_description"
-                                   class="form-control" maxlength="25" style="width: 300px;">
+                                   class="form-control" maxlength="25" style="width: 300px;"autocomplete="off">
                         </div>
 
                     </div>

@@ -122,13 +122,13 @@
                         <!-- VIN -->
                         <div class="col-12">
                             <label class="form-label" for="Vin">VIN <span class="text-danger">*</span></label>
-                            <input type="text" class="form-control" id="Vin" name="Vin" minlength="17" maxlength="17" required pattern="^(?=.*[A-Za-z])(?=.*\d)[A-Za-z0-9]{17}$" inputmode="latin-prose" title="VIN must be exactly 17 characters and contain both letters and numbers.">
+                            <input type="text" class="form-control" id="Vin" name="Vin" minlength="17" maxlength="17" required pattern="^(?=.*[A-Za-z])(?=.*\d)[A-Za-z0-9]{17}$" inputmode="latin-prose" title="VIN must be exactly 17 characters and contain both letters and numbers." autocomplete="off" >
                         </div>
 
                         <!-- Production Order -->
                         <div class="col-12">
                             <label class="form-label" for="Production_order_id">Production Order ID <span class="text-danger">*</span></label>
-                            <input type="text" class="form-control" id="Production_order_id" name="production_order_id" maxlength="50" required pattern="^[A-Za-z0-9 ]+$" inputmode="text" title="Only letters,space and numbers are allowed.">
+                            <input type="text" class="form-control" id="Production_order_id" name="production_order_id" maxlength="50" required pattern="^[A-Za-z0-9 ]+$" inputmode="text" title="Only letters,space and numbers are allowed." autocomplete="off" >
                         </div>
 
                         <!-- Color -->
@@ -142,25 +142,25 @@
                         <!-- EOL Quality Inspector -->
                         <div class="col-12">
                             <label class="form-label" for="Eol_quality_inspector_id">EOL Quality Inspector ID <span class="text-danger">*</span></label>
-                            <input type="text" class="form-control" id="Eol_quality_inspector_id" name="Eol_quality_inspector_id" maxlength="50" required pattern="^[A-Za-z0-9 ]+$" inputmode="text">
+                            <input type="text" class="form-control" id="Eol_quality_inspector_id" name="Eol_quality_inspector_id" maxlength="50" required pattern="^[A-Za-z0-9 ]+$" inputmode="text" autocomplete="off" >
                         </div>
 
                         <!-- Batch/Lot -->
                         <div class="col-12">
                             <label class="form-label" for="Batch_lot_number">Batch/Lot Number <span class="text-danger">*</span></label>
-                            <input type="text" class="form-control" id="Batch_lot_number" name="batch_lot_number" maxlength="50" required pattern="^[A-Za-z0-9 ]+$" inputmode="text">
+                            <input type="text" class="form-control" id="Batch_lot_number" name="batch_lot_number" maxlength="50" required pattern="^[A-Za-z0-9 ]+$" inputmode="text" autocomplete="off" >
                         </div>
 
                         <!-- Line ID -->
                         <div class="col-12">
                             <label class="form-label" for="Line_id">Line ID <span class="text-danger">*</span></label>
-                            <input type="text" class="form-control" id="Line_id" name="Line_id" maxlength="50" required pattern="^[A-Za-z0-9 ]+$" inputmode="text">
+                            <input type="text" class="form-control" id="Line_id" name="Line_id" maxlength="50" required pattern="^[A-Za-z0-9 ]+$" inputmode="text" autocomplete="off" >
                         </div>
 
                         <!-- Shop ID -->
                         <div class="col-12">
                             <label class="form-label" for="Shop_id">Shop ID <span class="text-danger">*</span></label>
-                            <input type="text" class="form-control" id="Shop_id" name="Shop_id" maxlength="50" required pattern="^[A-Za-z0-9 ]+$" inputmode="text">
+                            <input type="text" class="form-control" id="Shop_id" name="Shop_id" maxlength="50" required pattern="^[A-Za-z0-9 ]+$" inputmode="text" autocomplete="off" >
                         </div>
 
                         <!-- Completion Timestamp -->
@@ -180,7 +180,7 @@
                         <!-- Certificate -->
                         <div class="col-12">
                             <label class="form-label" for="Certificate_id">Certificate ID <span class="text-danger">*</span></label>
-                            <input type="text" class="form-control" id="Certificate_id" name="Certificate_id" maxlength="50" required pattern="^[A-Za-z0-9 ]+$" inputmode="text">
+                            <input type="text" class="form-control" id="Certificate_id" name="Certificate_id" maxlength="50" required pattern="^[A-Za-z0-9 ]+$" inputmode="text" autocomplete="off" >
                         </div>
 
                     </div>
