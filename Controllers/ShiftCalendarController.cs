@@ -103,7 +103,11 @@ namespace YardManagementApplication
 
                     Holidays = holidayType?.ToList() ?? new List<DropdownModel>(),
 
-                    HolidayList = holidayList?.ToList() ?? new List<HolidayModel>(),
+                    HolidayList = holidayList?
+                            .Where(h => h.Is_deleted == false && h.Status_name == "Active")
+                            .ToList()
+                         ?? new List<HolidayModel>(),
+
 
                     ShiftData = shiftData?.ToList() ?? new List<ShiftMasterModel>(),
 
