@@ -5,79 +5,204 @@
 
 <style>
     .main-container {
-        margin-left: 5px !important;
-        margin-right: 5px !important;
+    margin-left: 5px !important;
+    margin-right: 5px !important;
+    }
+    #assignShiftModal .modal-dialog {
+    max-width: 900px !important;  
+    }
+
+    #assignShiftModal .modal-body {
+    padding: 25px 35px !important;
     }
 
     #calendar {
-        max-height: 600px;
+    max-height: 600px;
     }
 
     .form-label {
-        font-size: 0.80rem;
-        font-weight: 600;
+    font-size: 0.80rem;
+    font-weight: 600;
     }
 
     .form-select-sm, .form-control-sm {
-        padding: 3px 6px !important;
-        height: 36px !important;
-        border-radius: 4px !important;
+    padding: 3px 6px !important;
+    height: 36px !important;
+    border-radius: 4px !important;
     }
 
     .btn-sm {
-        height: 32px;
-        font-size: 0.8rem;
+    height: 32px;
+    font-size: 0.8rem;
     }
 
    
     .freq-btn.active {
-        background-color: #0d6efd !important;
-        color: white !important;
-        border-color: #0d6efd !important;
+    background-color: #0d6efd !important;
+    color: white !important;
+    border-color: #0d6efd !important;
     }
 
     .freq-btn {
-        width: 44px;
-        height: 36px;
-        padding: 0;
-        text-align: center;
-        font-weight: 600;
-        border-radius: 6px;
+    width: 44px;
+    height: 36px;
+    padding: 0;
+    text-align: center;
+    font-weight: 600;
+    border-radius: 6px;
     }
 
     .modal-request .btn-close {
-        filter: invert(1);
-        width: 36px;
-        height: 36px;
+    filter: invert(1);
+    width: 36px;
+    height: 36px;
     }
 
     .shift-detail {
-        padding: 12px;
-        border: 1px solid #e9e9e9;
-        border-radius: 6px;
-        margin-bottom: 10px;
+    padding: 12px;
+    border: 1px solid #e9e9e9;
+    border-radius: 6px;
+    margin-bottom: 10px;
     }
-        .calendar-legend-container {
+    
+    .calendar-legend-container {
     display: flex;
     gap: 18px;
     align-items: center;
     font-size: 0.85rem;
     padding-left: 4px;
-}
+    }
 
-.legend-item {
+    .legend-item {
     display: flex;
     align-items: center;
     gap: 6px;
-}
+    }
 
-.legend-color {
+    .legend-color {
     width: 14px;
     height: 14px;
     border-radius: 4px;
     border: 1px solid #999;
-}
+    }
+    .input-icon-box {
+    position: relative;
+    }
 
+    .input-icon-box i {
+    position: absolute;
+    left: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 18px;
+    color: #6b7280;
+    }
+
+    .input-icon-box input {
+    padding-left: 38px !important;
+    }
+
+   
+    .template-icon-box i {
+    font-size: 20px;
+    color: #2563eb;
+    margin-right: 6px;
+    }
+    #shiftDetailsPanel {
+    background: #f8f8f8 !important;   
+    border: 1px solid #e2e2e2 !important;
+    border-radius: 8px !important;
+    }
+
+  
+    #shiftDetailsContent {
+    background: white !important;
+    border-radius: 6px;
+    padding: 15px;
+    border: 1px solid #e1e1e1;
+    }
+
+    .fc-col-header-cell {
+    background: #7e7e7b !important;      
+    border-bottom: 1px solid #d7d7d7 !important;
+    font-weight: 700 !important;
+    font-size: 14px !important;
+    color: #2f3b52 !important;            
+    padding: 12px 0 !important;
+    }
+
+    .fc-col-header-cell-cushion {
+    color: white !important;
+    text-decoration: none !important;
+    letter-spacing: 0.3px !important;
+    }
+    .fc .fc-daygrid-day-top { border-bottom: none !important; }
+    .fc .fc-daygrid-day-frame { border-top: none !important; }
+    .fc .fc-daygrid-day-events { border-top: none !important; }
+
+
+    .fc-daygrid-day-number {
+    font-size: 13px !important;
+    font-weight: 500 !important;
+    color: #6b6b6b !important;
+    padding: 6px !important;
+    border: none !important;
+    }
+    .fc-daygrid-day-top a {
+    text-decoration: none !important;
+    }
+    
+    .fc-theme-standard td, 
+    .fc-theme-standard th {
+    border-color: #e9e9e9 !important;
+    }
+
+    .fc-event-holiday {
+    background: #e8f2ff !important;
+    border: 1px solid #6aa6f8 !important;
+    color: #094a8f !important;
+    padding: 2px 6px !important;
+    border-radius: 6px !important;
+    font-size: 11px !important;
+    font-weight: 600 !important;
+    text-align: center !important;
+    white-space: normal !important;
+    }
+
+
+    .fc-event-template {
+    background: #AA2F33 !important;  
+    border: 1px solid #b7cdfc !important;
+    color: #003a9b !important;
+    padding: 3px 8px !important;
+    border-radius: 6px !important;
+    font-size: 12px !important;
+    font-weight: 600 !important;
+    text-align: center !important;
+    }
+
+
+    .fc-day-today {
+    background-color: #fff7e1 !important;
+    border-radius: 2px !important;
+    }
+
+    .fc-daygrid-day {
+    cursor: pointer !important;
+    }
+
+    .fc-daygrid-event {
+    white-space: normal !important;
+    height: auto !important;
+    overflow: visible !important;
+    }
+
+
+    .fc-event-title {
+    white-space: normal !important;
+    word-break: break-word !important;
+    line-height: 1.2 !important;
+    }
 </style>
 
 <div class="main-container">
@@ -122,6 +247,9 @@
             <span class="legend-item">
                 <span style="font-size:16px;">📝</span> Template
             </span>
+            <span class="legend-item">
+               <span class="legend-color" style="background:#fff7e5;"></span> Today
+            </span>
     </div>
 
 
@@ -145,22 +273,31 @@
 
                 <form id="assignShiftForm">
 
-                    <div class="row g-3 mb-1">
+                    <div class="row g-4">
 
-                        <div class="col-md-8">
-                            <label class="form-label">Start Date</label>
-                            <input id="modalStartDate" class="form-control" readonly />
+                        <div class="col-md-4">
+                             <label class="form-label">Start Date</label>
+                            <div class="input-icon-box">
+                                <i class="fa-solid fa-calendar-day"></i>
+                                <input id="modalStartDate" class="form-control" readonly />
+                            </div>
                         </div>
 
-                        <div class="col-md-8">
+                        <div class="col-md-4">
                             <label class="form-label">End Date</label>
+                            <div class="input-icon-box">
+                                <i class="fa-solid fa-calendar-day"></i>
                             <input id="modalEndDate" class="form-control" readonly />
                         </div>
+                         </div>
 
-                        <div class="col-md-12">
+                        <div class="col-md-4">
                             <label class="form-label">Template</label>
+                            <div class="input-icon-box">
+                            <i class="fa-solid fa-layer-group"></i>
                             <input id="modalTemplateName" class="form-control" readonly />
                         </div>
+                         </div>
 
                     </div>
 
@@ -283,6 +420,7 @@ function validateFilters() {
     let template = $("#templateDropdown").val();
     let today = todayIso();
 
+
     if (start && start < today)
         showToast({ icon: "error", text: "Start date must be in the future" });
 
@@ -311,7 +449,12 @@ $("#plantDropdown, #templateDropdown, #startDate, #endDate")
 $(document).ready(function () {
 
     $("#shiftDetailsPanel").hide();   // hide by default
-
+     let today = todayIso();
+    $("#startDate").attr("min", today);
+    $("#endDate").attr("min", today);
+    $("#startDate").on("change", function () {
+        $("#endDate").attr("min", $(this).val());
+    });
     // Dropdown population
     $("#plantDropdown").append('<option value="" disabled selected>Select Plant</option>');
     @foreach (var p in Model.Plants) {
@@ -335,24 +478,37 @@ $(document).ready(function () {
             var dt = h.Holiday_date.HasValue
                 ? h.Holiday_date.Value.Date.ToString("yyyy-MM-dd")
                 : "";
-        <text>
-        {
-            title: "@h.Holiday_name",
-            start: "@dt",
-            display: "background",
-            backgroundColor: "#cfe9ff",
-            borderColor: "#cc8400",
-            textColor: "black"
-        },
-        </text>
+       <text>
+{
+    title: "@h.Holiday_name".toUpperCase(),
+    start: "@dt",
+    allDay: true,
+    display: "auto",
+    backgroundColor: "#e6f0fa",
+    borderColor: "#3b82f6",
+    textColor: "#1e3a8a",
+    extendedProps: { type: "holiday" }
+},
+</text>
+
         }
     ];
 
     // Calendar init
    calendar = new FullCalendar.Calendar(document.getElementById('calendar'), {
     initialView: 'dayGridMonth',
+       eventDidMount: function(info) {
+ if (info.event.extendedProps.type === "holiday") {
+        info.el.classList.add("fc-event-holiday");
+    }
+
+    if (info.event.extendedProps.type === "template") {
+        info.el.classList.add("fc-event-template");
+    }
+    },
+
     eventSources: [
-        { url: '/Calendar/GetEvents', method: 'GET' },
+     
         { events: holidayEvents }
     ]
 });

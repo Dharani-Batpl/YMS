@@ -87,6 +87,7 @@ namespace YardManagementApplication
                 var vm = new ShiftCalendarViewModel
                 {
                     Templates = templates?
+                         .Where(t => t.Is_deleted == false)
                         .Select(t => new TemplateModel
                         {
                             Template_id = t.Template_id,
@@ -123,18 +124,7 @@ namespace YardManagementApplication
                 return StatusCode(500, ex.Message);
             }
         }
-        
-        [HttpGet]
-        public JsonResult GetEvents()
-        {
-            var events = new CalendarEvent[]
-            {
-            new(Title : "Team Meeting", Start : "2025-11-10", End : "2025-11-10" ),
-            new( Title : "Project Deadline", Start : "2025-11-13" , End: null)
-        };
-            return Json(events);
-        }
-
+     
         [HttpPost]
         public async Task<IActionResult> Create([FromBody] ShiftCalendarModel model)
         {
