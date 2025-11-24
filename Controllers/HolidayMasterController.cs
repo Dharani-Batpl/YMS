@@ -388,7 +388,7 @@ namespace YardManagementApplication
                     {
                         status = "error",
                         title = "No Data",
-                        message = "Template contains headers but no data rows."
+                        message = "Template contains no data rows."
                     });
                 }
 
