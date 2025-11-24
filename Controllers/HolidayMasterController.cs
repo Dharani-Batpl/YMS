@@ -15,10 +15,15 @@
 // -------------------------------------------------------------------------------------------------
 // 1.0     | 2025-10-14 | Dhanalakshmi D   | Initial creation based on holiday master model structure.
 // =================================================================================================
+// 1.1     | 2025-11-24 | Dharani T   | Modified the Upload method to handle Excel file uploads for bulk creation.
+// =================================================================================================
 
 using FluentValidation;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using NPOI.HSSF.UserModel;
+using NPOI.SS.UserModel;
+using NPOI.XSSF.UserModel;
 using OfficeOpenXml;
 using System;
 using System.Collections.Generic;
@@ -43,16 +48,20 @@ namespace YardManagementApplication
         private readonly v1Client _apiClient;
         private readonly CsvUploadService _csvUploadService;
         private readonly IValidator<HolidayModel> _validator;
+        private readonly ILogger<HolidayMasterController> _logger;
+
+
 
         // Single constructor to inject dependencies
         public HolidayMasterController(
             CsvUploadService csvUploadService,
             v1Client apiClient,
-            IValidator<HolidayModel> validator)
+            IValidator<HolidayModel> validator, ILogger<HolidayMasterController> logger)
         {
             _csvUploadService = csvUploadService;
             _apiClient = apiClient;
             _validator = validator;
+            _logger = logger;
         }
 
         // =====================================================
@@ -60,8 +69,18 @@ namespace YardManagementApplication
         // =====================================================
         public async Task<IActionResult> Index()
         {
+            // Log action start
+            string controller = nameof(HolidayMasterController);
+            string action = nameof(Index);
+            string user = HttpContext.Session.GetString("LoginUser") ?? "Unknown";
+
+            _logger.LogInformation(
+                "[ACTION START] {controller}.{action} | User={user}",
+                controller, action, user
+            );
             try
             {
+
                 ViewData["Title"] = "Holiday Master";
 
                 var result = await _apiClient.GetAllHolidayAsync();
@@ -72,19 +91,17 @@ namespace YardManagementApplication
                     result = new List<HolidayModel> { new HolidayModel() };
                 }
 
-                // Use the COMMON utility for consistent date formatting:
-                // - DateTime      => MM/dd/yyyy
-                // - DateTimeOffset=> MM/dd/yyyy HH:mm:ss (24h)
-                // Old line
-                // var jsonOptions = AppJson.CreateUiOptions();
-
-                // New line
+                
                 var jsonOptions = AppJson.CreateDateOnlyOptions();
 
 
                 string jsonResult = System.Text.Json.JsonSerializer.Serialize(result, jsonOptions);
                 ViewData["HolidayMasterData"] = jsonResult;
 
+                _logger.LogInformation(
+                    "[ACTION INFO] {controller}.{action} | RecordsFetched={count}",
+                    controller, action, result?.Count() ?? 0
+                );
                 // Dropdowns
                 var statuses = await _apiClient.HolidayStatusAsync();
                 var holidayType = await _apiClient.HolidayTypeAsync();
@@ -96,6 +113,13 @@ namespace YardManagementApplication
             catch (ApiException<ProblemDetails> ex)
             {
                 var problem = ex.Result;
+
+                // Log error
+                _logger.LogError(
+                     ex,
+                     "[ACTION ERROR] {controller}.{action} | Exception={error}",
+                     controller, action, ex.Message
+                 );
 
                 return StatusCode(problem.Status ?? ex.StatusCode, new
                 {
@@ -112,13 +136,30 @@ namespace YardManagementApplication
         [HttpPost]
         public async Task<IActionResult> Create([FromBody] HolidayModel model)
         {
+            // Log action start
+            string controller = nameof(HolidayMasterController);
+            string action = nameof(Index);
+            string user = HttpContext.Session.GetString("LoginUser") ?? "Unknown";
+
+            _logger.LogInformation(
+                "[ACTION START] {controller}.{action} | User={user}",
+                controller, action, user
+            );
+
             try
             {
                 model.Created_by = HttpContext.Session.GetString("LoginUser");
-                model.Version = 0;
-             
-                    
+              
+
+
                 var result = await _apiClient.InsertHolidayAsync(model);
+
+
+                _logger.LogInformation(
+                    "[ACTION INFO] {controller}.{action} | RecordsFetched={count}",
+                    controller, action, result
+                );
+
 
                 return Ok(new
                 {
@@ -129,6 +170,13 @@ namespace YardManagementApplication
             }
             catch (ApiException<ProblemDetails> ex)
             {
+
+                // Log error
+                _logger.LogError(
+                     ex,
+                     "[ACTION ERROR] {controller}.{action} | Exception={error}",
+                     controller, action, ex.Message
+                 );
                 var problem = ex.Result;
 
                 return StatusCode(problem.Status ?? ex.StatusCode, new
@@ -146,11 +194,30 @@ namespace YardManagementApplication
         [HttpPut]
         public async Task<IActionResult> Update([FromBody] HolidayUpdateModel model)
         {
+            // Log action start
+            string controller = nameof(HolidayMasterController);
+            string action = nameof(Index);
+            string user = HttpContext.Session.GetString("LoginUser") ?? "Unknown";
+
+            _logger.LogInformation(
+                "[ACTION START] {controller}.{action} | User={user}",
+                controller, action, user
+            );
+
+
             try
             {
                 model.Updated_by = HttpContext.Session.GetString("LoginUser");
 
                 var result = await _apiClient.UpdateHolidayAsync(model.Holiday_id, model);
+
+
+
+
+                _logger.LogInformation(
+                    "[ACTION INFO] {controller}.{action} | RecordsFetched={count}",
+                    controller, action, result
+                );
 
                 return Ok(new
                 {
@@ -161,6 +228,12 @@ namespace YardManagementApplication
             }
             catch (ApiException<ProblemDetails> ex)
             {
+                // Log error
+                _logger.LogError(
+                     ex,
+                     "[ACTION ERROR] {controller}.{action} | Exception={error}",
+                     controller, action, ex.Message
+                 );
                 var problem = ex.Result;
 
                 return StatusCode(problem.Status ?? ex.StatusCode, new
@@ -178,11 +251,29 @@ namespace YardManagementApplication
         [HttpPut]
         public async Task<IActionResult> Delete([FromBody] HolidayMasterDeleteModel model)
         {
+            // Log action start
+            string controller = nameof(HolidayMasterController);
+            string action = nameof(Index);
+            string user = HttpContext.Session.GetString("LoginUser") ?? "Unknown";
+
+            _logger.LogInformation(
+                "[ACTION START] {controller}.{action} | User={user}",
+                controller, action, user
+            );
+
             try
             {
                 model.Updated_by = HttpContext.Session.GetString("LoginUser");
 
                 var result = await _apiClient.DeleteHolidayAsync(model.Holiday_id);
+
+
+
+                _logger.LogInformation(
+                    "[ACTION INFO] {controller}.{action} | RecordsFetched={count}",
+                    controller, action, result
+                );
+
 
                 return Ok(new
                 {
@@ -193,6 +284,12 @@ namespace YardManagementApplication
             }
             catch (ApiException<ProblemDetails> ex)
             {
+                // Log error
+                _logger.LogError(
+                     ex,
+                     "[ACTION ERROR] {controller}.{action} | Exception={error}",
+                     controller, action, ex.Message
+                 );
                 var problem = ex.Result;
 
                 return StatusCode(problem.Status ?? ex.StatusCode, new
@@ -204,101 +301,183 @@ namespace YardManagementApplication
             }
         }
 
-        // =====================================================
-        // GET /HolidayMaster/DownloadHolidayMasterTemplate - Export Excel template
-        // =====================================================
-        public IActionResult DownloadHolidayMasterTemplate()
-        {
-            var stream = new MemoryStream();
+      
+        // -----------------------------------------------------
+        // UPLOAD HOLIDAY DATA VIA EXCEL
+        // -----------------------------------------------------
 
-            using (var package = new ExcelPackage(stream))
-            {
-                var worksheet = package.Workbook.Worksheets.Add("HolidayMasterTemplate");
-
-                string[] headers = new[]
-                {
-                    "holiday_id", "holiday_name", "holiday_date",
-                    "holiday_type_id", "holiday_type_name", "description",
-                    "created_by", "created_at", "updated_by", "updated_at"
-                };
-
-                for (int i = 0; i < headers.Length; i++)
-                {
-                    worksheet.Cells[1, i + 1].Value = headers[i];
-                    worksheet.Column(i + 1).AutoFit();
-                }
-
-                package.Save();
-            }
-
-            stream.Position = 0;
-            string excelName = $"HolidayMasterTemplate-{DateTime.Now:yyyyMMddHHmmss}.xlsx";
-
-            return File(stream, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", excelName);
-        }
-
-        // =====================================================
-        // POST /HolidayMaster/Upload - CSV upload for bulk insert
-        // =====================================================
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Upload(IFormFile file)
         {
+            //Log action start
+            string controller = nameof(HolidayMasterController);
+            string action = nameof(Index);
+            string user = HttpContext.Session.GetString("LoginUser") ?? "Unknown";
+
+            _logger.LogInformation(
+                "[ACTION START] {controller}.{action} | User={user}",
+                controller, action, user
+            );
+
             try
             {
+                // Validate file
                 if (file == null || file.Length == 0)
                     return BadRequest("No file uploaded.");
 
-                var nameOk = Path.GetExtension(file.FileName).Equals(".csv", StringComparison.OrdinalIgnoreCase);
-                var type = (file.ContentType ?? "").ToLowerInvariant();
-                var typeOk = type.Contains("csv") || type == "application/vnd.ms-excel";
-                if (!nameOk && !typeOk)
-                    return BadRequest("Only CSV files are allowed.");
+                var ext = Path.GetExtension(file.FileName).ToLowerInvariant();
+                if (ext != ".xlsx" && ext != ".xls")
+                    return BadRequest("Only Excel files (.xlsx/.xls) allowed.");
 
-                var res = _csvUploadService.ProcessCsvFile(file, _validator);
 
-                if (res.ValidItems.Any())
+                List<Dictionary<string, string>> excelRows = new();
+                List<string> headers = new();
+
+                // Read Excel file
+                using (var stream = file.OpenReadStream())
                 {
-                    foreach (var validItem in res.ValidItems)
+                    IWorkbook wb = ext == ".xlsx" ? new XSSFWorkbook(stream) : new HSSFWorkbook(stream);
+                    var sheet = wb.GetSheetAt(0);
+                    var header = sheet.GetRow(0);
+
+                    for (int i = 0; i < header.LastCellNum; i++)
+                        headers.Add(header.GetCell(i)?.ToString()?.Trim() ?? $"Col{i}");
+
+                    for (int r = 1; r <= sheet.LastRowNum; r++)
                     {
-                        await _apiClient.InsertHolidayAsync(validItem);
+                        var row = sheet.GetRow(r);
+                        if (row == null) continue;
+
+                        var dict = new Dictionary<string, string>();
+                        for (int c = 0; c < headers.Count; c++)
+                            dict[headers[c]] = row.GetCell(c)?.ToString()?.Trim() ?? "";
+
+                        excelRows.Add(dict);
+                    }
+                }
+
+                string currentUser = HttpContext.Session.GetString("LoginUser") ?? "System";
+
+
+                var allItems = new List<HolidayModel>();
+
+                // Map Excel rows to HolidayModel
+                foreach (var row in excelRows)
+                {
+                    string norm(string x) =>
+                        x.Trim().ToLower().Replace(" ", "").Replace("_", "").Replace("-", "");
+
+                    var mapped = new Dictionary<string, string>();
+
+                    foreach (var kv in row)
+                    {
+                        string key = norm(kv.Key);
+                        switch (key)
+                        {
+                            case "holidayname": mapped["holiday_name"] = kv.Value; break;
+                            case "holidaydescription": mapped["holiday_description"] = kv.Value; break;
+                            case "holidaytype": mapped["holiday_type_name"] = kv.Value; break;
+                            case "holidaydate": mapped["holiday_date"] = kv.Value; break;
+                        }
                     }
 
-                    string invalidRecordsCsv = null;
-                    if (res.InvalidItems.Any())
+                    var model = new HolidayModel
                     {
-                        invalidRecordsCsv = _csvUploadService.CreateInvalidCsvWithErrors(res.InvalidItems);
-                    }
+                        Holiday_name = mapped.GetValueOrDefault("holiday_name"),
+                        Description = mapped.GetValueOrDefault("holiday_description"),
+                        Holiday_type_name = mapped.GetValueOrDefault("holiday_type_name"),
+                        Is_deleted = false,
+                        Created_by = currentUser
+                    };
 
-                    return Ok(new
+                    if (DateTime.TryParse(mapped.GetValueOrDefault("holiday_date"), out var dt))
+                        model.Holiday_date = dt;
+
+                    allItems.Add(model);
+                }
+
+                // Upload each template via API
+                int successCount = 0;
+                var apiErrors = new List<object>();
+
+                foreach (var item in allItems)
+                {
+                    try
                     {
-                        status = "success",
-                        title = "Success",
-                        message = $"{res.ValidCount} records added successfully",
-                        invalidRecords = invalidRecordsCsv != null
-                            ? Convert.ToBase64String(Encoding.UTF8.GetBytes(invalidRecordsCsv))
-                            : null
+                        await _apiClient.UploadHolidayAsync(item);
+                        successCount++;
+                    }
+                    catch (ApiException<ResponseModel> ex)
+                    {
+                        // Log API exception
+                        _logger.LogError(
+                             ex,
+                             "[ACTION ERROR] {controller}.{action} | Exception={error}",
+                             controller, action, ex.Message
+                         );
+
+                        apiErrors.Add(new
+                        {
+
+                            error = ex.Result?.Detail ?? ex.Message
+                        });
+                    }
+                    catch (Exception ex)
+                    {
+                        // Log general exception
+                        _logger.LogError(
+                             ex,
+                             "[ACTION ERROR] {controller}.{action} | Exception={error}",
+                             controller, action, ex.Message
+                         );
+
+                        apiErrors.Add(new
+                        {
+
+                            error = ex.Message
+                        });
+                    }
+                }
+
+
+                if (apiErrors.Count > 0)
+                {
+                    // Return errors if any
+                    return BadRequest(new
+                    {
+                        status = "error",
+                        title = "Upload Failed",
+                        message = $"{apiErrors.Count} record(s) failed.",
+                        errors = apiErrors
                     });
                 }
 
                 return Ok(new
                 {
                     status = "success",
-                    title = "No Records",
-                    message = "No valid records to insert."
+                    title = "Success",
+                    message = $"{successCount} records added successfully.",
+                    successCount
                 });
             }
-            catch (ApiException<ProblemDetails> ex)
+            catch (Exception ex)
             {
-                var problem = ex.Result;
+                // Log error
+                _logger.LogError(
+                     ex,
+                     "[ACTION ERROR] {controller}.{action} | Exception={error}",
+                     controller, action, ex.Message
+                 );
 
-                return StatusCode(problem.Status ?? ex.StatusCode, new
+                return BadRequest(new
                 {
-                    status = problem.Status ?? ex.StatusCode,
+                    status = "error",
                     title = "Error",
-                    message = problem.Detail ?? "An unexpected error occurred."
+                    message = ex.Message
                 });
             }
         }
+
     }
 }

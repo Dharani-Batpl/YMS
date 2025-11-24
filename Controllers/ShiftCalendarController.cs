@@ -104,7 +104,7 @@ namespace YardManagementApplication
                     Holidays = holidayType?.ToList() ?? new List<DropdownModel>(),
 
                     HolidayList = holidayList?
-                            .Where(h => h.Is_deleted == false && h.Status_name == "Active")
+                            .Where(h => h.Is_deleted == false )
                             .ToList()
                          ?? new List<HolidayModel>(),
 

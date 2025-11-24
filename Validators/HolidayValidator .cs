@@ -18,10 +18,7 @@ namespace YardManagementApplication.Validators
                 .NotEmpty().WithMessage("Holiday Date is mandatory");
 
             RuleFor(x => x.Holiday_type_id)
-               .GreaterThan(0).WithMessage("Valid Holiday_type_Id is mandatory");    
-
-            RuleFor(x => x.Status_id)
-                 .GreaterThan(0).WithMessage("Valid Status Id is mandatory");
+               .GreaterThan(0).WithMessage("Valid Holiday_type_Id is mandatory");              
 
             RuleFor(x => x.Created_by)
                 .NotEmpty().WithMessage("Created By is mandatory")

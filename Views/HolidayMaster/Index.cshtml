@@ -73,7 +73,7 @@
 
     <form id="afForm" style="display:none" method="post">
         @Html.AntiForgeryToken()
-        <input type="file" id="upload-file" style="display:none" accept=".csv,text/csv" />
+        <input type="file" id="upload-file" style="display:none" accept=".xls,.xlsx" />
     </form>
 
     <!-- ---- Data Grid Area ---- -->
@@ -150,23 +150,6 @@
 
                     </div>
 
-                    <!-- Row 3 -->
-                    <div class="row g-3 mt-1 mb-2">
-
-                        <!-- Status -->
-                        <div class="col-md-6">
-                            <label class="form-label">Status <span class="text-danger">*</span></label>
-                            <select class="form-select"
-                                    id="Status_id" name="Status_id"
-                                     style="width: 200px;"
-                                    required
-                                    asp-items="@(ViewBag.StatusList as IEnumerable<SelectListItem>)">
-                                <option value="" disabled selected>Select Status</option>
-                            </select>
-                        </div>
-
-                    </div>
-
                 </form>
 
             </div>
@@ -180,295 +163,311 @@
         </div>
     </div>
 </div>
-
 <script>
+document.addEventListener("DOMContentLoaded", () => {
 
+    initTooltips(); // Bootstrap tooltips
 
-    document.addEventListener("DOMContentLoaded", () => {
-        // ==========================
-        // 🔹 Initialize reusable components
-        // ==========================
-        initTooltips(); // Bootstrap tooltips
+    // Disable past dates
+    const dateField = document.getElementById("Holiday_date");
+    const today = new Date().toISOString().split("T")[0];
+    dateField.setAttribute("min", today);
 
+    const holidayMasterData = JSON.parse('@Html.Raw(holidayMasterData)');
+    let selectedRow = null;
+    let currentMode = "";
 
-        const holidayMasterData = JSON.parse('@Html.Raw(holidayMasterData)');
-        let selectedRow = null;
-        let currentMode = "";
-
-        // ==========================
-        // 🔹 Generate Tabulator columns dynamically
-        // ==========================
-       function generateTabulatorColumns(data) {
-            if (!data || data.length === 0) return [];
-
-            const fields = Object.keys(data[0]);
-
-            // 🏷️ Custom aliases (you can edit these)
-            const aliases = {
-                Status_name: "Status",
-
-            };
-
-            const formatTitle = (str) => {
-                let result = str.replace(/[_\-]/g, ' ');
-                result = result.replace(/([a-z])([A-Z])/g, '$1 $2');
-                return result.replace(/\w\S*/g, (txt) => txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase());
-            };
-
-            return fields.map(field => ({
-                title: aliases[field] || formatTitle(field),
-                field: field,
-                headerHozAlign: "center",
-                hozAlign: "center",
-                tooltip: true,
-                resizable: true
-            }));
+    // ----------------------------------------------------
+    //  Tabulator table
+    // ----------------------------------------------------
+    const dataTable = new Tabulator("#holidayMasterTable", {
+        data: holidayMasterData,
+        columns: [
+            { title: "Holiday Name", field: "Holiday_name", width: 220 },
+            { title: "Holiday Date", field: "Holiday_date", width: 220 },
+            { title: "Holiday Type Name", field: "Holiday_type_name", width: 220 },
+            { title: "Description", field: "Description", width: 220 },
+            { title: "Created By", field: "Created_by", width: 150 },
+        ],
+        layout: "fitDataStretch",
+        height: "80vh",
+        selectable: 1,
+        pagination: "local",
+        paginationSize: 10,
+        paginationSizeSelector: [5, 10, 20, 50, 100],
+        resizableRows: false,
+        movableColumns: false,
+        rowClick: function (e, row) {
+            selectedRow = row.getData();
         }
-
-        // ==========================
-        // 🔹 Initialize Tabulator
-        // ==========================
-        // const dataTable = initializeTabulator("#holidayMasterTable", holidayMasterData, generateTabulatorColumns(holidayMasterData),
-        //     (data) => selectedRow = data[0] || null
-        // );
-        const dataTable = new Tabulator("#holidayMasterTable", {
-	            data: holidayMasterData,
-	        
-                 columns: [
-                    { title: "Holiday Name", field: "Holiday_name", width: 220 },
-                    { title: "Holiday Date", field: "Holiday_date", width: 220 },
-                    { title: "Holiday Type Name", field: "Holiday_type_name", width: 220 },
-                    { title: "Description", field: "Description", width: 220 },
-                    { title: "Status", field: "Status_name", width: 220 , formatter: function (cell) {
-                        let val = cell.getValue();
-
-                        return val === true || val === "true"
-                            ? "<span>In-Active</span>"
-                            : "<span>Active</span>";
-                    }},
-                    { title: "Created By", field: "Created_by", width: 150},
-                ],
-	            layout: "fitDataStretch",
-	            height: "80vh",
-	            selectable: 1,
-	            pagination: "local",
-	            resizableRows:false,
-	            resizableRowGuide:false,
-	            resizableColumnGuide:false,
-	            columnDefaults:{
-		            resizable:false,
-	            },           
-	            movableColumns: false,
-	            paginationSize: 10,
-	            paginationSizeSelector: [5, 10, 20, 50, 100],
-	             locale: true,
-	            langs: {
-		            "en": {
-	            pagination: {
-		            first: "<<",
-		            first_title: "First",
-		            last: ">>", 
-		            last_title: "Last", 
-		            prev: "<", 
-		            prev_title: "Prev",
-		            next: ">", 
-		            next_title: "Next", 
-		            page_size: "Page Size" 
-		             }
-		            }
-	             },
-
-	            rowClick: function (e, row) {
-	              selectedRow = row.getData();
-	            }
-	            });
-
-
-        // Command: Live search (visible columns only) for parent table
-        document.getElementById("searchField").addEventListener("input", function () {
-            var searchTerm = this.value.toLowerCase();
-
-            // Command: Collect visible fields
-            var visibleColumns = dataTable.getColumns()
-                                      .filter(col => col.isVisible())
-                                      .map(col => col.getField());
-
-            // Command: Apply per-row predicate filter
-            dataTable.setFilter(function (data) {
-                return visibleColumns.some(field => {
-                    var value = data[field];
-                    return value != null && value.toString().toLowerCase().includes(searchTerm);
-                });
-            });
-        });
-    //        // Update record count after filtering
-    // dataTable.on("dataFiltered", function(filters, rows){
-    //     document.getElementById("recordCount").innerText = "Total Records: " + rows.length;
-    // });
-
-
-    // // Initial load
-    // dataTable.on("dataLoaded", function(data) {
-    //     document.getElementById("recordCount").innerText = "Total Records: " + data.length;
-    // });
-
-       // Record count for filtered data
-     dataTable.on("dataFiltered", function(filters, rows) {
-           updateRecordCount(dataTable, rows, "Holiday_id");  // Pass the field name >>replace with your table primary id column
-     });
-
-     // Record count for loaded data
-     dataTable.on("dataLoaded", function(data) {
-           updateRecordCount(dataTable, data, "Holiday_id");  // Pass the field name >>replace with your table primary id column
-     });
-
-    dataTable.on("tableBuilt", function(){
-        const hideFields = [
-               "Shift_id",
-               "Holiday_id",
-               "Holiday_type_id",
-              "Status_id",
-              "Is_deleted",
-              "Created_at",
-              "Updated_by",
-              "Updated_at",
-              "Version",
-              "AdditionalProperties"
-        ];
-
-        hideFields.forEach(field => dataTable.hideColumn(field));
     });
 
-           const addEditModalEl = document.getElementById('addEditModal');
-        const addEditModal = new bootstrap.Modal(addEditModalEl);
-        const form = document.getElementById("addEditForm");
+    // ----------------------------------------------------
+    // Search
+    // ----------------------------------------------------
+    document.getElementById("searchField").addEventListener("input", function () {
+        const term = this.value.toLowerCase();
+        const visibleColumns = dataTable.getColumns()
+            .filter(col => col.isVisible())
+            .map(col => col.getField());
 
-        // ==========================
-        // 🔹 Add Button
-        // ==========================
-        document.getElementById("add-btn").addEventListener("click", () => {
-            currentMode = "Add";
-            form.reset();
-            document.getElementById("addEditModalLabel").textContent = "Add Holiday Master";
-            document.getElementById("modalSubmitBtn").textContent = "Add";
-            document.getElementById("Holiday_id").value=0;
-            addEditModal.show();
+        dataTable.setFilter(function (data) {
+            return visibleColumns.some(field => {
+                const v = data[field];
+                return v != null && v.toString().toLowerCase().includes(term);
+            });
         });
+    });
 
-        // ==========================
-        // 🔹 Edit Button
-        // ==========================
-           document.getElementById("edit-btn").addEventListener("click", () => {
-        const selectedRow = dataTable.getSelectedData()?.[0];
-        if (!selectedRow) {
-            return showAppAlert({ icon: 'warning', title: 'No Selection', text: 'Please select a row to edit.' });
+    // ----------------------------------------------------
+    // Record Count
+    // ----------------------------------------------------
+    dataTable.on("dataFiltered", (filters, rows) => {
+        updateRecordCount(dataTable, rows, "Holiday_id");
+    });
+
+    dataTable.on("dataLoaded", (data) => {
+        updateRecordCount(dataTable, data, "Holiday_id");
+    });
+
+    dataTable.on("tableBuilt", () => {
+        const hide = [
+            "Shift_id", "Holiday_id", "Holiday_type_id",
+            "Is_deleted", "Created_at", "Updated_by",
+            "Updated_at", "Version", "AdditionalProperties"
+        ];
+        hide.forEach(f => dataTable.hideColumn(f));
+    });
+
+    // ----------------------------------------------------
+    // Modal
+    // ----------------------------------------------------
+    const addEditModalEl = document.getElementById("addEditModal");
+    const addEditModal = new bootstrap.Modal(addEditModalEl);
+    const form = document.getElementById("addEditForm");
+
+    // Add
+    document.getElementById("add-btn").addEventListener("click", () => {
+        currentMode = "Add";
+        form.reset();
+        document.getElementById("addEditModalLabel").textContent = "Add Holiday Master";
+        document.getElementById("modalSubmitBtn").textContent = "Add";
+        document.getElementById("Holiday_id").value = 0;
+        addEditModal.show();
+    });
+
+    // Edit
+    document.getElementById("edit-btn").addEventListener("click", () => {
+        const row = dataTable.getSelectedData()?.[0];
+        if (!row) {
+            return showAppAlert({
+                icon: "warning",
+                title: "No Selection",
+                text: "Please select a row to edit."
+            });
         }
 
         currentMode = "Edit";
         document.getElementById("addEditModalLabel").textContent = "Edit Holiday Master";
         document.getElementById("modalSubmitBtn").textContent = "Update";
 
-        // Populate modal form fields dynamically
-        Object.keys(selectedRow).forEach(field => {
-            const EmployeeMasterField = document.getElementById(field);
-            if (!EmployeeMasterField) return;
+        Object.keys(row).forEach(field => {
+            const el = document.getElementById(field);
+            if (!el) return;
 
-            if (EmployeeMasterField.type === "date" && selectedRow[field]) {
-                const date = new Date(selectedRow[field]);
-                const yyyy = date.getFullYear();
-                const mm = String(date.getMonth() + 1).padStart(2, '0');
-                const dd = String(date.getDate()).padStart(2, '0');
-                EmployeeMasterField.value = `${yyyy}-${mm}-${dd}`;
+            if (el.type === "date" && row[field]) {
+                const d = new Date(row[field]);
+                el.value = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
             } else {
-                // For text, number, email, etc.
-                EmployeeMasterField.value = selectedRow[field] ?? "";
+                el.value = row[field] ?? "";
             }
         });
 
         addEditModal.show();
     });
 
-        // ==========================
-        // 🔹 Delete Button
-        // ==========================
-
-        document.getElementById("delete-btn").addEventListener("click", async () => {
-            const selectedRow = dataTable.getSelectedData()?.[0];
-            if (!selectedRow) {
-                return showAppAlert({ icon: "warning", title: "No Selection", text: "Please select a row to delete." });
-            }
-
-            const holidayId = selectedRow.Holiday_id;
-
-            const confirm = await showAppAlert({
-                type: "confirm",
-                icon: "question",
-                title: "Delete Confirmation",
-                text: "Are you sure you want to delete this record?"
+    // Delete
+    document.getElementById("delete-btn").addEventListener("click", async () => {
+        const row = dataTable.getSelectedData()?.[0];
+        if (!row) {
+            return showAppAlert({
+                icon: "warning",
+                title: "No Selection",
+                text: "Please select a row to delete."
             });
+        }
 
-            if (!confirm.isConfirmed) return;
-
-            const success = await deleteRecord("/HolidayMaster/Delete", { Holiday_id: holidayId }); // method defaults to PUT
-            if (success) {
-                // redirect or refresh your table
-                setTimeout(() => { window.location.href = "/HolidayMaster/Index"; }, 900);
-                // or: dataTable.replaceData();
-            }
+        const confirm = await showAppAlert({
+            type: "confirm",
+            icon: "question",
+            title: "Delete Confirmation",
+            text: "Are you sure you want to delete this record?"
         });
 
-        // ==========================
-        // 🔹 Form Submit (Add/Edit)
-        // ==========================
-        form.addEventListener("submit", async (e) => {
-            e.preventDefault();
-            const formData = Object.fromEntries(new FormData(form).entries());
+        if (!confirm.isConfirmed) return;
 
-            const fetchUrl = currentMode === "Add" ? "/HolidayMaster/Create" : "/HolidayMaster/Update";
+        const success = await deleteRecord("/HolidayMaster/Delete", { Holiday_id: row.Holiday_id });
 
-            const success = await saveRecord(fetchUrl, formData, currentMode, addEditModal, form);
-            if (success) {
-                setTimeout(() => {
-                    window.location.href = "/HolidayMaster/Index";
-                }, 900);
-            }
+        if (success) {
+            setTimeout(() => location.reload(), 900);
+        }
+    });
+
+    // Save (Add/Edit)
+    form.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const formData = Object.fromEntries(new FormData(form).entries());
+
+        const url = currentMode === "Add" ? "/HolidayMaster/Create" : "/HolidayMaster/Update";
+
+        const success = await saveRecord(url, formData, currentMode, addEditModal, form);
+
+        if (success) {
+            setTimeout(() => location.reload(), 900);
+        }
+    });
+
+    // ----------------------------------------------------
+    // Download CSV (actual data)
+    // ----------------------------------------------------
+    document.getElementById("download-btn").addEventListener("click", () => {
+
+        let rowCount = dataTable.getData().length;
+
+        if (rowCount === 1) {
+            const rowVal = dataTable.getData()[0]?.Holiday_id;
+            if (!rowVal) rowCount = 0;
+        }
+
+        if (rowCount === 0) {
+            return showAppAlert({
+                icon: "warning",
+                title: "No Data",
+                text: "No records found to download."
+            });
+        }
+
+        downloadCsv(dataTable, "HolidayMaster.csv");
+    });
+ // ================================================================
+//  Upload button click
+// ================================================================
+$("#upload-btn").on("click", function () {
+    $("#upload-file").click();
+});
+
+// ================================================================
+//  File selection handler
+// ================================================================
+$("#upload-file").on("change", function (event) {
+    const file = event.target.files?.[0];
+
+    if (!file) {
+        return showAppAlert({
+            icon: 'warning',
+            title: 'No File',
+            text: 'Please select a file to upload.'
+        });
+    }
+
+    const isExcel = /\.(xlsx|xls)$/i.test(file.name);
+    if (!isExcel) {
+        showAppAlert({
+            icon: 'warning',
+            title: 'Invalid File',
+            text: 'Please upload Excel file (.xlsx or .xls).'
+        });
+        return;
+    }
+
+    uploadFile('/HolidayMaster/Upload', file);
+});
+
+}); 
+// -------------------------------------------------------------
+// Download Template (this MUST be outside DOMContentLoaded)
+// -------------------------------------------------------------
+$("#download-template-btn").on("click", function () {
+    const headers = [
+        "Holiday Name",
+        "Holiday Description",
+        "Holiday Type",
+        "Holiday Date"
+    ];
+
+    downloadTemplate(headers, "HolidayMasterTemplate");
+});
+// ================================================================
+//  Upload function (global, so onclick can find it)
+// ================================================================
+async function uploadFile(url, file) {
+
+    const formData = new FormData();
+    formData.append("file", file);
+
+    const csrf = $('#afForm input[name="__RequestVerificationToken"]').val();
+
+    try {
+        const response = await fetch(url, {
+            method: 'POST',
+            headers: { 'RequestVerificationToken': csrf },
+            body: formData
         });
 
+        await handleUploadResponse(response);
 
-        // ==========================
-        // 🔹 Download Template
-        // ==========================
-        // document.getElementById("download-template-btn").addEventListener("click", () =>
-        //     downloadCsvTemplate(dataTable, "HolidayMasterTemplate")
-        // );
-               document.getElementById("download-btn").addEventListener("click", function () {
+    } catch (err) {
+        showAppAlert({
+            icon: "error",
+            title: "Upload Failed",
+            text: err.message
+        });
+    }
+}
 
-       let rowCount = dataTable.getDataCount ? dataTable.getDataCount() : dataTable.getData().length;
+// ================================================================
+//  Handle upload response
+// ================================================================
+async function handleUploadResponse(response) {
 
-     if (rowCount === 1) {
-         let firstRowData = dataTable.getData()[0];
-         let firstRowFieldValue = firstRowData ? firstRowData["Holiday_id"] : null;
-         if (firstRowFieldValue === null || firstRowFieldValue === 0 || firstRowFieldValue === "") {
-             rowCount = 0;
-         }
-     }
-     if (rowCount === 0) {
-         showAppAlert({
-             icon: 'warning',
-             title: 'No Data',
-             text: 'No records found to download.'
-         });
-         return; // Stop further execution
-     }
+    const result = await response.json().catch(() => null);
 
-        downloadCsv(dataTable, "HolidayMasterTemplate.csv");
+    if (response.ok) {
+        showAppAlert({
+            icon: "success",
+            title: result.title || "Upload Successful",
+            text: result.message || "Excel uploaded successfully.",
+            timer: 2000,
+            showConfirmButton: false
+        });
+
+        setTimeout(() => location.reload(), 900);
+        $("#upload-file").val("");
+        return;
+    }
+
+    if (result?.errors) {
+        let msg = "";
+        result.errors.forEach(e => msg += `${e.error}\n`);
+
+        showAppAlert({
+            icon: "error",
+            title: "Upload Failed",
+            text: msg
+        });
+
+        $("#upload-file").val("");
+        return;
+    }
+
+    showAppAlert({
+        icon: "error",
+        title: "Upload Failed",
+        text: result?.message || "Unexpected error occurred."
     });
 
-                // Helper: get anti-forgery token value from hidden form
-      function getRequestVerificationToken() {
-        const tokenInput = document.querySelector('#afForm input[name="__RequestVerificationToken"]');
-        return tokenInput ? tokenInput.value : null;
-      }
+    $("#upload-file").val("");
+}
 
-    });
+
 </script>

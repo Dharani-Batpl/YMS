@@ -6898,6 +6898,115 @@
         }
       }
     },
+    "/api/v1/Holiday/UploadHoliday": {
+      "post": {
+        "tags": [
+          "Holiday"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HolidayModel"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HolidayModel"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/HolidayModel"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponseModel"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponseModel"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponseModel"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponseModel"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponseModel"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponseModel"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponseModel"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponseModel"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponseModel"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponseModel"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponseModel"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponseModel"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/EolProduction/GetAllEolProduction": {
       "get": {
         "tags": [
@@ -13941,14 +14050,6 @@
             "type": "string",
             "nullable": true
           },
-          "status_id": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "status_name": {
-            "type": "string",
-            "nullable": true
-          },
           "is_deleted": {
             "type": "boolean"
           },
@@ -13968,11 +14069,6 @@
           "updated_at": {
             "type": "string",
             "format": "date-time",
-            "nullable": true
-          },
-          "version": {
-            "type": "integer",
-            "format": "int32",
             "nullable": true
           }
         }
@@ -14006,15 +14102,6 @@
             "type": "string",
             "nullable": true
           },
-          "status_id": {
-            "type": "integer",
-            "format": "int64",
-            "nullable": true
-          },
-          "status_name": {
-            "type": "string",
-            "nullable": true
-          },
           "is_deleted": {
             "type": "boolean",
             "nullable": true
@@ -14026,11 +14113,6 @@
           "updated_at": {
             "type": "string",
             "format": "date-time",
-            "nullable": true
-          },
-          "version": {
-            "type": "integer",
-            "format": "int32",
             "nullable": true
           }
         }
