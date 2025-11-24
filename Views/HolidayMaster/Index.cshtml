@@ -164,21 +164,20 @@
     </div>
 </div>
 <script>
-document.addEventListener("DOMContentLoaded", () => {
+$(document).ready(function () {
 
-    initTooltips(); // Bootstrap tooltips
+    initTooltips();
 
     // Disable past dates
-    const dateField = document.getElementById("Holiday_date");
     const today = new Date().toISOString().split("T")[0];
-    dateField.setAttribute("min", today);
+    $("#Holiday_date").attr("min", today);
 
     const holidayMasterData = JSON.parse('@Html.Raw(holidayMasterData)');
     let selectedRow = null;
     let currentMode = "";
 
     // ----------------------------------------------------
-    //  Tabulator table
+    // Tabulator table
     // ----------------------------------------------------
     const dataTable = new Tabulator("#holidayMasterTable", {
         data: holidayMasterData,
@@ -187,7 +186,7 @@ document.addEventListener("DOMContentLoaded", () => {
             { title: "Holiday Date", field: "Holiday_date", width: 220 },
             { title: "Holiday Type Name", field: "Holiday_type_name", width: 220 },
             { title: "Description", field: "Description", width: 220 },
-            { title: "Created By", field: "Created_by", width: 150 },
+            { title: "Created By", field: "Created_by", width: 150 }
         ],
         layout: "fitDataStretch",
         height: "80vh",
@@ -197,38 +196,37 @@ document.addEventListener("DOMContentLoaded", () => {
         paginationSizeSelector: [5, 10, 20, 50, 100],
         resizableRows: false,
         movableColumns: false,
-        rowClick: function (e, row) {
-            selectedRow = row.getData();
-        }
+        rowClick: (e, row) => selectedRow = row.getData()
     });
 
     // ----------------------------------------------------
-    // Search
+    // Search (jQuery)
     // ----------------------------------------------------
-    document.getElementById("searchField").addEventListener("input", function () {
-        const term = this.value.toLowerCase();
-        const visibleColumns = dataTable.getColumns()
-            .filter(col => col.isVisible())
-            .map(col => col.getField());
+    $("#searchField").on("input", function () {
 
-        dataTable.setFilter(function (data) {
-            return visibleColumns.some(field => {
-                const v = data[field];
-                return v != null && v.toString().toLowerCase().includes(term);
-            });
-        });
+        const term = $(this).val().toLowerCase();
+        const visibleColumns = dataTable.getColumns().map(c => c.getField());
+
+        dataTable.setFilter(d =>
+            visibleColumns.some(f =>
+                (d?.[f] ?? "")
+                    .toString()
+                    .toLowerCase()
+                    .includes(term)
+            )
+        );
     });
 
     // ----------------------------------------------------
     // Record Count
     // ----------------------------------------------------
-    dataTable.on("dataFiltered", (filters, rows) => {
-        updateRecordCount(dataTable, rows, "Holiday_id");
-    });
+    dataTable.on("dataFiltered", (_, rows) =>
+        updateRecordCount(dataTable, rows, "Holiday_id")
+    );
 
-    dataTable.on("dataLoaded", (data) => {
-        updateRecordCount(dataTable, data, "Holiday_id");
-    });
+    dataTable.on("dataLoaded", data =>
+        updateRecordCount(dataTable, data, "Holiday_id")
+    );
 
     dataTable.on("tableBuilt", () => {
         const hide = [
@@ -240,25 +238,29 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
     // ----------------------------------------------------
-    // Modal
+    // Modal Setup
     // ----------------------------------------------------
-    const addEditModalEl = document.getElementById("addEditModal");
-    const addEditModal = new bootstrap.Modal(addEditModalEl);
-    const form = document.getElementById("addEditForm");
+    const addEditModal = new bootstrap.Modal($("#addEditModal")[0]);
+    const form = $("#addEditForm");
 
     // Add
-    document.getElementById("add-btn").addEventListener("click", () => {
+    $("#add-btn").on("click", function () {
+
         currentMode = "Add";
-        form.reset();
-        document.getElementById("addEditModalLabel").textContent = "Add Holiday Master";
-        document.getElementById("modalSubmitBtn").textContent = "Add";
-        document.getElementById("Holiday_id").value = 0;
+        form[0].reset();
+
+        $("#addEditModalLabel").text("Add Holiday Master");
+        $("#modalSubmitBtn").text("Add");
+        $("#Holiday_id").val(0);
+
         addEditModal.show();
     });
 
     // Edit
-    document.getElementById("edit-btn").addEventListener("click", () => {
+    $("#edit-btn").on("click", function () {
+
         const row = dataTable.getSelectedData()?.[0];
+
         if (!row) {
             return showAppAlert({
                 icon: "warning",
@@ -268,18 +270,24 @@ document.addEventListener("DOMContentLoaded", () => {
         }
 
         currentMode = "Edit";
-        document.getElementById("addEditModalLabel").textContent = "Edit Holiday Master";
-        document.getElementById("modalSubmitBtn").textContent = "Update";
 
-        Object.keys(row).forEach(field => {
-            const el = document.getElementById(field);
-            if (!el) return;
+        $("#addEditModalLabel").text("Edit Holiday Master");
+        $("#modalSubmitBtn").text("Update");
 
-            if (el.type === "date" && row[field]) {
-                const d = new Date(row[field]);
-                el.value = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
-            } else {
-                el.value = row[field] ?? "";
+        // Fill fields
+        $.each(row, function (field, value) {
+
+            const $el = $("#" + field);
+            if (!$el.length) return;
+
+            if ($el.attr("type") === "date" && value) {
+                let d = new Date(value);
+                $el.val(
+                    `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`
+                );
+            }
+            else {
+                $el.val(value ?? "");
             }
         });
 
@@ -287,8 +295,10 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
     // Delete
-    document.getElementById("delete-btn").addEventListener("click", async () => {
+    $("#delete-btn").on("click", async function () {
+
         const row = dataTable.getSelectedData()?.[0];
+
         if (!row) {
             return showAppAlert({
                 icon: "warning",
@@ -313,33 +323,32 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     });
 
-    // Save (Add/Edit)
-    form.addEventListener("submit", async (e) => {
-        e.preventDefault();
-        const formData = Object.fromEntries(new FormData(form).entries());
+    // Save (add/edit)
+    form.on("submit", async function (e) {
 
+        e.preventDefault();
+
+        const formData = Object.fromEntries(new FormData(this).entries());
         const url = currentMode === "Add" ? "/HolidayMaster/Create" : "/HolidayMaster/Update";
 
-        const success = await saveRecord(url, formData, currentMode, addEditModal, form);
+        const success = await saveRecord(url, formData, currentMode, addEditModal, this);
 
-        if (success) {
-            setTimeout(() => location.reload(), 900);
-        }
+        if (success) setTimeout(() => location.reload(), 900);
     });
 
     // ----------------------------------------------------
-    // Download CSV (actual data)
+    // Download CSV
     // ----------------------------------------------------
-    document.getElementById("download-btn").addEventListener("click", () => {
+    $("#download-btn").on("click", function () {
 
-        let rowCount = dataTable.getData().length;
+        let count = dataTable.getData().length;
 
-        if (rowCount === 1) {
-            const rowVal = dataTable.getData()[0]?.Holiday_id;
-            if (!rowVal) rowCount = 0;
+        if (count === 1) {
+            const id = dataTable.getData()[0]?.Holiday_id;
+            if (!id) count = 0;
         }
 
-        if (rowCount === 0) {
+        if (count === 0) {
             return showAppAlert({
                 icon: "warning",
                 title: "No Data",
@@ -349,45 +358,42 @@ document.addEventListener("DOMContentLoaded", () => {
 
         downloadCsv(dataTable, "HolidayMaster.csv");
     });
- // ================================================================
-//  Upload button click
-// ================================================================
-$("#upload-btn").on("click", function () {
-    $("#upload-file").click();
+
+    // ----------------------------------------------------
+    // Upload button
+    // ----------------------------------------------------
+    $("#upload-btn").on("click", () => $("#upload-file").click());
+
+    $("#upload-file").on("change", function (event) {
+
+        const file = event.target.files?.[0];
+
+        if (!file) {
+            return showAppAlert({
+                icon: "warning",
+                title: "No File",
+                text: "Please select a file to upload."
+            });
+        }
+
+        if (!/\.(xlsx|xls)$/i.test(file.name)) {
+            return showAppAlert({
+                icon: "warning",
+                title: "Invalid File",
+                text: "Please upload Excel file (.xlsx or .xls)."
+            });
+        }
+
+        uploadFile("/HolidayMaster/Upload", file);
+    });
 });
 
-// ================================================================
-//  File selection handler
-// ================================================================
-$("#upload-file").on("change", function (event) {
-    const file = event.target.files?.[0];
 
-    if (!file) {
-        return showAppAlert({
-            icon: 'warning',
-            title: 'No File',
-            text: 'Please select a file to upload.'
-        });
-    }
-
-    const isExcel = /\.(xlsx|xls)$/i.test(file.name);
-    if (!isExcel) {
-        showAppAlert({
-            icon: 'warning',
-            title: 'Invalid File',
-            text: 'Please upload Excel file (.xlsx or .xls).'
-        });
-        return;
-    }
-
-    uploadFile('/HolidayMaster/Upload', file);
-});
-
-}); 
 // -------------------------------------------------------------
-// Download Template (this MUST be outside DOMContentLoaded)
+// Download Template (global)
 // -------------------------------------------------------------
 $("#download-template-btn").on("click", function () {
+
     const headers = [
         "Holiday Name",
         "Holiday Description",
@@ -397,9 +403,11 @@ $("#download-template-btn").on("click", function () {
 
     downloadTemplate(headers, "HolidayMasterTemplate");
 });
-// ================================================================
-//  Upload function (global, so onclick can find it)
-// ================================================================
+
+
+// -------------------------------------------------------------
+// Upload function (global)
+// -------------------------------------------------------------
 async function uploadFile(url, file) {
 
     const formData = new FormData();
@@ -409,8 +417,8 @@ async function uploadFile(url, file) {
 
     try {
         const response = await fetch(url, {
-            method: 'POST',
-            headers: { 'RequestVerificationToken': csrf },
+            method: "POST",
+            headers: { "RequestVerificationToken": csrf },
             body: formData
         });
 
@@ -425,9 +433,10 @@ async function uploadFile(url, file) {
     }
 }
 
-// ================================================================
-//  Handle upload response
-// ================================================================
+
+// -------------------------------------------------------------
+// Upload response handler
+// -------------------------------------------------------------
 async function handleUploadResponse(response) {
 
     const result = await response.json().catch(() => null);
@@ -449,13 +458,7 @@ async function handleUploadResponse(response) {
     if (result?.errors) {
         let msg = "";
         result.errors.forEach(e => msg += `${e.error}\n`);
-
-        showAppAlert({
-            icon: "error",
-            title: "Upload Failed",
-            text: msg
-        });
-
+        showAppAlert({ icon: "error", title: "Upload Failed", text: msg });
         $("#upload-file").val("");
         return;
     }
@@ -468,6 +471,4 @@ async function handleUploadResponse(response) {
 
     $("#upload-file").val("");
 }
-
-
 </script>

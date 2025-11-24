@@ -301,7 +301,7 @@ namespace YardManagementApplication
             }
         }
 
-      
+
         // -----------------------------------------------------
         // UPLOAD HOLIDAY DATA VIA EXCEL
         // -----------------------------------------------------
@@ -310,64 +310,98 @@ namespace YardManagementApplication
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Upload(IFormFile file)
         {
-            //Log action start
             string controller = nameof(HolidayMasterController);
-            string action = nameof(Index);
+            string action = nameof(Upload);
             string user = HttpContext.Session.GetString("LoginUser") ?? "Unknown";
 
-            _logger.LogInformation(
-                "[ACTION START] {controller}.{action} | User={user}",
-                controller, action, user
-            );
+            _logger.LogInformation("[ACTION START] {controller}.{action} | User={user}", controller, action, user);
 
             try
             {
-                // Validate file
                 if (file == null || file.Length == 0)
-                    return BadRequest("No file uploaded.");
+                    return BadRequest(new
+                    {
+                        status = "error",
+                        title = "No File",
+                        message = "No file uploaded."
+                    });
 
                 var ext = Path.GetExtension(file.FileName).ToLowerInvariant();
                 if (ext != ".xlsx" && ext != ".xls")
-                    return BadRequest("Only Excel files (.xlsx/.xls) allowed.");
-
+                    return BadRequest(new
+                    {
+                        status = "error",
+                        title = "Invalid File",
+                        message = "Only Excel files (.xlsx/.xls) allowed."
+                    });
 
                 List<Dictionary<string, string>> excelRows = new();
                 List<string> headers = new();
 
-                // Read Excel file
                 using (var stream = file.OpenReadStream())
                 {
                     IWorkbook wb = ext == ".xlsx" ? new XSSFWorkbook(stream) : new HSSFWorkbook(stream);
                     var sheet = wb.GetSheetAt(0);
                     var header = sheet.GetRow(0);
 
+                    if (header == null)
+                        return BadRequest(new
+                        {
+                            status = "error",
+                            title = "Invalid Template",
+                            message = "Header row missing in file."
+                        });
+
+                    // Read headers
                     for (int i = 0; i < header.LastCellNum; i++)
                         headers.Add(header.GetCell(i)?.ToString()?.Trim() ?? $"Col{i}");
 
+                    // Read rows
                     for (int r = 1; r <= sheet.LastRowNum; r++)
                     {
                         var row = sheet.GetRow(r);
                         if (row == null) continue;
 
+                        bool entireRowEmpty = true;
                         var dict = new Dictionary<string, string>();
-                        for (int c = 0; c < headers.Count; c++)
-                            dict[headers[c]] = row.GetCell(c)?.ToString()?.Trim() ?? "";
 
-                        excelRows.Add(dict);
+                        for (int c = 0; c < headers.Count; c++)
+                        {
+                            string value = row.GetCell(c)?.ToString()?.Trim() ?? "";
+                            dict[headers[c]] = value;
+
+                            if (!string.IsNullOrWhiteSpace(value))
+                                entireRowEmpty = false;
+                        }
+
+                        if (!entireRowEmpty)
+                            excelRows.Add(dict);
                     }
                 }
 
+                // -------------------------------------------
+                // ❗ STOP if headers exist but NO data rows
+                // -------------------------------------------
+                if (excelRows.Count == 0)
+                {
+                    return BadRequest(new
+                    {
+                        status = "error",
+                        title = "No Data",
+                        message = "Template contains headers but no data rows."
+                    });
+                }
+
+                // Map + Upload
                 string currentUser = HttpContext.Session.GetString("LoginUser") ?? "System";
 
+                List<HolidayModel> allItems = new();
 
-                var allItems = new List<HolidayModel>();
+                string norm(string x) =>
+                    x.Trim().ToLower().Replace(" ", "").Replace("_", "").Replace("-", "");
 
-                // Map Excel rows to HolidayModel
                 foreach (var row in excelRows)
                 {
-                    string norm(string x) =>
-                        x.Trim().ToLower().Replace(" ", "").Replace("_", "").Replace("-", "");
-
                     var mapped = new Dictionary<string, string>();
 
                     foreach (var kv in row)
@@ -397,7 +431,6 @@ namespace YardManagementApplication
                     allItems.Add(model);
                 }
 
-                // Upload each template via API
                 int successCount = 0;
                 var apiErrors = new List<object>();
 
@@ -410,40 +443,16 @@ namespace YardManagementApplication
                     }
                     catch (ApiException<ResponseModel> ex)
                     {
-                        // Log API exception
-                        _logger.LogError(
-                             ex,
-                             "[ACTION ERROR] {controller}.{action} | Exception={error}",
-                             controller, action, ex.Message
-                         );
-
-                        apiErrors.Add(new
-                        {
-
-                            error = ex.Result?.Detail ?? ex.Message
-                        });
+                        apiErrors.Add(new { error = ex.Result?.Detail ?? ex.Message });
                     }
                     catch (Exception ex)
                     {
-                        // Log general exception
-                        _logger.LogError(
-                             ex,
-                             "[ACTION ERROR] {controller}.{action} | Exception={error}",
-                             controller, action, ex.Message
-                         );
-
-                        apiErrors.Add(new
-                        {
-
-                            error = ex.Message
-                        });
+                        apiErrors.Add(new { error = ex.Message });
                     }
                 }
 
-
                 if (apiErrors.Count > 0)
                 {
-                    // Return errors if any
                     return BadRequest(new
                     {
                         status = "error",
@@ -457,27 +466,22 @@ namespace YardManagementApplication
                 {
                     status = "success",
                     title = "Success",
-                    message = $"{successCount} records added successfully.",
-                    successCount
+                    message = $"{successCount} records added successfully."
                 });
             }
             catch (Exception ex)
             {
-                // Log error
-                _logger.LogError(
-                     ex,
-                     "[ACTION ERROR] {controller}.{action} | Exception={error}",
-                     controller, action, ex.Message
-                 );
+                _logger.LogError(ex, "[ACTION ERROR] {controller}.{action}", controller, action);
 
                 return BadRequest(new
                 {
                     status = "error",
-                    title = "Error",
+                    title = "Exception",
                     message = ex.Message
                 });
             }
         }
+
 
     }
 }
