@@ -2,8 +2,7 @@
     font-family: "Segoe UI", system-ui, -apple-system, "Helvetica Neue", Arial;
     font-size: 13px;
 }
-
-    /* === Dialog sizing === */
+/* === Dialog sizing === */
     .modal-request .modal-dialog {
         max-width: 600px;
         max-height: 90vh;

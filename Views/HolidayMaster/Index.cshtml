@@ -182,22 +182,48 @@ $(document).ready(function () {
     const dataTable = new Tabulator("#holidayMasterTable", {
         data: holidayMasterData,
         columns: [
-            { title: "Holiday Name", field: "Holiday_name", width: 220 },
-            { title: "Holiday Date", field: "Holiday_date", width: 220 },
-            { title: "Holiday Type Name", field: "Holiday_type_name", width: 220 },
-            { title: "Description", field: "Description", width: 220 },
-            { title: "Created By", field: "Created_by", width: 150 }
+            { title: "Holiday Name", field: "Holiday_name" },
+            { title: "Holiday Date", field: "Holiday_date" },
+            { title: "Holiday Type Name", field: "Holiday_type_name" },
+            { title: "Description", field: "Description"},
+            { title: "Created By", field: "Created_by" }
         ],
-        layout: "fitDataStretch",
-        height: "80vh",
+        layout: "fitColumns",
+       layout: "fitColumns",
+        height: "70vh",
         selectable: 1,
+
         pagination: "local",
         paginationSize: 10,
         paginationSizeSelector: [5, 10, 20, 50, 100],
+
         resizableRows: false,
+        resizableColumnGuide: false,
+        columnDefaults: { resizable: false },
         movableColumns: false,
-        rowClick: (e, row) => selectedRow = row.getData()
-    });
+
+        locale: true,
+        langs: {
+	        "en": {
+		        pagination: {
+			        first: "<<",
+			        first_title: "First",
+			        last: ">>",
+			        last_title: "Last",
+			        prev: "<",
+			        prev_title: "Prev",
+			        next: ">",
+			        next_title: "Next",
+			        page_size: "Page Size"
+		        }
+	        }
+        },
+
+        rowClick: function (e, row) {
+	        selectedRow = row.getData();
+        }
+        });
+
 
     // ----------------------------------------------------
     // Search (jQuery)

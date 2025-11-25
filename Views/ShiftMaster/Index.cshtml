@@ -74,16 +74,18 @@
 </div>
 
 
-<!-- Modal -->
-<div class="modal fade modal-request" id="addEditModal" tabindex="-1">
+<!------- Add/Edit Modal ------->
+<div class="modal fade modal-request" id="addEditModal" tabindex="-1" aria-labelledby="addEditModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered modal-lg">
         <div class="modal-content">
 
+             <!-- Header -->
             <div class="modal-header">
                 <h6 class="modal-title" id="addEditModalLabel">Add/Edit Shift</h6>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" style="filter:invert(1);"></button>
             </div>
 
+             <!-- Body -->
             <div class="modal-body">
                 <form id="addEditForm" autocomplete="off">
 
@@ -102,7 +104,7 @@
                         <div>
                             <label class="form-label">Description</label>
                             <input type="text" id="Shift_description" name="Shift_description"
-                                   class="form-control" maxlength="25" style="width: 300px;"autocomplete="off">
+                                   class="form-control" maxlength="20" style="width: 300px;"autocomplete="off">
                         </div>
 
                     </div>
@@ -162,6 +164,62 @@
 $(document).ready(function () {
 
     // ================================================================
+    //  Utility: Check if value is blank or spaces only
+    // ================================================================
+    function isBlankOrSpaces(v) {
+        return !v || $.trim(v).length === 0;
+    }
+
+    // ================================================================
+    //  Normalize and validate input fields
+    // ================================================================
+    function normalizeAndValidateField($el) {
+        if (!$el.is('input[type="text"], textarea')) return true;
+
+        // Replace multiple spaces → single space & trim ends
+        const trimmed = $el.val().replace(/\s+/g, ' ').trim();
+        $el.val(trimmed);
+
+        // Reset HTML5 validation
+        $el[0].setCustomValidity("");
+
+        // Required field check
+        if ($el.is('[required]') && isBlankOrSpaces($el.val())) {
+            $el[0].setCustomValidity("This field cannot be empty or only spaces.");
+            return false;
+        }
+
+        return true;
+    }
+    
+    // ================================================================
+    //  Form input auto-validation
+    // ================================================================
+    const $form = $("#addEditForm");
+
+    $form.on("input", 'input[type="text"], textarea', function () {
+        this.setCustomValidity("");
+    });
+
+    $form.on("blur", 'input[type="text"], textarea', function () {
+        normalizeAndValidateField($(this));
+    });
+
+    // Global validator for form submit
+    window.validateNoSpaceOnlyInputs = function (formEl) {
+        let ok = true;
+        $(formEl).find('input[type="text"], textarea').each(function () {
+            if (!normalizeAndValidateField($(this))) {
+                this.reportValidity();
+                this.focus();
+                ok = false;
+                return false;
+            }
+        });
+        return ok;
+    };
+
+    // ================================================================
     //  Init tooltip + load initial data
     // ================================================================
     initTooltips();
@@ -177,22 +235,46 @@ $(document).ready(function () {
     const dataTable = new Tabulator("#shiftMastertable", {
         data: shiftMasterData,
         columns: [
-            { title: "Shift Name", field: "Shift_name", width: 220,headerHozAlign: "center" },
-            { title: "Shift Description", field: "Shift_description", width: 220,headerHozAlign: "center" },
-            { title: "Start Time", field: "Start_time", width: 220 ,headerHozAlign: "center"},
-            { title: "End Time", field: "End_time", width: 220,headerHozAlign: "center" },
-            { title: "Created By", field: "Created_by", width: 150,headerHozAlign: "center"},
+            { title: "Shift Name", field: "Shift_name",headerHozAlign: "center" },
+            { title: "Shift Description", field: "Shift_description", headerHozAlign: "center" },
+            { title: "Start Time", field: "Start_time",headerHozAlign: "center"},
+            { title: "End Time", field: "End_time", headerHozAlign: "center" },
+            { title: "Created By", field: "Created_by", headerHozAlign: "center"},
         ],
-        layout: "fitDataStretch",
+        layout: "fitColumns",
         height: "70vh",
         selectable: 1,
+
         pagination: "local",
         paginationSize: 10,
         paginationSizeSelector: [5, 10, 20, 50, 100],
+
+        resizableRows: false,
+        resizableColumnGuide: false,
         columnDefaults: { resizable: false },
         movableColumns: false,
-        rowClick: (e, row) => selectedRow = row.getData()
-    });
+
+        locale: true,
+        langs: {
+	        "en": {
+		        pagination: {
+			        first: "<<",
+			        first_title: "First",
+			        last: ">>",
+			        last_title: "Last",
+			        prev: "<",
+			        prev_title: "Prev",
+			        next: ">",
+			        next_title: "Next",
+			        page_size: "Page Size"
+		        }
+	        }
+        },
+
+        rowClick: function (e, row) {
+	        selectedRow = row.getData();
+        }
+        });
 
     dataTable.on("dataLoaded", data =>
         $("#recordCount").text("Total Records: " + data.length)
@@ -202,11 +284,20 @@ $(document).ready(function () {
     // ================================================================
     //  Search functionality
     // ================================================================
-    $("#searchField").on("input", function () {
-        let s = $(this).val().toLowerCase();
-        dataTable.setFilter(d =>
-            Object.values(d).some(v => v?.toString().toLowerCase().includes(s))
-        );
+     $("#searchField").on("keyup", function () {
+        const value = $(this).val().toLowerCase();
+
+        if (value === "") {
+            dataTable.clearFilter();
+            return;
+        }
+
+        dataTable.setFilter(function (data) {
+            return Object.values(data)
+                .join(" ")
+                .toLowerCase()
+                .includes(value);
+        });
     });
 
 
@@ -588,19 +679,6 @@ $(document).ready(function () {
 
         $("#upload-file").val("");
     }
-
-
-    // ================================================================
-    //  Download invalid records (if backend returns it)
-    // ================================================================
-    function downloadInvalidRecords(fileData) {
-        const csvData = atob(fileData);
-        const blob = new Blob([csvData], { type: 'text/csv' });
-        const link = document.createElement('a');
-        link.href = URL.createObjectURL(blob);
-        link.download = 'invalid_records.csv';
-        link.click();
-    }
-
+        
 });
 </script>

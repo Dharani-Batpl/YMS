@@ -80,7 +80,9 @@
 <!------- Add/Edit Modal ------->
 
 <div class="modal fade modal-request" id="addEditModal" tabindex="-1" aria-labelledby="addEditModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
+  <div class="modal-dialog modal-dialog-centered" 
+     style="max-width: 900px; height: 90vh;">
+
         <div class="modal-content">
             
             <!-- Header -->
@@ -409,7 +411,8 @@ $(document).ready(function () {
         resizableRows: false,
         resizableRowGuide: false,
         resizableColumnGuide: false,
-        columnDefaults: { resizable: false },
+        columnDefaults: { resizable: false,
+        headerHozAlign: "center"},
         movableColumns: false,
 
         paginationSize: 10,
@@ -472,8 +475,7 @@ $(document).ready(function () {
             "Shift_id",
             "Eol_quality_inspector_name",
             "Color_id",
-            "Shift_name",
-            "Quality_status",
+            "Shift_name",           
             "Transit_status",
             "Quality_status_id",
             "Brand_id",

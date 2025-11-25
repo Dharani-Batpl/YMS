@@ -72,11 +72,13 @@
     <div class="modal-dialog modal-dialog-centered modal-lg">
         <div class="modal-content">
 
+             <!-- Header -->
             <div class="modal-header">
                 <h6 class="modal-title" id="addEditModalLabel">Add/Edit Template</h6>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" style="filter:invert(1);"></button>
             </div>
 
+             <!-- Body -->
             <div class="modal-body">
 
                 <form id="addEditForm">
@@ -610,15 +612,4 @@ async function handleUploadResponse(response) {
 }
 
 
-// ================================================================
-//  Download invalid records (if backend returns it)
-// ================================================================
-function downloadInvalidRecords(fileData) {
-    const csvData = atob(fileData);
-    const blob = new Blob([csvData], { type: 'text/csv' });
-    const link = document.createElement('a');
-    link.href = URL.createObjectURL(blob);
-    link.download = 'invalid_records.csv';
-    link.click();
-}
 </script>

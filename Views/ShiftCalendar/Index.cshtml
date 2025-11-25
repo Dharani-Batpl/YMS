@@ -270,14 +270,16 @@
                         <input id="holidayDate" class="form-control" readonly />
                     </div>
 
-                    <div class="mb-3">
+                   <div class="mb-3">
                         <label class="form-label">Holiday Name <span class="text-danger">*</span></label>
-                        <input id="holidayName" class="form-control" required autocomplete="off" />
+                        <input id="holidayName" class="form-control"
+                               required maxlength="150" autocomplete="off" />
                     </div>
 
                     <div class="mb-3">
                         <label class="form-label">Holiday Description <span class="text-danger">*</span></label>
-                        <input id="holidayDescription" class="form-control" required autocomplete="off" />
+                        <input id="holidayDescription" class="form-control"
+                               required maxlength="500" autocomplete="off" />
                     </div>
 
                     <div class="mb-3">
@@ -285,12 +287,13 @@
                         <select id="holidayType" class="form-select" required></select>
                     </div>
 
+
                 </form>
             </div>
 
             <div class="modal-footer">
                 <button class="btn btn-cancel" data-bs-dismiss="modal">Cancel</button>
-                <button id="saveHolidayBtn" class="btn btn-submit">Save</button>
+                <button type="submit" form="holidayForm" class="btn btn-submit">Save</button>
             </div>
 
         </div>
@@ -757,26 +760,28 @@ $("#addHolidayBtn").click(function () {
 // -----------------------------------------------
 // SAVE HOLIDAY
 // -----------------------------------------------
-$("#saveHolidayBtn").click(async function () {
+$("#holidayForm").on("submit", async function (e) {
+
+    // Browser validation
+    if (!this.checkValidity()) {
+        return; // shows browser bubble automatically
+    }
+
+    e.preventDefault(); // now safe to stop default submit
 
     const name = $("#holidayName").val().trim();
     const desc = $("#holidayDescription").val().trim();
     const type = $("#holidayType").val();
-
-    if (!name) return showToast({ icon: "error", text: "Holiday name required" });
-    if (!desc) return showToast({ icon: "error", text: "Holiday description required" });
-    if (!type) return showToast({ icon: "error", text: "Holiday type required" });
 
     const formData = {
         Holiday_date: selectedDate,
         Holiday_name: name,
         Description: desc,
         Holiday_type_id: type
-       
     };
 
     const modal = bootstrap.Modal.getInstance(document.getElementById("holidayModal"));
-    const success = await saveRecord("/HolidayMaster/Create", formData, "Add", modal, document.getElementById("holidayForm"));
+    const success = await saveRecord("/HolidayMaster/Create", formData, "Add", modal, this);
 
     if (success) {
         showToast({ icon: "success", text: "Holiday Saved" });
