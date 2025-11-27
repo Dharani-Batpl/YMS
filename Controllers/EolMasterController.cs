@@ -546,7 +546,19 @@ namespace YardManagementApplication
                     }
                 }
 
-                
+                // -------------------------------------------
+                // ❗ STOP if headers exist but NO data rows
+                // -------------------------------------------
+                if (excelRows.Count == 0)
+                {
+                    return BadRequest(new
+                    {
+                        status = "error",
+                        title = "No Data",
+                        message = "Template contains no data rows."
+                    });
+                }
+
                 string currentUser = HttpContext.Session.GetString("LoginUser") ?? "System";
 
                  var allItems = new List<EolProductionModel>();
