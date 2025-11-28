@@ -14,6 +14,7 @@
 // Version | Date       | Author           | Description
 // -------------------------------------------------------------------------------------------------
 // 1.0     | 2025-10-14 | Kavin R   | Initial creation based on Employee Master Model structure.
+// 1.1     | 2025-11-28 | Dharani T | Modifications in UI and logics
 // =================================================================================================
 
 using FluentValidation;

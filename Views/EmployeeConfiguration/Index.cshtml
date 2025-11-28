@@ -409,7 +409,58 @@
             // );
             	const dataTable = new Tabulator("#employeeConfigurationTable", {
 	            data: EmployeeConfigurationData,
-	            columns: generateTabulatorColumns(EmployeeConfigurationData),
+	            columns: [
+                    { title: "Employee Code", field: "Employee_code", headerHozAlign: "center" },
+                    { title: "First Name", field: "First_name", headerHozAlign: "center" },
+                    { title: "Middle Name", field: "Middle_name", headerHozAlign: "center" },
+                    { title: "Last Name", field: "Last_name", headerHozAlign: "center" },
+                    { title: "Address", field: "Address", headerHozAlign: "center" },
+
+                    { title: "Department Name", field: "Department_name", headerHozAlign: "center" },
+                    { title: "Reporting To Name", field: "Reporting_to_name", headerHozAlign: "center" },
+
+                    // -------------------------
+                    // PHONE MERGED FIELD
+                    // -------------------------
+                    {
+                        title: "Phone",
+                        field: "PhoneFull",
+                        headerHozAlign: "center",
+                        hozAlign: "center",
+                        formatter: function (cell) {
+                            const d = cell.getRow().getData();
+                            return `${d.Country_code || ""}-${d.Contact_number || ""}`;
+                        }
+                    },
+
+                    // -------------------------
+                    // EMERGENCY PHONE MERGED FIELD
+                    // -------------------------
+                    {
+                        title: "Emergency Phone",
+                        field: "EmergencyPhoneFull",
+                        headerHozAlign: "center",
+                        hozAlign: "center",
+                        formatter: function (cell) {
+                            const d = cell.getRow().getData();
+                            return `${d.Emergency_country_code || ""}-${d.Emergency_contact_number || ""}`;
+                        }
+                    },
+
+                    { title: "Email", field: "Email", headerHozAlign: "center" },
+                    { title: "Employee Type", field: "Employee_type", headerHozAlign: "center" },
+
+                    { title: "Blood Group", field: "Blood_group", headerHozAlign: "center" },
+                    { title: "Skill Type", field: "Skill_type", headerHozAlign: "center" },
+                    { title: "Skill Level", field: "Skill_level_name", headerHozAlign: "center" },
+
+                    { title: "Certificate Type Name", field: "Certificate_type_name", headerHozAlign: "center" },
+                    { title: "Certification Date", field: "Certification_date", headerHozAlign: "center" },
+                    { title: "Expiry Date", field: "Expiry_date", headerHozAlign: "center" }
+                ],
+
+                
+
 	            layout: "fitDataStretch",
 	            height: "80vh",
 	            selectable: 1,
@@ -474,6 +525,8 @@
                     "Certificate_type_id",
                     "Expiry_date",
                      "Certification_date",
+                     "Created_by",
+                     "Status_name",
                     "AdditionalProperties"
             ];
 
