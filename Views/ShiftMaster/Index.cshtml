@@ -326,7 +326,7 @@ $(document).ready(function () {
         currentMode = "Add";
         form[0].reset();
         $("#Shift_id").val(0);
-
+         $("#Shift_name").prop("readonly", false); 
         $("#modalSubmitBtn").text("Add");
         $("#addEditModalLabel").text("Add Shift");
 
@@ -343,7 +343,7 @@ $(document).ready(function () {
             return showAppAlert({ icon: "warning", title: "No Selection", text: "Select a row." });
 
         currentMode = "Edit";
-
+         $("#Shift_name").prop("readonly", true);  
         $("#Shift_id").val(row.Shift_id);
         $("#Shift_name").val(row.Shift_name);
         $("#Shift_description").val(row.Shift_description);
@@ -517,12 +517,69 @@ $(document).ready(function () {
     //  Download CSV
     // ================================================================
     $("#download-btn").on("click", () => {
-        let count = dataTable.getData()?.length || 0;
-        if (count === 0)
-            return showAppAlert({ icon: "warning", title: "No Data", text: "No records to download." });
 
-        downloadCsv(dataTable, "ShiftMaster.csv");
+    let tableData = dataTable.getData();
+
+    if (!tableData.length) {
+        return showAppAlert({
+            icon: "warning",
+            title: "No Data",
+            text: "No records to download."
+        });
+    }
+
+    let finalRows = [];
+
+    tableData.forEach(row => {
+
+        let newRow = {
+            "Shift Name": row.Shift_name,
+            "Shift Description": row.Shift_description,
+            "Start Time": row.Start_time,
+            "End Time": row.End_time
+        };
+
+        if (row.Break_details) {
+            try {
+                let breaks = JSON.parse(row.Break_details);
+
+                breaks.forEach((b, i) => {
+                    const idx = i + 1;
+                    newRow[`Break${idx}In`] = b[`Break${idx}In`] || "";
+                    newRow[`Break${idx}Out`] = b[`Break${idx}Out`] || "";
+                    newRow[`Break${idx}Description`] = b[`Break${idx}Description`] || "";
+                });
+
+            } catch (err) {
+                console.error("Break parse error", err);
+            }
+        }
+
+        finalRows.push(newRow);
     });
+
+    exportCsv(finalRows, "ShiftMaster.csv");
+});
+function exportCsv(rows, fileName) {
+
+    const headers = Object.keys(rows[0]);
+
+    const csv = [
+        headers.join(","),
+        ...rows.map(r => headers.map(h => `"${r[h] || ""}"`).join(","))
+    ].join("\n");
+
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = fileName;
+    a.click();
+
+    URL.revokeObjectURL(url);
+}
+
 
 
     // ================================================================

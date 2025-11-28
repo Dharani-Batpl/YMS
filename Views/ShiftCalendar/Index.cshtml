@@ -376,6 +376,12 @@ $(document).ready(function () {
     $("#startDate").on("change", function () {
         $("#endDate").attr("min", $(this).val());
     });
+    // When Holiday modal closes → disable the Add Holiday button and clear selectedDate
+    $("#holidayModal").on("hidden.bs.modal", function () {
+        selectedDate = null;
+        $("#addHolidayBtn").prop("disabled", true);
+    });
+
     // Dropdown population
     $("#plantDropdown").append('<option value="" disabled selected>Select Plant</option>');
     @foreach (var p in Model.Plants) {
