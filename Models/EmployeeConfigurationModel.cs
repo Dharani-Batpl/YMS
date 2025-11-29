@@ -16,6 +16,8 @@
         public string? Country_code { get; set; }
         public string? Emergency_country_code { get; set; }
         public string? Emergency_contact_number { get; set; }
+
+        public bool? App_user { get; set; }
         public string? Email { get; set; }
         public int? Employee_type_id { get; set; }
         public string? Employee_type { get; set; }
@@ -55,12 +57,6 @@
         public string? Reporting_to_id { get; set; }
         public string? Reporting_to_name { get; set; }
         public string? Contact_number { get; set; }
-
-        public string? Country_code { get; set; }
-
-        public string? Emergency_country_code { get; set; }
-
-
         public string? Emergency_contact_number { get; set; }
         public string? Email { get; set; }
         public int? Employee_type_id { get; set; }
@@ -96,11 +92,18 @@
         public string? updated_by { get; set; }
     }
 
-    //public class DropdownModel
-    //{
-    //    public int id { get; set; }
-    //    public string Name { get; set; }
-    //}
+    public class AppUserInsertModel
+    {
+        public long User_id { get; set; }             
+        public string User_name { get; set; } = null!;
+        public string? Password { get; set; }         
+        public string? Email { get; set; }          
+        public bool Is_deleted { get; set; }         
+        public string Created_by { get; set; } = null!; 
+        public DateTimeOffset Created_at { get; set; } 
+        public string? Updated_by { get; set; }      
+        public DateTimeOffset? Updated_at { get; set; } 
+    }
 
 
 }

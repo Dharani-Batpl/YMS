@@ -92,719 +92,377 @@
 
 </div>
 
-<!--  Add/Edit modal (single form reused for both modes) -->
-<div class="modal fade" id="addEditModal" tabindex="-1" aria-labelledby="addEditModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered modal-lg">
-        <div class="modal-content">
-            <!--  Modal header -->
+<!--  Add/Edit modal (wide inline version) -->
+<div class="modal fade modal-request" id="addEditModal" tabindex="-1" aria-labelledby="addEditModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg"
+         style="max-width: 55% !important;">
+        <div class="modal-content"
+             style="max-height: 90vh; overflow-y: auto; border-radius: 12px;">
+
+            <!-- Header -->
             <div class="modal-header">
-                <h6 class="modal-title" id="addEditModalLabel">Add/Edit User</h6>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close" style="filter: invert(1);"></button>
+                <h6 class="modal-title" id="addEditModalLabel">Add Employee Master</h6>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" style="filter: invert(1);"></button>
             </div>
-            <!-- Modal body with form fields -->
+
+            <!-- Body -->
             <div class="modal-body">
-                <!-- Form to add or edit employee details -->
                 <form id="addEditForm">
-                    <!-- Hidden field to hold the Employee ID (for edit operations) -->
+
                     <input type="hidden" id="Employee_id" name="Employee_id" />
 
-                    <!-- Form rows, organized into 3 columns for responsive layout -->
-                    <div class="row g-3">
+                    <div class="row g-4">
 
-                        <!-- Employee Code Field -->
-                        <div class="col-md-4">
-                            <label for="Employee_code" class="form-label">Employee Code</label>
-                            <span class="text-danger"><strong>*</strong></span>
-                            <input type="text" class="form-control" id="Employee_code" name="Employee_code" required>
+                        <!-- Employee Code -->
+                        <div class="col-md-6" style="width:320px;">
+                            <label class="form-label">Employee Code <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" autocomplete="off" id="Employee_code" name="Employee_code" required>
                         </div>
 
-
-                        <!-- First Name Field -->
-                        <div class="col-md-4">
-                            <label for="First_name" class="form-label">First Name</label>
-                            <span class="text-danger"><strong>*</strong></span>
-                            <input type="text" class="form-control" id="First_name" name="First_name" required>
+                        <!-- First Name -->
+                        <div class="col-md-6" style="width:320px;">
+                            <label class="form-label">First Name <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" autocomplete="off" id="First_name" name="First_name" required>
                         </div>
 
-                        <!-- Middle Name Field (required) -->
-                        <div class="col-md-4">
-                            <label for="Middle_name" class="form-label">Middle Name</label>
-                           @*  <span class="text-danger"><strong>*</strong></span> *@
-                            <input type="text" class="form-control" id="Middle_name" name="Middle_name">
+                        <!-- Middle Name -->
+                        <div class="col-md-6" style="width:320px;">
+                            <label class="form-label">Middle Name</label>
+                            <input type="text" class="form-control" autocomplete="off" id="Middle_name" name="Middle_name">
                         </div>
 
-                        <!-- Last Name Field -->
-                        <div class="col-md-4">
-                            <label for="Last_name" class="form-label">Last Name</label>
-                            <span class="text-danger"><strong>*</strong></span>
-                            <input type="text" class="form-control" id="Last_name" name="Last_name" required>
+                        <!-- Last Name -->
+                        <div class="col-md-6" style="width:320px;">
+                            <label class="form-label">Last Name <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" autocomplete="off" id="Last_name" name="Last_name" required>
                         </div>
 
-                        <!-- Department Dropdown -->
-                        <div class="col-md-4">
-                            <label for="Department_id" class="form-label">Department</label>
-                            <span class="text-danger"><strong>*</strong></span>
+                        <!-- Department -->
+                        <div class="col-md-6" style="width:320px;">
+                            <label class="form-label">Department <span class="text-danger">*</span></label>
                             <select class="form-select" id="Department_id" name="Department_id" required
-                                    asp-items="@(ViewBag.DepartmentList as IEnumerable<SelectListItem>)">
-                                <!-- Default placeholder option -->
-                                <option value="" selected disabled>Select Department</option>
+                                asp-items="@(ViewBag.DepartmentList as IEnumerable<SelectListItem>)">
+                                <option value="" disabled selected>Select Department</option>
                             </select>
                         </div>
 
-                        <!-- User Name Dropdown -->
-                        @* <div class="col-md-4">
-                            <label for="User_id" class="form-label">User Name</label>
-                            <select class="form-select" id="User_id" name="User_id" required
-                                    asp-items="@(ViewBag.UserNameList as IEnumerable<SelectListItem>)">
-                                <!-- Default placeholder option -->
-                                <option value="" selected disabled>Select User Name</option>
-                            </select>
+                        <!-- Reporting To -->
+                        <div class="col-md-6" style="width:320px;">
+                            <label class="form-label">Reporting To <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" autocomplete="off" id="Reporting_to_name" name="Reporting_to_name" required>
                         </div>
 
-                        <!--User Group Name Dropdown -->
-                        <div class="col-md-4">
-                            <label for="User_group_id" class="form-label">User Group Name</label>
-                            <select class="form-select" id="User_group_id" name="User_group_id" required
-                                    asp-items="@(ViewBag.UserGroupNameList as IEnumerable<SelectListItem>)">
-                                <!-- Default placeholder option -->
-                                <option value="" selected disabled>Select User Group Name</option>
-                            </select>
-                        </div> *@
-
-                        <!-- Reporting To (Manager) Field -->
-                        <div class="col-md-4">
-                            <label for="Reporting_to_name" class="form-label">Reporting To</label>
-                            <span class="text-danger"><strong>*</strong></span>
-                            <input type="text" class="form-control" id="Reporting_to_name" name="Reporting_to_name" required>
-                        </div>
-
-                        <div class="col-md-6">
-                            <label for="Contact_number" class="form-label">Phone Number</label>
-                            <span class="text-danger"><strong>*</strong></span>
+                        <!-- Phone Number -->
+                        <div class="col-md-6" style="width:320px;">
+                            <label class="form-label">Phone Number <span class="text-danger">*</span></label>
                             <div class="input-group">
-                                <!-- Country Code Dropdown -->
-                                <select class="form-select form-select-sm" id="Country_code" name="Country_code" required style="max-width: 100px;">
-                                    @* <option value="" selected disabled>Select</option> *@
+                                <select class="form-select" id="Country_code" name="Country_code" required style="max-width:110px;">
                                     <option value="+1">+1 (US)</option>
                                     <option value="+52">+52 (MX)</option>
                                     <option value="+91">+91 (IND)</option>
-                                        
-
                                 </select>
-                                <input type="text" class="form-control" id="Contact_number" name="Contact_number" maxlength="10" pattern="^\d{10}$" title="Only numbers are allowed, 10 digits" required />
+                                <input type="text" class="form-control" autocomplete="off" id="Contact_number" name="Contact_number" maxlength="10" required>
                             </div>
                         </div>
 
-                        <!-- Emergency Contact Number -->
-                        <div class="col-md-6">
-                            <label for="Emergency_contact_number" class="form-label">Emergency Contact Number</label>
-                            <span class="text-danger"><strong>*</strong></span>
+                        <!-- Emergency contact -->
+                        <div class="col-md-6" style="width:320px;">
+                            <label class="form-label">Emergency Contact Number <span class="text-danger">*</span></label>
                             <div class="input-group">
-                                <!-- Country Code Dropdown -->
-                                <select class="form-select form-select-sm" id="Emergency_country_code" name="Emergency_country_code" required style="max-width: 100px;">
-                                    @* <option value="" selected disabled>Select</option> *@
+                                <select class="form-select" id="Emergency_country_code" name="Emergency_country_code" required style="max-width:110px;">
                                     <option value="+1">+1 (US)</option>
                                     <option value="+52">+52 (MX)</option>
                                     <option value="+91">+91 (IND)</option>
-                                        
-
                                 </select>
-                                <input type="text" class="form-control" id="Emergency_contact_number" name="Emergency_contact_number" maxlength="10" pattern="^\d{10}$" title="Only numbers are allowed, 10 digits" required />
+                                <input type="text" class="form-control" autocomplete="off" id="Emergency_contact_number" name="Emergency_contact_number" maxlength="10" required>
                             </div>
                         </div>
 
-                        <div class="col-md-4">
-                            <label for="Email" class="form-label">Email</label>
-                            <span class="text-danger"><strong>*</strong></span>
-                            <input type="email"
-                                   class="form-control"
-                                   id="Email"
-                                   name="Email"
-                                   required>
+                        <!-- Email -->
+                        <div class="col-md-6" style="width:320px;">
+                            <label class="form-label" for="Email">Email</label>
+
+                            <input type="email" class="form-control" autocomplete="off" id="Email" name="Email">
                         </div>
 
-                        <!-- Skill Name Dropdown -->
-                        <div class="col-md-4">
-                            <label for="Skill_id" class="form-label">Skill Type</label>
-                            <span class="text-danger"><strong>*</strong></span>
+                        <!-- Skill Type -->
+                        <div class="col-md-6" style="width:320px;">
+                            <label class="form-label">Skill Type <span class="text-danger">*</span></label>
                             <select class="form-select" id="Skill_id" name="Skill_id" required
-                                    asp-items="@(ViewBag.SkillNameList as IEnumerable<SelectListItem>)">
-                                <!-- Default placeholder option -->
-                                <option value="" selected disabled>Select Skill</option>
+                                asp-items="@(ViewBag.SkillNameList as IEnumerable<SelectListItem>)">
+                                <option value="" disabled selected>Select Skill</option>
                             </select>
                         </div>
 
-                        <!-- Skill Level Dropdown -->
-                        <div class="col-md-4">
-                            <label for="Skill_level_id" class="form-label">Skill Level</label>
-                            <span class="text-danger"><strong>*</strong></span>
+                        <!-- Skill Level -->
+                        <div class="col-md-6" style="width:320px;">
+                            <label class="form-label">Skill Level <span class="text-danger">*</span></label>
                             <select class="form-select" id="Skill_level_id" name="Skill_level_id" required
-                                    asp-items="@(ViewBag.SkilllevelList as IEnumerable<SelectListItem>)">
-                                <!-- Default placeholder option -->
-                                <option value="" selected disabled>Select Skill Level</option>
+                                asp-items="@(ViewBag.SkilllevelList as IEnumerable<SelectListItem>)">
+                                <option value="" disabled selected>Select Skill Level</option>
                             </select>
                         </div>
 
-                        <!-- Certification Type -->
-                        <div class="col-md-4">
-                            <label for="Certificate_type_id" class="form-label">Certificate Type</label>
-                            <span class="text-danger"><strong>*</strong></span>
+                        <!-- Certificate Type -->
+                        <div class="col-md-6" style="width:320px;">
+                            <label class="form-label">Certificate Type <span class="text-danger">*</span></label>
                             <select class="form-select" id="Certificate_type_id" name="Certificate_type_id" required
-                                    asp-items="@(ViewBag.CertificateTypeList as IEnumerable<SelectListItem>)">
-                                <option value="" selected disabled>Select Certificate Type</option>
+                                asp-items="@(ViewBag.CertificateTypeList as IEnumerable<SelectListItem>)">
+                                <option value="" disabled selected>Select Certificate Type</option>
                             </select>
                         </div>
 
-
-                        <!-- Certification Date Field -->
-                        <div class="col-md-4">
-                            <label for="Certification_date" class="form-label">Certificate Issue Date</label>
-                            <span class="text-danger"><strong>*</strong></span>
-                            <input type="date" class="form-control" id="Certification_date" name="Certification_date" required>
+                        <!-- Certification Date -->
+                        <div class="col-md-6" style="width:320px;">
+                            <label class="form-label">Certificate Issue Date <span class="text-danger">*</span></label>
+                            <input type="date" class="form-control" autocomplete="off" id="Certification_date" name="Certification_date" required>
                         </div>
 
-                        <!-- Expiry Date Field -->
-                        <div class="col-md-4">
-                            <label for="Expiry_date" class="form-label">Certificate Expiry Date</label>
-                            <span class="text-danger"><strong>*</strong></span>
-                            <input type="date" class="form-control" id="Expiry_date" name="Expiry_date" required>
+                        <!-- Expiry Date -->
+                        <div class="col-md-6" style="width:320px;">
+                            <label class="form-label">Certificate Expiry Date <span class="text-danger">*</span></label>
+                            <input type="date" class="form-control" autocomplete="off" id="Expiry_date" name="Expiry_date" required>
                         </div>
-                        <!-- Blood Group Field -->
-                        <div class="col-md-4">
-                            <label for="Blood_group" class="form-label">Blood Group</label>
-                            <span class="text-danger"><strong>*</strong></span>
+
+                        <!-- Blood Group -->
+                        <div class="col-md-6" style="width:320px;">
+                            <label class="form-label">Blood Group <span class="text-danger">*</span></label>
                             <select class="form-select" id="Blood_group" name="Blood_group" required>
-                                <option value="" selected disabled>Select Blood Group</option>
-                                <option value="A+">A+</option>
-                                <option value="A-">A-</option>
-                                <option value="B+">B+</option>
-                                <option value="B-">B-</option>
-                                <option value="O+">O+</option>
-                                <option value="O-">O-</option>
-                                <option value="AB+">AB+</option>
-                                <option value="AB-">AB-</option>
+                                <option disabled selected value="">Select Blood Group</option>
+                                <option>A+</option><option>A-</option>
+                                <option>B+</option><option>B-</option>
+                                <option>O+</option><option>O-</option>
+                                <option>AB+</option><option>AB-</option>
                             </select>
                         </div>
 
-
-
-                        <!-- Employee Type Dropdown -->
-                        <div class="col-md-4">
-                            <label for="Employee_type_id" class="form-label">Employment Type</label>
-                            <span class="text-danger"><strong>*</strong></span>
+                        <!-- Employment -->
+                        <div class="col-md-6" style="width:320px;">
+                            <label class="form-label">Employment Type <span class="text-danger">*</span></label>
                             <select class="form-select" id="Employee_type_id" name="Employee_type_id" required
-                                    asp-items="@(ViewBag.EmployeeTypeList as IEnumerable<SelectListItem>)">
-                                <!-- Default placeholder option -->
-                                <option value="" selected disabled>Select Employment Type</option>
+                                asp-items="@(ViewBag.EmployeeTypeList as IEnumerable<SelectListItem>)">
+                                <option disabled selected value="">Select Employment Type</option>
                             </select>
                         </div>
 
-                        <!-- Status Dropdown -->
-                        <div class="col-md-4">
-                            <label for="Status_id" class="form-label">Status</label>
-                            <span class="text-danger"><strong>*</strong></span>
+                        <!-- Status -->
+                        <div class="col-md-6" style="width:320px;">
+                            <label class="form-label">Status <span class="text-danger">*</span></label>
                             <select class="form-select" id="Status_id" name="Status_id" required
-                                    asp-items="@(ViewBag.StatusList as IEnumerable<SelectListItem>)">
-                                <!-- Default placeholder option -->
-                                <option value="" selected disabled>Select Status</option>
+                                asp-items="@(ViewBag.StatusList as IEnumerable<SelectListItem>)">
+                                <option disabled selected value="">Select Status</option>
                             </select>
+                        </div>                        
+                      
+                        <!-- Address -->
+                        <div class="col-md-12" style="width:420px;">
+                            <label class="form-label">Address <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" autocomplete="off" id="Address" name="Address" required>
                         </div>
 
-                        <div class="col-md-12">
-                            <label for="Address" class="form-label">Address</label>
-                            <span class="text-danger"><strong>*</strong></span>
-                            <input type="text" class="form-control" id="Address" name="Address" required>
-                        </div>
                     </div>
                 </form>
             </div>
-            <!--  Modal footer with actions -->
-            <div class="modal-footer">
-                <button type="button" class="btn btn-primary-professional" data-bs-dismiss="modal">Cancel</button>
-                <button type="submit" class="btn btn-primary-professional" id="modalSubmitBtn" form="addEditForm">Add</button>
+
+            <!-- Footer -->
+            <div class="modal-footer d-flex justify-content-between align-items-center">
+            <!-- APP USER CHECKBOX -->
+                <div>
+                    <input class="form-input" type="checkbox" id="IsAppUser" name="IsAppUser" style="margin-right: 8px;">
+
+                    <label class="form-label" for="IsAppUser">App User?</label>
+                </div>
+
+            <div>
+                <button type="button" class="btn btn-cancel" data-bs-dismiss="modal">Cancel</button>
+                <button type="submit" class="btn btn-submit" id="modalSubmitBtn" form="addEditForm">Add</button>
             </div>
         </div>
     </div>
 </div>
-
 <script>
 
-    //phonenumber and emergency number not same
-     document.addEventListener('input', function () {
-     const contact = document.getElementById('Contact_number').value;
-     const emergency = document.getElementById('Emergency_contact_number').value;
- 
-     if (contact && emergency && contact === emergency) {
-         document.getElementById('Emergency_contact_number').setCustomValidity('Phone number and Emergency number cannot be the same');
-     } else {
-         document.getElementById('Emergency_contact_number').setCustomValidity('');
-     }
-});
+$(document).ready(function () {
 
-         document.getElementById('Contact_number').addEventListener('input', function() {
-        this.value = this.value.replace(/[^0-9]/g, '');
-    });
-
-
-       document.addEventListener('input', function () {
-    const emailField = document.getElementById('Email');
-    const emailValue = emailField.value.trim();
- 
-    // ✅ Correct Gmail pattern
-     const gmailPattern = /^[a-zA-Z0-9._%+-]+@@[a-zA-Z0-9.-]+\.com$/i;
- 
-    if (emailValue && !gmailPattern.test(emailValue)) {
-        emailField.setCustomValidity('Please enter a valid Email address (ex: abc@gmail.com)');
-    } else {
-        emailField.setCustomValidity('');
-    }
-});
-
-
-            document.addEventListener("DOMContentLoaded", () => {
-            // ==========================
-            // 🔹 Initialize reusable components
-            // ==========================
-            initTooltips(); // Bootstrap tooltips
-
-
-            const EmployeeConfigurationData = JSON.parse('@Html.Raw(employeeConfiguration)');
-            let selectedRow = null;
-            let currentMode = "";
-
-            // ==========================
-            // 🔹 Generate Tabulator columns dynamically
-            // ==========================
-          function generateTabulatorColumns(data) {
-            if (!data || data.length === 0) return [];
-
-            const fields = Object.keys(data[0]);
-
-            // 🏷️ Custom aliases (you can edit these)
-            const aliases = {
-               // Status_name: "Status",
-
-            };
-
-            const formatTitle = (str) => {
-                let result = str.replace(/[_\-]/g, ' ');
-                result = result.replace(/([a-z])([A-Z])/g, '$1 $2');
-                return result.replace(/\w\S*/g, (txt) => txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase());
-            };
-
-            return fields.map(field => ({
-                title: aliases[field] || formatTitle(field),
-                field: field,
-                headerHozAlign: "center",
-                hozAlign: "center",
-                tooltip: true,
-                resizable: true
-            }));
+    // -------------------------------
+    // App User toggle (Email required)
+    // -------------------------------
+    $("#IsAppUser").on("change", function () {
+        if ($(this).is(":checked")) {
+            $("#Email").attr("required", true);
+            $("label[for='Email']").html('Email <span class="text-danger">*</span>');
+        } else {
+            $("#Email").removeAttr("required");
+            $("label[for='Email']").text('Email');
         }
-            // ==========================
-            // 🔹 Initialize Tabulator
-            // ==========================
-            // const dataTable = initializeTabulator("#employeeConfigurationTable", EmployeeConfigurationData, generateTabulatorColumns(EmployeeConfigurationData),
-            //     (data) => selectedRow = data[0] || null
-            // );
-            	const dataTable = new Tabulator("#employeeConfigurationTable", {
-	            data: EmployeeConfigurationData,
-	            columns: [
-                    { title: "Employee Code", field: "Employee_code", headerHozAlign: "center" },
-                    { title: "First Name", field: "First_name", headerHozAlign: "center" },
-                    { title: "Middle Name", field: "Middle_name", headerHozAlign: "center" },
-                    { title: "Last Name", field: "Last_name", headerHozAlign: "center" },
-                    { title: "Address", field: "Address", headerHozAlign: "center" },
-
-                    { title: "Department Name", field: "Department_name", headerHozAlign: "center" },
-                    { title: "Reporting To Name", field: "Reporting_to_name", headerHozAlign: "center" },
-
-                    // -------------------------
-                    // PHONE MERGED FIELD
-                    // -------------------------
-                    {
-                        title: "Phone",
-                        field: "PhoneFull",
-                        headerHozAlign: "center",
-                        hozAlign: "center",
-                        formatter: function (cell) {
-                            const d = cell.getRow().getData();
-                            return `${d.Country_code || ""}-${d.Contact_number || ""}`;
-                        }
-                    },
-
-                    // -------------------------
-                    // EMERGENCY PHONE MERGED FIELD
-                    // -------------------------
-                    {
-                        title: "Emergency Phone",
-                        field: "EmergencyPhoneFull",
-                        headerHozAlign: "center",
-                        hozAlign: "center",
-                        formatter: function (cell) {
-                            const d = cell.getRow().getData();
-                            return `${d.Emergency_country_code || ""}-${d.Emergency_contact_number || ""}`;
-                        }
-                    },
-
-                    { title: "Email", field: "Email", headerHozAlign: "center" },
-                    { title: "Employee Type", field: "Employee_type", headerHozAlign: "center" },
-
-                    { title: "Blood Group", field: "Blood_group", headerHozAlign: "center" },
-                    { title: "Skill Type", field: "Skill_type", headerHozAlign: "center" },
-                    { title: "Skill Level", field: "Skill_level_name", headerHozAlign: "center" },
-
-                    { title: "Certificate Type Name", field: "Certificate_type_name", headerHozAlign: "center" },
-                    { title: "Certification Date", field: "Certification_date", headerHozAlign: "center" },
-                    { title: "Expiry Date", field: "Expiry_date", headerHozAlign: "center" }
-                ],
-
-                
-
-	            layout: "fitDataStretch",
-	            height: "80vh",
-	            selectable: 1,
-	            pagination: "local",
-	            resizableRows:false,
-	            resizableRowGuide:false,
-	            resizableColumnGuide:false,
-	            columnDefaults:{
-		            resizable:false,
-	            },           
-	            movableColumns: false,
-	            paginationSize: 10,
-	            paginationSizeSelector: [5, 10, 20, 50, 100],
-	             locale: true,
-	            langs: {
-		            "en": {
-	            pagination: {
-		            first: "<<",
-		            first_title: "First",
-		            last: ">>", 
-		            last_title: "Last", 
-		            prev: "<", 
-		            prev_title: "Prev",
-		            next: ">", 
-		            next_title: "Next", 
-		            page_size: "Page Size" 
-		             }
-		            }
-	             },
-
-	            rowClick: function (e, row) {
-	              selectedRow = row.getData();
-	            }
-	            });
-
-            // Record count for filtered data
-             dataTable.on("dataFiltered", function(filters, rows) {
-                   updateRecordCount(dataTable, rows, "Employee_id");  // Pass the field name >>replace with your table primary id column
-             });
-
-             // Record count for loaded data
-             dataTable.on("dataLoaded", function(data) {
-                   updateRecordCount(dataTable, data, "Employee_id");  // Pass the field name >>replace with your table primary id column
-             });
-
-            dataTable.on("tableBuilt", function(){
-            const hideFields = [
-                    "Employee_id",
-                    "Updated_by",
-                    "Department_id",
-                    "Reporting_to_id",
-                    "Employee_type_id",
-                    "User_id",
-                    "User_group_id",
-                    "Skill_id",
-                    "Skill_level_id",
-                    "Status_id",
-                    "Is_deleted",
-                    "Created_at",
-                    "Updated_at",
-                    "Version",
-                    "Certificate_type_id",
-                    "Expiry_date",
-                     "Certification_date",
-                     "Created_by",
-                     "Status_name",
-                    "AdditionalProperties"
-            ];
-
-        hideFields.forEach(field => dataTable.hideColumn(field));
     });
 
+    // -------------------------------
+    // Date validation (Issue → Expiry)
+    // -------------------------------
+    $("#Certification_date").on("change", function () {
+        $("#Expiry_date").attr("min", $(this).val());
+    });
 
-            // Command: Live search (visible columns only) for parent table
-            document.getElementById("searchField").addEventListener("input", function () {
-                var searchTerm = this.value.toLowerCase();
+    // -------------------------------
+    // Phone input: numbers only
+    // -------------------------------
+    $("#Contact_number, #Emergency_contact_number").on("input", function () {
+        this.value = this.value.replace(/[^0-9]/g, "");
+    });
 
-                // Command: Collect visible fields
-                var visibleColumns = dataTable.getColumns()
-                                          .filter(col => col.isVisible())
-                                          .map(col => col.getField());
+    // -------------------------------
+    // Phone ≠ Emergency Phone
+    // -------------------------------
+    $("#Contact_number, #Emergency_contact_number").on("input", function () {
+        let contact = $("#Contact_number").val();
+        let emergency = $("#Emergency_contact_number").val();
 
-                // Command: Apply per-row predicate filter
-                dataTable.setFilter(function (data) {
-                    return visibleColumns.some(field => {
-                        var value = data[field];
-                        return value != null && value.toString().toLowerCase().includes(searchTerm);
-                    });
-                });
-            });
+        if (contact && emergency && contact === emergency) {
+            $("#Emergency_contact_number")[0]
+                .setCustomValidity("Phone number and Emergency number cannot be the same");
+        } else {
+            $("#Emergency_contact_number")[0].setCustomValidity("");
+        }
+    });
 
-            const addEditModalEl = document.getElementById('addEditModal');
-            const addEditModal = new bootstrap.Modal(addEditModalEl);
-            const form = document.getElementById("addEditForm");
+    // -------------------------------
+    // Email validation
+    // -------------------------------
+    $("#Email").on("input", function () {
+        let email = $(this).val().trim();
+        const pattern = /^[a-zA-Z0-9._%+-]+@@[a-zA-Z0-9.-]+\.com$/i;
 
-            // ==========================
-            // 🔹 Add Button
-            // ==========================
-            document.getElementById("add-btn").addEventListener("click", () => {
-                currentMode = "Add";
-                form.reset();
-                document.getElementById("addEditModalLabel").textContent = "Add Employee Master";
-                document.getElementById("modalSubmitBtn").textContent = "Add";
-                document.getElementById("Employee_id").value = 0;
-                addEditModal.show();
-            });
+        if (email && !pattern.test(email)) {
+            this.setCustomValidity("Please enter a valid Email address (ex: abc@gmail.com)");
+        } else {
+            this.setCustomValidity("");
+        }
+    });
 
-            // ==========================
-            // 🔹 Edit Button
-            // ==========================
-               document.getElementById("edit-btn").addEventListener("click", () => {
-        const selectedRow = dataTable.getSelectedData()?.[0];
-        if (!selectedRow) {
-            return showAppAlert({ icon: 'warning', title: 'No Selection', text: 'Please select a row to edit.' });
+    // -------------------------------
+    // Tabulator Init (unchanged)
+    // -------------------------------
+    const EmployeeConfigurationData = JSON.parse('@Html.Raw(employeeConfiguration)');
+    let currentMode = "";
+    let selectedRow = null;
+
+    const dataTable = new Tabulator("#employeeConfigurationTable", {
+        data: EmployeeConfigurationData,
+        columns: [
+            { title: "Employee Code", field: "Employee_code", headerHozAlign: "center" },
+            { title: "First Name", field: "First_name", headerHozAlign: "center" },
+            { title: "Last Name", field: "Last_name", headerHozAlign: "center" },
+            { title: "Address", field: "Address", headerHozAlign: "center" },
+            { title: "Department Name", field: "Department_name", headerHozAlign: "center" },
+            { title: "Reporting To", field: "Reporting_to_name", headerHozAlign: "center" },
+            { title: "Phone", field: "Contact_number", headerHozAlign: "center" },
+            { title: "Emergency Phone", field: "Emergency_contact_number", headerHozAlign: "center" },
+            { title: "Email", field: "Email", headerHozAlign: "center" }
+        ],
+        layout: "fitDataStretch",
+        height: "80vh",
+        selectable: 1,
+        pagination: "local",
+        paginationSize: 10,
+        rowClick: function (e, row) {
+            selectedRow = row.getData();
+        }
+    });
+
+    // -------------------------------
+    // Add Button
+    // -------------------------------
+    $("#add-btn").click(function () {
+        currentMode = "Add";
+        $("#addEditForm")[0].reset();
+        $("#addEditModalLabel").text("Add Employee Master");
+        $("#modalSubmitBtn").text("Add");
+        $("#Employee_id").val(0);
+        new bootstrap.Modal("#addEditModal").show();
+    });
+
+    // -------------------------------
+    // Edit Button
+    // -------------------------------
+    $("#edit-btn").click(function () {
+        const row = dataTable.getSelectedData()?.[0];
+
+        if (!row) {
+            return showAppAlert({ icon: "warning", title: "No Selection", text: "Select a row to edit." });
         }
 
         currentMode = "Edit";
-        document.getElementById("addEditModalLabel").textContent = "Edit Employee Master";
-        document.getElementById("modalSubmitBtn").textContent = "Update";
+        $("#addEditModalLabel").text("Edit Employee Master");
+        $("#modalSubmitBtn").text("Update");
 
-        // // Populate modal form fields dynamically
-        // Object.keys(selectedRow).forEach(field => {
-        //     const EmployeeMasterField = document.getElementById(field);
-        //     if (!EmployeeMasterField) return;
+        // Fill fields
+        Object.keys(row).forEach(f => {
+            let el = $("#" + f);
+            if (!el.length) return;
 
-        //     if (EmployeeMasterField.type === "date" && selectedRow[field]) {
-        //         const date = new Date(selectedRow[field]);
-        //         const yyyy = date.getFullYear();
-        //         const mm = String(date.getMonth() + 1).padStart(2, '0');
-        //         const dd = String(date.getDate()).padStart(2, '0');
-        //         EmployeeMasterField.value = `${yyyy}-${mm}-${dd}`;
-        //     } else {
-        //         // For text, number, email, etc.
-        //         EmployeeMasterField.value = selectedRow[field] ?? "";
-        //     }
-        // });
-
-         Object.keys(selectedRow).forEach(field => {
-         const EmployeeMasterField = document.getElementById(field);
-         if (!EmployeeMasterField) return;
-
-         if (EmployeeMasterField.tagName === "SELECT") {
-             // Bind dropdown value (works for Emergency_country_code too)
-             EmployeeMasterField.value = selectedRow[field] ?? "";
-         } else if (EmployeeMasterField.type === "date" && selectedRow[field]) {
-             const date = new Date(selectedRow[field]);
-             const yyyy = date.getFullYear();
-             const mm = String(date.getMonth() + 1).padStart(2, '0');
-             const dd = String(date.getDate()).padStart(2, '0');
-             EmployeeMasterField.value = `${yyyy}-${mm}-${dd}`;
-         } else {
-             // Text, number, email, etc. (works for Emergency_contact_number)
-             EmployeeMasterField.value = selectedRow[field] ?? "";
-         }
-    });
-
-        addEditModal.show();
-    });
-
-
-            // ==========================
-            // 🔹 Delete Button
-            // ==========================
-
-            document.getElementById("delete-btn").addEventListener("click", async () => {
-                const selectedRow = dataTable.getSelectedData()?.[0];
-                if (!selectedRow) {
-                    return showAppAlert({ icon: "warning", title: "No Selection", text: "Please select a row to delete." });
-                }
-
-                const employeeid = selectedRow.Employee_id;
-
-                const confirm = await showAppAlert({
-                    type: "confirm",
-                    icon: "question",
-                    title: "Delete Confirmation",
-                    text: "Are you sure you want to delete this record?"
-                });
-
-                if (!confirm.isConfirmed) return;
-
-                const success = await deleteRecord("/EmployeeConfiguration/Delete", { Employee_id: employeeid }); // method defaults to PUT
-                if (success) {
-                    // redirect or refresh your table
-                    setTimeout(() => { window.location.href = "/EmployeeConfiguration/Index"; }, 900);
-                    // or: dataTable.replaceData();
-                }
-            });
-
-            // ==========================
-            // 🔹 Form Submit (Add/Edit)
-            // ==========================
-            form.addEventListener("submit", async (e) => {
-                e.preventDefault();
-                const formData = Object.fromEntries(new FormData(form).entries());
-
-                const fetchUrl = currentMode === "Add" ? "/EmployeeConfiguration/Create" : "/EmployeeConfiguration/Update";
-
-                const success = await saveRecord(fetchUrl, formData, currentMode, addEditModal, form);
-                if (success) {
-                    setTimeout(() => {
-                        window.location.href = "/EmployeeConfiguration/Index";
-                    }, 900);
-                }
-            });
-
-            // ==========================
-            // 🔹 Download 
-            // ==========================
-            document.getElementById("download-btn").addEventListener("click", function () {
-                 let rowCount = dataTable.getDataCount ? dataTable.getDataCount() : dataTable.getData().length;
-
-                 if (rowCount === 1) {
-                     let firstRowData = dataTable.getData()[0];
-                     let firstRowFieldValue = firstRowData ? firstRowData["Employee_id"] : null;
-                     if (firstRowFieldValue === null || firstRowFieldValue === 0 || firstRowFieldValue === "") {
-                         rowCount = 0;
-                     }
-                 }
-                 if (rowCount === 0) {
-                     showAppAlert({
-                         icon: 'warning',
-                         title: 'No Data',
-                         text: 'No records found to download.'
-                     });
-                     return; // Stop further execution
-                 }
-                downloadCsv(dataTable, "EmployeeConfiguration.csv");
-            });
-
-            // ==========================
-            // 🔹 Download Template
-            // ==========================
-            document.getElementById("download-template-btn").addEventListener("click", () =>
-                    downloadCsvTemplate(dataTable, "EmployeeConfigurationTemplate")
-            );
-
-            // ==========================
-            // 🔹 Upload Excel
-            // ==========================
-            document.getElementById("upload-btn").addEventListener("click", () =>
-                document.getElementById("upload-file").click()
-            );
-
-            document.getElementById("upload-file").addEventListener("change", function (event) {
-            const fileInput = event.target;
-            if (!fileInput.files || fileInput.files.length === 0) {
-                    alert("Validation");
-                return showAppAlert({ icon: 'warning', title: 'No File', text: 'Please select a file to upload.' });
+            if (el.attr("type") === "date" && row[f]) {
+                let d = new Date(row[f]);
+                el.val(d.toISOString().split("T")[0]);
+            } else {
+                el.val(row[f]);
             }
-            const file = fileInput.files[0];
-
-            // Client-side CSV guards
-            const extOk = /\.csv$/i.test(file.name);
-            const type = (file.type || '').toLowerCase();
-            const typeOk = type.includes('csv') || type === 'application/vnd.ms-excel'; // some browsers
-            if (!extOk && !typeOk) {
-                alert("Validation");
-                showAppAlert({ icon: 'warning', title: 'Invalid File', text: 'Please select a .csv file.' });
-                fileInput.value = ''; // Clear the file input
-                return;
-            }
-
-            const url = '/EmployeeConfiguration/Upload';  // Ensure this matches the controller route
-            uploadFile(url, file);
         });
 
-        // Call this function after submitting the form
-        async function uploadFile(url, file) {
-            const formData = new FormData();
-            formData.append("file", file);
+        new bootstrap.Modal("#addEditModal").show();
+    });
 
-            // Get the CSRF token from the page
-            const csrfToken = document.querySelector('input[name="__RequestVerificationToken"]').value;
+    // -------------------------------
+    // Form Submit (Add / Update)
+    // -------------------------------
+    $("#addEditForm").on("submit", async function (e) {
+        e.preventDefault();
 
-            try {
-                const response = await fetch(url, {
-                    method: 'POST',
-                    headers: {
-                        'RequestVerificationToken': csrfToken // Add CSRF token in the header
-                    },
-                    body: formData  // Attach the file to FormData
-                });
+        let formData = Object.fromEntries(new FormData(this).entries());
+        formData.app_user = $("#IsAppUser").is(":checked");
 
-               await handleUploadResponse(response);  // Handle response
+        // Format phone numbers
+        formData.Contact_number = `${formData.Country_code}-${formData.Contact_number}`;
+        formData.Emergency_contact_number = `${formData.Emergency_country_code}-${formData.Emergency_contact_number}`;
+        formData.certificate_name = $("#Certificate_type_id option:selected").text();
 
-               console.log(response);
+        const url = currentMode === "Add"
+            ? "/EmployeeConfiguration/Create"
+            : "/EmployeeConfiguration/Update";
 
-            } catch (error) {
-                showAppAlert('An error occurred while uploading the file.');
-            }
-        }
+        const success = await saveRecord(url, formData, currentMode,
+            bootstrap.Modal.getInstance("#addEditModal"), this);
 
-           async function handleUploadResponse(response) {
-            if (response.ok) {
-                const result = await response.json();
-                c({ icon: 'success', title: result.title, text: result.message });
-
-                // If invalid records exist, trigger the download of the CSV file
-                if (result.invalidRecords) {
-                    const invalidRecordsFileData = result.invalidRecords;
-                    downloadInvalidRecords(invalidRecordsFileData); // Trigger the download
-                }
-            } else {
-                const error = await response.json();
-                showAppAlert({ icon: 'error', title: error.title, text: error.message });
-            }
-        }
-
-            async function handleUploadResponse(response) {
-              if (response.ok) {
-                const result = await response.json();
-                showAppAlert({ icon: 'success', title: result.title, text: result.message });
-                    setTimeout(() => { window.location.href = "/EmployeeConfiguration/Index"; }, 1500);
-                if (result.invalidRecords) downloadInvalidRecords(result.invalidRecords);
-
-                if (result.status === "success") {
-                  setTimeout(() => { window.location.href = "/EmployeeConfiguration/Index"; }, 900);
-                }
-              } else {
-                let title = "Upload Failed", text = "An unexpected error occurred.";
-                try {
-                  const err = await response.json();
-                  title = err.title || title;
-                  text = err.message || text;
-                  if (err.status === "error") {
-                        setTimeout(() => { window.location.href = "/EmployeeConfiguration/Index"; }, 1500);
-                  }
-                } catch (_) { /* ignore JSON parse errors */ }
-                showAppAlert({ icon: 'error', title, text });
-                setTimeout(() => { window.location.href = "/EmployeeConfiguration/Index"; }, 1500);
-              }
-                  setTimeout(() => { window.location.href = "/EmployeeConfiguration/Index"; }, 1500);
-            }
-
-        function downloadInvalidRecords(fileData) {
-            // Decode the base64 CSV data and create a Blob
-            const csvData = atob(fileData); // Decode base64 string to CSV
-            const blob = new Blob([csvData], { type: 'text/csv' });  // Create a Blob of CSV data
-            const link = document.createElement('a');
-            link.href = URL.createObjectURL(blob);  // Create a URL for the Blob
-            link.download = 'invalid_records.csv';  // Set the file name
-            link.click();  // Trigger the download
+        if (success) {
+            setTimeout(() => location.reload(), 800);
         }
     });
-</script>
 
+    // -------------------------------
+    // Delete Button
+    // -------------------------------
+    $("#delete-btn").click(async function () {
+        const row = dataTable.getSelectedData()?.[0];
+
+        if (!row) {
+            return showAppAlert({ icon: "warning", title: "No Selection", text: "Select a row to delete." });
+        }
+
+        const confirmDelete = await showAppAlert({
+            type: "confirm",
+            icon: "question",
+            title: "Delete?",
+            text: "Are you sure you want to delete this record?"
+        });
+
+        if (!confirmDelete.isConfirmed) return;
+
+        const success = await deleteRecord("/EmployeeConfiguration/Delete", {
+            Employee_id: row.Employee_id
+        });
+
+        if (success) location.reload();
+    });
+
+});
+</script>

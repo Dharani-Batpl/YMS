@@ -122,10 +122,32 @@ namespace YardManagementApplication
         {
             try
             {
+
+                //model.Contact_number= model.Country_code + "-"+ model.Contact_number;
+                //model.Emergency_contact_number= model.Emergency_country_code + "-"+ model.Emergency_contact_number;
                 model.Created_by = HttpContext.Session.GetString("LoginUser");
+                var test = model;
+
+                
 
                 // Inserting the new employee record using the API
                 var result = await _apiClient.InsertEmployeeAsync(model);
+
+                if (model.App_user == true)
+                {
+                    var userModel = new AppUserInsertModel
+                    {
+                        User_name = model.Employee_code, 
+                        Email = model.Email,
+                        Password = "test@123",
+                        Is_deleted = false,
+                        Created_by = HttpContext.Session.GetString("LoginUser"),
+                        Created_at = DateTimeOffset.Now
+                    };
+
+
+                    await _apiClient.InsertAppUserAsync(userModel);
+                }
 
                 // Returning a success response with status and message
                 return Ok(new

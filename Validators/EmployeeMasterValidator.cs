@@ -45,10 +45,10 @@ namespace YardManagementApplication.Validators
                 .NotEmpty().WithMessage("Employee Type is mandatory")
                 .MaximumLength(30).WithMessage("Employee Type cannot exceed 30 characters")
                 .Matches(@"^[A-Za-z0-9 ]+$").WithMessage("Employee Type can contain only letters (A–Z, a–z) and digits (0–9).");
-            RuleFor(x => x.Certificate_type_name)
-            .NotEmpty().WithMessage("Certificate Type is mandatory")
-            .MaximumLength(100).WithMessage("Certificate Type cannot exceed 100 characters")
-            .Matches(@"^[A-Za-z0-9 ]+$").WithMessage("Certificate Type can contain only letters (A–Z, a–z), digits (0–9) and spaces.");
+            //RuleFor(x => x.Certificate_type_name)
+            //.NotEmpty().WithMessage("Certificate Type is mandatory")
+            //.MaximumLength(100).WithMessage("Certificate Type cannot exceed 100 characters")
+            //.Matches(@"^[A-Za-z0-9 ]+$").WithMessage("Certificate Type can contain only letters (A–Z, a–z), digits (0–9) and spaces.");
 
 
             //RuleFor(x => x.User_name)
