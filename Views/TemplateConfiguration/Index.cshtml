@@ -37,7 +37,7 @@
         <div class="col-12 col-md d-flex justify-content-md-end align-items-center gap-2 flex-wrap">
 
              <!-- Search input -->
-            <input type="search" id="searchField" class="form-control form-control-sm" placeholder="Search..." style="max-width: 280px; min-width: 150px;" />
+            <input type="search" id="searchField" class="form-control form-control-sm" placeholder="Search..." style="max-width: 280px; min-width: 150px;"autocomplete="off" />
 
             <!-- Action buttons group -->
             <div class="btn-group flex-wrap">
@@ -192,8 +192,8 @@ $(document).ready(function () {
                 headerHozAlign: "center"
             },
             {
-                title: "Shift Name",
-                field: "Shift_name",
+                title: "Assigned Shift(s)",
+                field: "Assigned_shifts",
                 minWidth: 180,
                 headerHozAlign: "center"
             },
@@ -219,7 +219,14 @@ $(document).ready(function () {
                 field: "Created_by",
                 headerHozAlign: "center",
                 minWidth: 150
-            }
+            },
+
+            { title: "Shift1", field: "Assigned_shift1", visible: false },
+            { title: "Shift2", field: "Assigned_shift2", visible: false },
+            { title: "Shift3", field: "Assigned_shift3", visible: false },
+            { title: "Shift4", field: "Assigned_shift4", visible: false },
+            { title: "Shift5", field: "Assigned_shift5", visible: false }
+
         ],
 
         layout: "fitColumns",
@@ -261,10 +268,14 @@ $(document).ready(function () {
     // ================================================================
     //  Search functionality
     // ================================================================
-    $("#searchField").on("input", function () {
+     $("#searchField").on("input", function () {
 
         const q = $(this).val().toLowerCase();
-        const visibleCols = templateTable.getColumns().map(c => c.getField());
+
+        const visibleCols = templateTable
+            .getColumns()
+            .map(c => c.getField())
+            .filter(f => f && f !== "Is_deleted");   
 
         templateTable.setFilter(d =>
             visibleCols.some(f =>
@@ -363,7 +374,15 @@ $(document).ready(function () {
         $("#Template_id").val(sel.Template_id || "");
         $("#Template_name").val(sel.Template_name || "");
         $("#Description").val(sel.Template_description || "");
-        $("#Shift_id").val(sel.Shift_id || "");
+        let assigned = [
+        sel.Assigned_shift1,
+        sel.Assigned_shift2,
+        sel.Assigned_shift3,
+        sel.Assigned_shift4,
+        sel.Assigned_shift5
+    ].filter(x => x !== null && x !== undefined && x !== 0);
+    console.log("Assigned shifts array:", assigned);
+    $("#Shift_id").val(assigned).trigger("change");
 
         $("#Status_id").prop("disabled", false);
 
@@ -419,13 +438,27 @@ $(document).ready(function () {
 
         const formData = Object.fromEntries(new FormData(this).entries());
 
+        let shiftList = $("#Shift_id").val() || [];
+
+         shiftList = shiftList.map(Number);
+
+         const assignedShifts = {
+            assigned_shift1: shiftList[0] || null,
+            assigned_shift2: shiftList[1] || null,
+            assigned_shift3: shiftList[2] || null,
+            assigned_shift4: shiftList[3] || null,
+            assigned_shift5: shiftList[4] || null
+        };
+
         const payload = {
             template_id: currentMode === "Edit" ? Number(formData.Template_id) : 0,
-            template_name: formData.Template_name,
-            template_description: formData.Description || "",
-            shift_id: Number(formData.Shift_id),
-            effective_from: formData.Effective_from,
-            is_deleted: false
+        template_name: formData.Template_name,
+        template_description: formData.Description || "",
+        effective_from: formData.Effective_from,
+        is_deleted: currentMode === "Edit" ? $("#Status_id").val() === "1" : false,
+
+        
+        ...assignedShifts
         };
 
         if (currentMode === "Edit") {
@@ -446,28 +479,48 @@ $(document).ready(function () {
     // ================================================================
     //  Download CSV
     // ================================================================
-    $("#download-btn").on("click", function () {
+   $("#download-btn").on("click", function () {
 
-        let rowCount = templateTable.getDataCount
-            ? templateTable.getDataCount()
-            : templateTable.getData().length;
+    let rows = templateTable.getData();
 
-        if (rowCount === 1) {
-            const firstRow = templateTable.getData()[0];
-            if (!firstRow["Template_id"]) rowCount = 0;
-        }
+    if (!rows || rows.length === 0) {
+        showAppAlert({
+            icon: 'warning',
+            title: 'No Data',
+            text: 'No records found to download.'
+        });
+        return;
+    }
 
-        if (rowCount === 0) {
-            showAppAlert({
-                icon: 'warning',
-                title: 'No Data',
-                text: 'No records found to download.'
-            });
-            return;
-        }
+    // 🔥 Create clean export copy
+    let exportRows = rows.map(r => ({
+        "Template Name": r.Template_name,
+        "Assigned Shift(s)": r.Assigned_shifts,
+        "Status": r.Is_deleted ? "Inactive" : "Active",
+        "Effective From": r.Effective_from,
+        "Created By": r.Created_by
+    }));
 
-        downloadCsv(templateTable, "TemplateMaster.csv");
-    });
+    // 🔥 Convert object → CSV
+    let headers = Object.keys(exportRows[0]);
+
+    let csv = [
+        headers.join(","),
+        ...exportRows.map(r => headers.map(h => `"${r[h] || ""}"`).join(","))
+    ].join("\n");
+
+    // 🔥 Download
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "TemplateMaster.csv";
+    a.click();
+
+    URL.revokeObjectURL(url);
+});
+
 
 
     // ================================================================
@@ -487,11 +540,15 @@ $("#download-template-btn").on("click", function () {
     const headers = [
         "Template Name",
         "Template Description",
-        "Shift Name",
+        "Shift Name 1",
+        "Shift Name 2",
+        "Shift Name 3",
+        "Shift Name 4",
+        "Shift Name 5",
         "Effective from"
     ];
 
-    downloadTemplate(headers, "TemplateMaster");
+    downloadTemplate(headers, "TemplateConfigurationMasterTemplate");
 });
 
 
@@ -634,5 +691,20 @@ async function handleUploadResponse(response) {
          dropdownParent: $("#addEditModal") 
     });
 
+    $("#Shift_id").on("select2:select", function (e) {
+    let selected = $(this).select2("data");
 
+    if (selected.length > 5) {
+        // Remove the extra selected item
+        $(this).find(`option[value='${e.params.data.id}']`).prop("selected", false);
+        $(this).trigger("change");
+
+        // Show error alert
+        showAppAlert({
+            icon: "warning",
+            title: "Maximum Limit Reached",
+            text: "You can select only up to 5 shifts."
+        });
+    }
+});
 </script>

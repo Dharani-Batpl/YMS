@@ -3,9 +3,19 @@
     public class TemplateModel
     {
         public long? template_id { get; set; }
-        public long? shift_id { get; set; }
+        public long? assigned_shift1 { get; set; }
+        public long? assigned_shift2 { get; set; }
+        public long? assigned_shift3 { get; set; }
+        public long? assigned_shift4 { get; set; }
+        public long? assigned_shift5 { get; set; }
         public string template_name { get; set; }
         public string? template_description { get; set; }
+
+        public string? assignedd_shift1_name { get; set; }
+        public string? assignedd_shift2_name { get; set; }
+        public string? assignedd_shift3_name { get; set; }
+        public string? assignedd_shift4_name { get; set; }
+        public string? assignedd_shift5_name { get; set; }
         public bool? is_deleted { get; set; }
         public string? created_by { get; set; }
         public DateTimeOffset? created_at { get; set; }
@@ -27,7 +37,11 @@
     public class TemplateUpdateModel
     {
         public long template_id { get; set; }
-        public long shift_id { get; set; }
+        public long? assigned_shift1 { get; set; }
+        public long? assigned_shift2 { get; set; }
+        public long? assigned_shift3 { get; set; }
+        public long? assigned_shift4 { get; set; }
+        public long? assigned_shift5 { get; set; }
         public string template_name { get; set; }
         public string updated_by { get; set; }
         public string? template_description { get; set; }

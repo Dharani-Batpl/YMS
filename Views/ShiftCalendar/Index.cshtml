@@ -574,7 +574,7 @@ $(document).on("click", ".freq-btn", function () {
 });
 
 // -----------------------------------------------
-// VIEW SHIFT DETAILS
+// VIEW SHIFT DETAILS  (Fix to show all 5 shifts)
 // -----------------------------------------------
 $("#showShiftDetailsBtn").click(function () {
 
@@ -598,40 +598,56 @@ $("#showShiftDetailsBtn").click(function () {
         return;
     }
 
-    const shiftId = template.shift_id;
-    const shift = allShiftData.find(s => s.shift_id == shiftId);
+    // FIXED: Correct syntax
+    const shiftIds = [
+        template.assigned_shift1,
+        template.assigned_shift2,
+        template.assigned_shift3,
+        template.assigned_shift4,
+        template.assigned_shift5
+    ].filter(x => x != null);
 
-    if (!shift) {
+    const shifts = allShiftData.filter(s => shiftIds.includes(s.shift_id));
+
+    if (shifts.length === 0) {
         $("#shiftDetailsContent").html("<p class='text-muted'>No shift details found.</p>");
         return;
     }
 
-    let html = `
-        <div class="mb-3 p-2 border rounded">
-            <div><strong>Shift:</strong> ${shift.shift_name}</div>
-            <div><strong>Start Time:</strong> ${shift.start_time}</div>
-            <div><strong>End Time:</strong> ${shift.end_time}</div>
-    `;
+    let html = "";
+    shifts.forEach((shift, index) => {
 
-    if (shift.break_details) {
-        try {
-            const breaks = JSON.parse(shift.break_details);
-            if (breaks.length > 0) {
-                html += `<div class="mt-2"><strong>Breaks:</strong></div>`;
-                breaks.forEach((b, i) => {
-                    let index = i + 1;
-                    html += `
-                        <div class="ms-3">
-                            • Break ${index}: ${b[`Break${index}In`]} - ${b[`Break${index}Out`]} (${b[`Break${index}Description`]})
-                        </div>`;
-                });
-            }
-        } catch {}
-    }
+        html += `
+            <div class="mb-3 p-2 border rounded">
+                <h6 class="fw-bold">Shift ${index + 1}: ${shift.shift_name}</h6>
+                <div><strong>Start Time:</strong> ${shift.start_time}</div>
+                <div><strong>End Time:</strong> ${shift.end_time}</div>
+        `;
 
-    html += `</div>`;
+        if (shift.break_details) {
+            try {
+                const breaks = JSON.parse(shift.break_details);
+                if (breaks.length > 0) {
+                    html += `<div class="mt-2"><strong>Breaks:</strong></div>`;
+
+                    breaks.forEach((b, i) => {
+                        let num = i + 1;
+                        html += `
+                            <div class="ms-3">
+                               • Break ${num}: ${b[`Break${num}In`]} – ${b[`Break${num}Out`]}
+                                 (${b[`Break${num}Description`]})
+                            </div>`;
+                    });
+                }
+            } catch {}
+        }
+
+        html += `</div>`;
+    });
+
     $("#shiftDetailsContent").html(html);
 });
+
 
 // ------------------------------------------------------------
 // SAVE SHIFT  (Assign Shift → Save button)

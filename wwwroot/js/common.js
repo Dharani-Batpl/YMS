@@ -324,10 +324,18 @@ async function saveRecord(fetchUrl, formData, currentMode, addEditModal, formEl)
         const result = await response.json();
         console.log(result);
 
+        resultMsg = result.message;
+        let cleanMessage = resultMsg;
+        if (cleanMessage && cleanMessage.includes("Error:")) {
+            cleanMessage = cleanMessage.split("Error:")[1].trim();
+        }
+
+        
+
         // ✅ Show icon and text only
         showToast({
             icon: result.title.toLowerCase(), // e.g., 'success', 'error', 'info'
-            text: result.message
+            text: cleanMessage
         });
 
         if (response.ok) {

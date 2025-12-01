@@ -100,9 +100,9 @@
         public string? Email { get; set; }          
         public bool Is_deleted { get; set; }         
         public string Created_by { get; set; } = null!; 
-        public DateTimeOffset Created_at { get; set; } 
+        public DateTime Created_at { get; set; } 
         public string? Updated_by { get; set; }      
-        public DateTimeOffset? Updated_at { get; set; } 
+        public DateTime? Updated_at { get; set; } 
     }
 
 

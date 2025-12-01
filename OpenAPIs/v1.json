@@ -15669,9 +15669,49 @@
             "format": "int64",
             "nullable": true
           },
-          "shift_id": {
+          "assigned_shift1": {
             "type": "integer",
             "format": "int64",
+            "nullable": true
+          },
+          "assigned_shift2": {
+            "type": "integer",
+            "format": "int64",
+            "nullable": true
+          },
+          "assigned_shift3": {
+            "type": "integer",
+            "format": "int64",
+            "nullable": true
+          },
+          "assigned_shift4": {
+            "type": "integer",
+            "format": "int64",
+            "nullable": true
+          },
+          "assigned_shift5": {
+            "type": "integer",
+            "format": "int64",
+            "nullable": true
+          },
+          "assignedd_shift1_name": {
+            "type": "string",
+            "nullable": true
+          },
+          "assignedd_shift2_name": {
+            "type": "string",
+            "nullable": true
+          },
+          "assignedd_shift3_name": {
+            "type": "string",
+            "nullable": true
+          },
+          "assignedd_shift4_name": {
+            "type": "string",
+            "nullable": true
+          },
+          "assignedd_shift5_name": {
+            "type": "string",
             "nullable": true
           },
           "template_name": {
@@ -15717,7 +15757,7 @@
       "TemplateResponseModel": {
         "type": "object",
         "properties": {
-          "shift_name": {
+          "assigned_shifts": {
             "type": "string",
             "nullable": true
           },
@@ -15726,9 +15766,49 @@
             "format": "int64",
             "nullable": true
           },
-          "shift_id": {
+          "assigned_shift1": {
             "type": "integer",
             "format": "int64",
+            "nullable": true
+          },
+          "assigned_shift2": {
+            "type": "integer",
+            "format": "int64",
+            "nullable": true
+          },
+          "assigned_shift3": {
+            "type": "integer",
+            "format": "int64",
+            "nullable": true
+          },
+          "assigned_shift4": {
+            "type": "integer",
+            "format": "int64",
+            "nullable": true
+          },
+          "assigned_shift5": {
+            "type": "integer",
+            "format": "int64",
+            "nullable": true
+          },
+          "assignedd_shift1_name": {
+            "type": "string",
+            "nullable": true
+          },
+          "assignedd_shift2_name": {
+            "type": "string",
+            "nullable": true
+          },
+          "assignedd_shift3_name": {
+            "type": "string",
+            "nullable": true
+          },
+          "assignedd_shift4_name": {
+            "type": "string",
+            "nullable": true
+          },
+          "assignedd_shift5_name": {
+            "type": "string",
             "nullable": true
           },
           "template_name": {
@@ -15764,6 +15844,10 @@
             "type": "string",
             "format": "date-time",
             "nullable": true
+          },
+          "shift_name": {
+            "type": "string",
+            "nullable": true
           }
         }
       },
@@ -15774,7 +15858,27 @@
             "type": "integer",
             "format": "int64"
           },
-          "shift_id": {
+          "assigned_shift1": {
+            "type": "integer",
+            "format": "int64",
+            "nullable": true
+          },
+          "assigned_shift2": {
+            "type": "integer",
+            "format": "int64",
+            "nullable": true
+          },
+          "assigned_shift3": {
+            "type": "integer",
+            "format": "int64",
+            "nullable": true
+          },
+          "assigned_shift4": {
+            "type": "integer",
+            "format": "int64",
+            "nullable": true
+          },
+          "assigned_shift5": {
             "type": "integer",
             "format": "int64",
             "nullable": true

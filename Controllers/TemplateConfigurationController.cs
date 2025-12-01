@@ -218,7 +218,11 @@ namespace YardManagementApplication
                     Template_id = model.Template_id,
                     Template_name = model.Template_name,
                     Template_description = model.Template_description,
-                    Shift_id = model.Shift_id,
+                    Assigned_shift1 = model.Assigned_shift1,
+                    Assigned_shift2 = model.Assigned_shift2,
+                    Assigned_shift3 = model.Assigned_shift3,
+                    Assigned_shift4 = model.Assigned_shift4,
+                    Assigned_shift5 = model.Assigned_shift5,
                     Effective_from = model.Effective_from,
                     Is_deleted = model.Is_deleted
                 };
@@ -360,7 +364,26 @@ namespace YardManagementApplication
                         {
                             case "templatename": mapped["template_name"] = kv.Value; break;
                             case "templatedescription": mapped["template_description"] = kv.Value; break;
-                            case "shiftname": mapped["shift_name"] = kv.Value; break;
+                            case "shiftname1":
+                                 mapped["assigned_shift1_name"] = string.IsNullOrWhiteSpace(kv.Value) ? null : kv.Value;
+                                break;
+
+                            case "shiftname2":
+                                mapped["assigned_shift2_name"] = string.IsNullOrWhiteSpace(kv.Value) ? null : kv.Value;
+                                break;
+
+                            case "shiftname3":
+                                mapped["assigned_shift3_name"] = string.IsNullOrWhiteSpace(kv.Value) ? null : kv.Value;
+                                break;
+
+                            case "shiftname4":
+                                mapped["assigned_shift4_name"] = string.IsNullOrWhiteSpace(kv.Value) ? null : kv.Value;
+                                break;
+
+                            case "shiftname5":
+                                mapped["assigned_shift5_name"] = string.IsNullOrWhiteSpace(kv.Value) ? null : kv.Value;
+                                break;
+
                             case "effectivefrom": mapped["effective_from"] = kv.Value; break;
                         }
                     }
@@ -369,7 +392,12 @@ namespace YardManagementApplication
                     {
                         Template_name = mapped.GetValueOrDefault("template_name"),
                         Template_description = mapped.GetValueOrDefault("template_description"),
-                        Shift_name = mapped.GetValueOrDefault("shift_name"),
+                        Assignedd_shift1_name = mapped.GetValueOrDefault("assigned_shift1_name"),
+                        Assignedd_shift2_name = mapped.GetValueOrDefault("assigned_shift2_name"),
+                        Assignedd_shift3_name = mapped.GetValueOrDefault("assigned_shift3_name"),
+                        Assignedd_shift4_name = mapped.GetValueOrDefault("assigned_shift4_name"),
+                        Assignedd_shift5_name = mapped.GetValueOrDefault("assigned_shift5_name"),
+                        Created_by=currentUser,
                         Is_deleted = false,
                         Updated_by = currentUser
                     };

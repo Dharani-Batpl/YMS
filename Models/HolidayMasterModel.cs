@@ -15,9 +15,9 @@
       
         public bool Is_deleted { get; set; }            //  Logical delete flag 
         public string? Created_by { get; set; }          //  User who created this record
-        public DateTimeOffset? Created_at { get; set; }  //  Timestamp of creation        
+        public DateTime? Created_at { get; set; }  //  Timestamp of creation        
         public string? Updated_by { get; set; }         //  User who last updated this record 
-        public DateTimeOffset? Updated_at { get; set; } //  Timestamp of last update
+        public DateTime? Updated_at { get; set; } //  Timestamp of last update
         public int? Version { get; set; }                //  Record version for concurrency control
     }
 
@@ -36,7 +36,7 @@
        
         public bool? Is_deleted { get; set; }               //  Optional delete flag for update
         public string? Updated_by { get; set; }             //  Optional user performing the update
-        public DateTimeOffset? Updated_at { get; set; }     //  Optional timestamp of update
+        public DateTime? Updated_at { get; set; }     //  Optional timestamp of update
     }
 
     // =====================================================
@@ -48,7 +48,7 @@
         public long Holiday_id { get; set; }                //  Unique identifier for the holiday
         public bool Is_deleted { get; set; }                //  Delete flag
         public string? Updated_by { get; set; }             //  Optional user performing deletion
-        public DateTimeOffset? Updated_at { get; set; }     //  Timestamp of deletion
+        public DateTime? Updated_at { get; set; }     //  Timestamp of deletion
     }
 
 }

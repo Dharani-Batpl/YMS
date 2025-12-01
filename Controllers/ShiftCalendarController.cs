@@ -92,7 +92,11 @@ namespace YardManagementApplication
                         {
                             Template_id = t.Template_id,
                             Template_name = t.Template_name,
-                            Shift_id = t.Shift_id,
+                            Assigned_shift1= t.Assigned_shift1,
+                            Assigned_shift2= t.Assigned_shift2,
+                            Assigned_shift3= t.Assigned_shift3,
+                            Assigned_shift4= t.Assigned_shift4,
+                            Assigned_shift5= t.Assigned_shift5,
                             Template_description = t.Template_description,
                             Is_deleted = t.Is_deleted
                         })

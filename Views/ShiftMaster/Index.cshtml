@@ -4,7 +4,12 @@
     Layout = "_Layout";
 }
 
-<head></head>
+<head>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+
+
+</head>
 
 <style>
     .main-container {
@@ -29,7 +34,7 @@
         <div class="col-12 col-md d-flex justify-content-md-end align-items-center gap-2 flex-wrap">
 
              <!-- Search input -->
-             <input type="search" id="searchField" class="form-control form-control-sm" placeholder="Search..." style="max-width: 280px; min-width: 150px;" />
+             <input type="search" id="searchField" class="form-control form-control-sm" placeholder="Search..." style="max-width: 280px; min-width: 150px;" autocomplete="off"/>
 
              <!-- Action buttons group -->
             <div class="btn-group flex-wrap">
@@ -114,13 +119,13 @@
                          <!-- Start time -->
                         <div>
                             <label class="form-label">From Time <span class="text-danger">*</span></label>
-                            <input type="time" class="form-control" id="start_time" name="start_time" required>
+                           <input type="text" class="form-control" id="start_time" name="start_time" required>
                         </div>
 
                          <!-- End time -->
                         <div>
                             <label class="form-label">To Time <span class="text-danger">*</span></label>
-                            <input type="time" class="form-control" id="end_time" name="end_time" required>
+                            <input type="text" class="form-control" id="end_time" name="end_time" required>
                         </div>
 
                          <!-- Add Break -->
@@ -169,6 +174,12 @@ $(document).ready(function () {
     function isBlankOrSpaces(v) {
         return !v || $.trim(v).length === 0;
     }
+        // Fix for Flatpickr showing old value on first click
+    $(document).on("input", "#start_time, #end_time, .break-time", function () {
+        if (this._flatpickr) {
+            this._flatpickr.setDate(this.value, false);
+        }
+    });
 
     // ================================================================
     //  Normalize and validate input fields
@@ -191,7 +202,41 @@ $(document).ready(function () {
 
         return true;
     }
-    
+    // ================================================================
+    //  Time pickers
+    // ================================================================
+    flatpickr("#start_time", {
+    enableTime: true,
+    noCalendar: true,
+    dateFormat: "H:i",
+        time_24hr: true,
+        minuteIncrement: 1,
+        allowInput: true,
+         clickOpens: true  
+    });
+
+    flatpickr("#end_time", {
+        enableTime: true,
+        noCalendar: true,
+        dateFormat: "H:i",
+        time_24hr: true,
+        minuteIncrement: 1,
+        allowInput: true,
+         clickOpens: true  
+    });
+
+    function initializeBreakPickers() {
+    flatpickr(".break-time", {
+        enableTime: true,
+        noCalendar: true,
+        dateFormat: "H:i",
+        time_24hr: true,
+        minuteIncrement: 1,
+        allowInput: true,
+         clickOpens: true  
+    });
+}
+
     // ================================================================
     //  Form input auto-validation
     // ================================================================
@@ -218,6 +263,20 @@ $(document).ready(function () {
         });
         return ok;
     };
+    function formatTimeToAMPM(timeStr) {
+    if (!timeStr) return "";
+
+    // Expected: "HH:mm:ss"
+    const [h, m] = timeStr.split(":");
+
+    let hour = parseInt(h);
+    const minute = m;
+    const ampm = hour >= 12 ? "PM" : "AM";
+
+    hour = (hour % 12) || 12; // convert 0 → 12
+
+    return `${hour}:${minute} ${ampm}`;
+}
 
     // ================================================================
     //  Init tooltip + load initial data
@@ -225,9 +284,11 @@ $(document).ready(function () {
     initTooltips();
 
     const shiftMasterData = @Html.Raw(shiftMasterData);
+   
     let selectedRow = null;
     let currentMode = "";
 
+  
 
     // ================================================================
     //  Tabulator table setup
@@ -237,8 +298,19 @@ $(document).ready(function () {
         columns: [
             { title: "Shift Name", field: "Shift_name",headerHozAlign: "center" },
             { title: "Shift Description", field: "Shift_description", headerHozAlign: "center" },
-            { title: "Start Time", field: "Start_time",headerHozAlign: "center"},
-            { title: "End Time", field: "End_time", headerHozAlign: "center" },
+            {
+            title: "Start Time",
+            field: "Start_time",
+            headerHozAlign: "center"
+           
+        },
+
+        {
+            title: "End Time",
+            field: "End_time",
+            headerHozAlign: "center"
+        },
+        
             { title: "Created By", field: "Created_by", headerHozAlign: "center"},
         ],
         layout: "fitColumns",
@@ -284,21 +356,56 @@ $(document).ready(function () {
     // ================================================================
     //  Search functionality
     // ================================================================
-     $("#searchField").on("keyup", function () {
-        const value = $(this).val().toLowerCase();
+ // improved search: matches name, description, created_by and times (partial tolerant)
+$("#searchField").on("input", function () {
+    const raw = $(this).val() ?? "";
+    const q = raw.toString().trim().toLowerCase();
 
-        if (value === "") {
-            dataTable.clearFilter();
-            return;
+    if (q === "") {
+        dataTable.clearFilter();
+        return;
+    }
+
+    // normalize query for time matching (remove colons so "12" matches "12:09:00" and "1209")
+    const qNoColons = q.replace(/:/g, "");
+
+    dataTable.setFilter(function (row) {
+        // pick the fields you want to search
+        const name = row.Shift_name ?? "";
+        const desc = row.Shift_description ?? "";
+        const createdBy = row.Created_by ?? "";
+        const start = row.Start_time ?? "";
+        const end = row.End_time ?? "";
+
+        // build an array of searchable strings (lowercased)
+        const parts = [
+            String(name).toLowerCase(),
+            String(desc).toLowerCase(),
+            String(createdBy).toLowerCase()
+        ];
+
+        // prepare multiple time representations for forgiving matching
+        function timeVariants(t) {
+            if (!t) return [];
+            const s = String(t);             // e.g. "12:09:00" or "22:15:00"
+            const noSecs = s.length >= 5 ? s.substring(0,5) : s;   // "12:09"
+            const noColons = s.replace(/:/g, "");                 // "120900"
+            const hourOnly = s.split(":")[0] || s;                // "12"
+            return [s.toLowerCase(), noSecs.toLowerCase(), noColons.toLowerCase(), hourOnly.toLowerCase()];
         }
 
-        dataTable.setFilter(function (data) {
-            return Object.values(data)
-                .join(" ")
-                .toLowerCase()
-                .includes(value);
-        });
+        const timeParts = [...timeVariants(start), ...timeVariants(end)];
+
+        // combined haystack
+        const hay = parts.concat(timeParts).join(" ");
+
+        // match either the raw query or colon-less query (so "12" or "12:0" works)
+        return hay.includes(q) || hay.includes(qNoColons);
     });
+});
+
+
+
 
 
     // ================================================================
@@ -339,8 +446,22 @@ $(document).ready(function () {
     // ================================================================
     $("#edit-btn").on("click", () => {
         const row = dataTable.getSelectedData()?.[0];
+         
         if (!row)
-            return showAppAlert({ icon: "warning", title: "No Selection", text: "Select a row." });
+            return showAppAlert({ icon: "warning", title: "No Selection", text: "Select a row." }); 
+
+       if (!row || row.Shift_id == 0) {
+        return showAppAlert({
+            icon: "warning",
+            title: "No Data",
+            text: "No data available to edit."
+        });
+        return showAppAlert({
+            icon: "warning",
+            title: "No Data",
+            text: "No data available to edit."
+        });
+    }
 
         currentMode = "Edit";
          $("#Shift_name").prop("readonly", true);  
@@ -348,8 +469,26 @@ $(document).ready(function () {
         $("#Shift_name").val(row.Shift_name);
         $("#Shift_description").val(row.Shift_description);
 
-        if (row.Start_time) $("#start_time").val(row.Start_time.substring(0, 5));
-        if (row.End_time) $("#end_time").val(row.End_time.substring(0, 5));
+       
+
+        if (row.End_time) {
+            $("#end_time").val(row.End_time.substring(0, 5));
+
+            // ⭐ ADD THIS
+            if ($("#end_time")[0]._flatpickr) {
+                $("#end_time")[0]._flatpickr.setDate($("#end_time").val(), false);
+            }
+        }
+        if (row.Start_time) {
+            $("#start_time").val(row.Start_time.substring(0, 5));
+
+            // ⭐ ADD THIS
+            if ($("#start_time")[0]._flatpickr) {
+                $("#start_time")[0]._flatpickr.setDate($("#start_time").val(), false);
+            }
+        }
+
+
 
         // Load break details
         breakRows.html("");
@@ -366,12 +505,12 @@ $(document).ready(function () {
                     const html = `
                         <div class="row g-2 align-items-center mb-2" id="breakRow_${breakCount}">
                             <div class="col-md-3">
-                                <input type="time" class="form-control"
+                                <input type="text" class="form-control break-time"
                                        name="Breaks[${breakCount}].In"
                                        value="${b[`Break${breakCount}In`] || ""}" required>
                             </div>
                             <div class="col-md-3">
-                                <input type="time" class="form-control"
+                                <input type="text" class="form-control  break-time"
                                        name="Breaks[${breakCount}].Out"
                                        value="${b[`Break${breakCount}Out`] || ""}" required>
                             </div>
@@ -389,6 +528,8 @@ $(document).ready(function () {
                         </div>`;
 
                     breakRows.append(html);
+
+                    initializeBreakPickers();
                 });
 
                 $(".removeBreakBtn").on("click", function () {
@@ -411,11 +552,31 @@ $(document).ready(function () {
     // ================================================================
     //  Delete record
     // ================================================================
-    $("#delete-btn").on("click", async () => {
+       $("#delete-btn").on("click", async () => {
         const row = dataTable.getSelectedData()?.[0];
-        if (!row)
-            return showAppAlert({ icon: "warning", title: "No Selection", text: "Select a row." });
 
+        if (!row) {
+            return showAppAlert({
+                icon: "warning",
+                title: "No Selection",
+                text: "Select a row."
+            });
+        }
+
+       if (!row || row.Shift_id == 0) {
+        return showAppAlert({
+            icon: "warning",
+            title: "No Data",
+            text: "No data available to delete."
+        });
+            return showAppAlert({
+                icon: "warning",
+                title: "No Data",
+                text: "No data available to delete."
+            });
+        }
+
+        // Actual delete logic
         const confirm = await showAppAlert({
             type: "confirm",
             icon: "question",
@@ -478,45 +639,51 @@ $(document).ready(function () {
     // ================================================================
     //  Add break
     // ================================================================
-    $("#addBreakBtn").on("click", () => {
-        breakCount++;
-        breakContainer.show();
+    // ================================================================
+//  Add break
+// ================================================================
+$("#addBreakBtn").on("click", () => {
+    breakCount++;
+    breakContainer.show();
 
-        const html = `
-            <div class="row g-2 align-items-center mb-2" id="breakRow_${breakCount}">
-                <div class="col-md-3">
-                    <input type="time" class="form-control"
-                           name="Breaks[${breakCount}].In" required>
-                </div>
-                <div class="col-md-3">
-                    <input type="time" class="form-control"
-                           name="Breaks[${breakCount}].Out" required>
-                </div>
-                <div class="col-md-4">
-                    <input type="text" class="form-control"
-                           name="Breaks[${breakCount}].Description"
-                           placeholder="Break Description" required>
-                </div>
-                <div class="col-md-2">
-                    <button type="button" class="btn btn-outline-danger-professional btn-sm removeBreakBtn">
-                        <span class="material-icons" style="font-size:16px;">close</span>
-                    </button>
-                </div>
-            </div>`;
+    const html = `
+        <div class="row g-2 align-items-center mb-2" id="breakRow_${breakCount}">
+            <div class="col-md-3">
+                <input type="text" class="form-control break-time"
+                       name="Breaks[${breakCount}].In" required>
+            </div>
+            <div class="col-md-3">
+                <input type="text" class="form-control break-time"
+                       name="Breaks[${breakCount}].Out" required>
+            </div>
+            <div class="col-md-4">
+                <input type="text" class="form-control"
+                       name="Breaks[${breakCount}].Description"
+                       placeholder="Break Description" required>
+            </div>
+            <div class="col-md-2">
+                <button type="button" class="btn btn-outline-danger-professional btn-sm removeBreakBtn">
+                    <span class="material-icons" style="font-size:16px;">close</span>
+                </button>
+            </div>
+        </div>`;
 
-        breakRows.append(html);
+    breakRows.append(html);
 
-        $(".removeBreakBtn").last().on("click", function () {
-            $(this).closest(".row").remove();
-            if (!breakRows.children().length) breakContainer.hide();
-        });
+    
+    initializeBreakPickers();
+
+    
+    $(".removeBreakBtn").last().on("click", function () {
+        $(this).closest(".row").remove();
+        if (!breakRows.children().length) breakContainer.hide();
     });
-
+});
 
     // ================================================================
     //  Download CSV
     // ================================================================
-    $("#download-btn").on("click", () => {
+   $("#download-btn").on("click", () => {
 
     let tableData = dataTable.getData();
 
@@ -531,7 +698,6 @@ $(document).ready(function () {
     let finalRows = [];
 
     tableData.forEach(row => {
-
         let newRow = {
             "Shift Name": row.Shift_name,
             "Shift Description": row.Shift_description,
@@ -539,20 +705,19 @@ $(document).ready(function () {
             "End Time": row.End_time
         };
 
-        if (row.Break_details) {
-            try {
-                let breaks = JSON.parse(row.Break_details);
+        // Parse break details
+        let breaks = [];
+        try {
+            if (row.Break_details) breaks = JSON.parse(row.Break_details);
+        } catch (e) {
+            breaks = [];
+        }
 
-                breaks.forEach((b, i) => {
-                    const idx = i + 1;
-                    newRow[`Break${idx}In`] = b[`Break${idx}In`] || "";
-                    newRow[`Break${idx}Out`] = b[`Break${idx}Out`] || "";
-                    newRow[`Break${idx}Description`] = b[`Break${idx}Description`] || "";
-                });
-
-            } catch (err) {
-                console.error("Break parse error", err);
-            }
+        // Prepare 5 fixed break sets
+        for (let i = 1; i <= 5; i++) {
+            newRow[`Break${i}In`] = breaks[i - 1]?.[`Break${i}In`] ?? "";
+            newRow[`Break${i}Out`] = breaks[i - 1]?.[`Break${i}Out`] ?? "";
+            newRow[`Break${i}Description`] = breaks[i - 1]?.[`Break${i}Description`] ?? "";
         }
 
         finalRows.push(newRow);
@@ -560,6 +725,7 @@ $(document).ready(function () {
 
     exportCsv(finalRows, "ShiftMaster.csv");
 });
+
 function exportCsv(rows, fileName) {
 
     const headers = Object.keys(rows[0]);
@@ -608,7 +774,7 @@ function exportCsv(rows, fileName) {
             "Break5Description"
         ];
 
-        downloadTemplate(headers, "ShiftMaster");
+        downloadTemplate(headers, "ShiftMasterTemplate");
     });
 
 

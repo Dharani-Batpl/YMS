@@ -1,4 +1,4 @@
-using Microsoft.AspNetCore.Http;
+﻿using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using System.Net.Http;
 using System.Text;
@@ -69,6 +69,15 @@ namespace YardManagementApplication.Controllers
 
             HttpContext.Session.SetString("LoginUser", loginModel.Username);
 
+            if (loginModel.Password == "test@123")
+            {
+                // optional: set a flag so change password page knows it's first login
+                HttpContext.Session.SetString("ForcePasswordChange", "true");
+
+                return RedirectToAction("ChangePassword", "Account");
+            }
+
+            // Normal login → dashboard
             return RedirectToAction("Index", "Dashboard");
         }
     }
