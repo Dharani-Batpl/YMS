@@ -21,6 +21,9 @@ using FluentValidation;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Newtonsoft.Json;
+using NPOI.HSSF.UserModel;
+using NPOI.SS.UserModel;
+using NPOI.XSSF.UserModel;
 using OfficeOpenXml;
 using System.ComponentModel.DataAnnotations;
 using System.Text;
@@ -39,7 +42,7 @@ namespace YardManagementApplication
         // Injecting the API client for communication with the backend API
         private readonly v1Client _apiClient;
 
-
+        private readonly ILogger<EmployeeConfigurationController> _logger;
 
         private readonly CsvUploadService _csvUploadService;
 
@@ -48,7 +51,7 @@ namespace YardManagementApplication
 
         // Single constructor to inject both dependencies
 
-        public EmployeeConfigurationController(CsvUploadService csvUploadService, v1Client apiClient, IValidator<EmployeeModel> validator)
+        public EmployeeConfigurationController(CsvUploadService csvUploadService, v1Client apiClient, IValidator<EmployeeModel> validator, ILogger<EmployeeConfigurationController> logger)
 
         {
 
@@ -58,12 +61,26 @@ namespace YardManagementApplication
 
             _validator = validator;
 
+            _logger = logger;
+
         }
 
 
         // Action for loading the Employee Configuration page
         public async Task<IActionResult> Index()
         {
+
+            // Log action start
+            string controller = nameof(EmployeeConfigurationController);
+            string action = nameof(Index);
+            string user = HttpContext.Session.GetString("LoginUser") ?? "Unknown";
+
+            _logger.LogInformation(
+                "[ACTION START] {controller}.{action} | User={user}",
+                controller, action, user
+            );
+
+
             try
             {
                 // Set the page title for the view
@@ -90,9 +107,7 @@ namespace YardManagementApplication
                 var skillType = await _apiClient.EmployeeSkillAsync();
                 var skillLevel = await _apiClient.EmployeeSkillLevelAsync();
                 var certificateType = await _apiClient.CertificateTypeAsync();
-                //var userGroupName = await _apiClient.UserGroupAsync();
-                //var UserName = await _apiClient.UserAsync();
-
+              
                 // Preparing the lists for dropdowns using a utility method
                 ViewBag.StatusList = Utils.Utility.PrepareSelectList(statuses);
                 ViewBag.EmployeeTypeList = Utils.Utility.PrepareSelectList(employeeType);
@@ -100,17 +115,28 @@ namespace YardManagementApplication
                 ViewBag.SkilllevelList = Utils.Utility.PrepareSelectList(skillLevel);
                 ViewBag.SkillNameList = Utils.Utility.PrepareSelectList(skillType);
                 ViewBag.CertificateTypeList = Utils.Utility.PrepareSelectList(certificateType);
-                //ViewBag.UserGroupNameList = Utils.Utility.PrepareSelectList(userGroupName);
-                //ViewBag.UserNameList = Utils.Utility.PrepareSelectList(UserName);
 
                 // Passing the employee data to the view in JSON format
                 ViewData["EmployeeConfiguration"] = jsonResult;
+
+
+                _logger.LogInformation(
+                    "[ACTION INFO] {controller}.{action} | RecordsFetched={count}",
+                    controller, action, jsonResult?.Count() ?? 0
+                );
+
 
                 // Returning the view for rendering
                 return View();
             }
             catch (Exception ex)
             {
+                // Log error
+                _logger.LogError(
+                     ex,
+                     "[ACTION ERROR] {controller}.{action} | Exception={error}",
+                     controller, action, ex.Message
+                 );
                 // Handling any exceptions and returning an error response
                 return StatusCode(500, ex.Message);
             }
@@ -123,9 +149,7 @@ namespace YardManagementApplication
             try
             {
 
-                //model.Contact_number= model.Country_code + "-"+ model.Contact_number;
-                //model.Emergency_contact_number= model.Emergency_country_code + "-"+ model.Emergency_contact_number;
-                model.Created_by = HttpContext.Session.GetString("LoginUser");
+                 model.Created_by = HttpContext.Session.GetString("LoginUser");
                 var test = model;
 
                 
@@ -214,8 +238,11 @@ namespace YardManagementApplication
                 model.updated_by = HttpContext.Session.GetString("LoginUser");
 
                 // Deleting the employee record using the API
-                var result = await _apiClient.DeleteEmployeeAsync(model.Employee_id);
+                var result = await _apiClient.DeleteEmployeeAsync(model.Employee_id);          
+                
+             
 
+       
                 // Returning a success response
                 return Ok(new
                 {
@@ -292,101 +319,204 @@ namespace YardManagementApplication
             }).ToList();
         }
 
-
-      
+        // -----------------------------------------------------
+        // UPLOAD TEMPLATE DATA VIA EXCEL
+        // -----------------------------------------------------
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Upload(IFormFile file)
         {
+            string user = HttpContext.Session.GetString("LoginUser") ?? "Unknown";
+
+            _logger.LogInformation("[UPLOAD] Employee Upload started | User={user}", user);
+
             try
             {
-                // 0) Guards
+                // ---------------------------------------------------------
+                // 1) Validate uploaded file
+                // ---------------------------------------------------------
                 if (file == null || file.Length == 0)
-                    return BadRequest("No file uploaded.");
-                var nameOk = Path.GetExtension(file.FileName).Equals(".csv", StringComparison.OrdinalIgnoreCase);
-                var type = (file.ContentType ?? "").ToLowerInvariant();
-                var typeOk = type.Contains("csv") || type == "application/vnd.ms-excel";
-                if (!nameOk && !typeOk)
-                    return BadRequest("Only CSV files are allowed.");
-                // 1) Parse + validate CSV
-                var res = _csvUploadService.ProcessCsvFile<EmployeeModel>(file, _validator);
-                // 2) Insert valid rows; collect API failures (no row numbers)
-                var apiFailures = new List<(EmployeeModel Record, string Error)>();
-                var successCount = 0;
-                foreach (var item in res.ValidItems)
+                    return BadRequest(new { status = "error", title = "No File", message = "No file uploaded." });
+
+                var ext = Path.GetExtension(file.FileName).ToLowerInvariant();
+                if (ext != ".xlsx" && ext != ".xls")
+                    return BadRequest(new { status = "error", title = "Invalid File", message = "Only Excel files allowed." });
+
+
+                // ---------------------------------------------------------
+                // 2) Extract excel data
+                // ---------------------------------------------------------
+                List<Dictionary<string, string>> excelRows = new();
+                List<string> headers = new();
+
+                using (var stream = file.OpenReadStream())
                 {
-                    try
+                    IWorkbook wb = ext == ".xlsx" ? new XSSFWorkbook(stream) : new HSSFWorkbook(stream);
+                    var sheet = wb.GetSheetAt(0);
+
+                    var header = sheet.GetRow(0);
+                    for (int i = 0; i < header.LastCellNum; i++)
+                        headers.Add(header.GetCell(i)?.ToString()?.Trim() ?? $"Col{i}");
+
+                    for (int r = 1; r <= sheet.LastRowNum; r++)
                     {
-                        await _apiClient.UploadEmployeeAsync(item);
-                        successCount++;
-                    }
-                    catch (Exception ex)
-                    {
-                        var msg = ex is ApiException<ResponseModel> apiEx && apiEx.Result != null
-                            ? (apiEx.Result.Detail ?? apiEx.Message)
-                            : ex.Message;
-                        apiFailures.Add((item, msg ?? "API insert error"));
+                        var row = sheet.GetRow(r);
+                        if (row == null) continue;
+
+                        var dict = new Dictionary<string, string>();
+                        for (int c = 0; c < headers.Count; c++)
+                            dict[headers[c]] = row.GetCell(c)?.ToString()?.Trim() ?? "";
+
+                        excelRows.Add(dict);
                     }
                 }
-                // 3) Build ONE CSV for all failures (validation + API),
-                //    but include ONLY the columns that were uploaded (plus ErrorMessages)
-                string invalidCsv = _csvUploadService.CreateUnifiedInvalidCsv(
-                    res.InvalidItems,
-                    apiFailures,
-                    res.UploadedHeaders // << key: only uploaded columns are exported
-                );
-                // Encode to Base64 only if we have any failures
-                string invalidBase64 = string.IsNullOrWhiteSpace(invalidCsv)
-                    ? null
-                    : Convert.ToBase64String(Encoding.UTF8.GetBytes(invalidCsv));
-                // 4) Prepare response
-                var status = successCount > 0 ? "success" : "error";
-                var title = successCount > 0 ? "Success" : "No Records";
-                var message = successCount > 0
-                    ? $"{successCount} records added successfully"
-                    : "No valid records to insert.";
-                return Ok(new
-                {
-                    status,
-                    title,
-                    message,
-                    successCount,
-                    validationFailedCount = res.InvalidCount,
-                    apiFailedCount = apiFailures.Count,
-                    invalidRecords = invalidBase64 // unified CSV (ErrorMessages + only uploaded columns)
-                });
-            }
-            catch (OperationCanceledException)
-            {
-                return StatusCode(499, new
-                {
-                    status = "error",
-                    title = "Client Closed Request",
-                    message = "The upload was cancelled."
-                });
-            }
-            //catch (ApiException<ProblemDetails> ex)
-            //{
-            //    var problem = ex.Result;
-            //    return StatusCode(problem.Status ?? ex.StatusCode, new
-            //    {
-            //        status = problem.Status ?? ex.StatusCode,
-            //        title = problem.Title ?? "Error",
-            //        message = problem.Detail ?? "An unexpected error occurred."
-            //    });
-            //}
 
-            catch (Exception ex)
-            {
-                if (ex is ApiException<ResponseModel> apiEx && apiEx.Result != null)
+                if (excelRows.Count == 0)
                 {
                     return BadRequest(new
                     {
                         status = "error",
-                        title = "Error",
-                        message = apiEx.Result.Detail // <- Pass Detail here
+                        title = "No Data",
+                        message = "Excel template contains no data rows."
                     });
                 }
+
+
+                // ---------------------------------------------------------
+                // 3) Normalize column names
+                // ---------------------------------------------------------
+                string norm(string x) =>
+                    x.Trim().ToLower().Replace(" ", "").Replace("_", "").Replace("-", "");
+
+                List<EmployeeModel> employees = new();
+                string currentUser = HttpContext.Session.GetString("LoginUser") ?? "System";
+
+                foreach (var row in excelRows)
+                {
+                    var map = new Dictionary<string, string>();
+
+                    foreach (var kv in row)
+                    {
+                        switch (norm(kv.Key))
+                        {
+                            case "employeecode": map["employee_code"] = kv.Value; break;
+                            case "firstname": map["first_name"] = kv.Value; break;
+                            case "middlename": map["middle_name"] = kv.Value; break;
+                            case "lastname": map["last_name"] = kv.Value; break;
+                            case "department": map["department_name"] = kv.Value; break;
+                            case "reportingto": map["reporting_to_name"] = kv.Value; break;
+                            case "countrycode": map["cc"] = kv.Value; break;
+                            case "phonenumber": map["phone"] = kv.Value; break;
+                            case "emergencycountrycode": map["ecc"] = kv.Value; break;
+                            case "emergencycontactnumber": map["ephone"] = kv.Value; break;
+                            case "email": map["email"] = kv.Value; break;
+                            case "skilltype": map["skill_type"] = kv.Value; break;
+                            case "skilllevel": map["skill_level"] = kv.Value; break;
+                            case "certificatetype": map["certificate_type"] = kv.Value; break;
+                            case "certificateissuedate": map["cert_issue"] = kv.Value; break;
+                            case "certificateexpirydate": map["cert_expiry"] = kv.Value; break;
+                            case "bloodgroup": map["blood_group"] = kv.Value; break;
+                            case "employmenttype": map["employment_type"] = kv.Value; break;
+                            case "status": map["status"] = kv.Value; break;
+                            case "address": map["address"] = kv.Value; break;
+                            case "isappuser(y/n)": map["app"] = kv.Value; break;
+                        }
+                    }
+
+                    bool appuser = (map.GetValueOrDefault("app") ?? "").Trim().ToLower() == "y";
+
+                    var model = new EmployeeModel
+                    {
+                        Employee_code = map.GetValueOrDefault("employee_code"),
+                        First_name = map.GetValueOrDefault("first_name"),
+                        Middle_name = map.GetValueOrDefault("middle_name"),
+                        Last_name = map.GetValueOrDefault("last_name"),
+                        Department_name = map.GetValueOrDefault("department_name"),
+                        Reporting_to_name = map.GetValueOrDefault("reporting_to_name"),
+                        Address = map.GetValueOrDefault("address"),
+                        Contact_number = $"+{map.GetValueOrDefault("cc") ?? ""}-{map.GetValueOrDefault("phone") ?? ""}",
+                        Emergency_contact_number = $"+{map.GetValueOrDefault("ecc") ?? ""}-{map.GetValueOrDefault("ephone") ?? ""}",
+                        Skill_type = map.GetValueOrDefault("skill_type"),
+                        Skill_level_name = map.GetValueOrDefault("skill_level"),
+                        Certificate_name = map.GetValueOrDefault("certificate_type"),
+                        Employee_type = map.GetValueOrDefault("employment_type"),
+                        Status_name = map.GetValueOrDefault("status"),
+                        Blood_group = map.GetValueOrDefault("blood_group"),
+                        Email = map.GetValueOrDefault("email"),
+                        App_user = appuser,
+                        Created_by = currentUser,
+                        Created_at = DateTime.Now
+                    };
+
+                    DateTime tmp;
+                    if (DateTime.TryParse(map.GetValueOrDefault("cert_issue"), out tmp)) model.Certification_date = tmp;
+                    if (DateTime.TryParse(map.GetValueOrDefault("cert_expiry"), out tmp)) model.Expiry_date = tmp;
+
+                    employees.Add(model);
+                }
+
+
+                // ---------------------------------------------------------
+                // 4) Send each row to API + collect errors
+                // ---------------------------------------------------------
+                var errors = new List<object>();
+                int success = 0;
+
+                foreach (var emp in employees)
+                {
+                    try
+                    {
+                        await _apiClient.UploadEmployeeAsync(emp);
+                        success++;
+                    }
+                    catch (ApiException<ResponseModel> ex)
+                    {
+                        var api = ex.Result;
+
+                        errors.Add(new
+                        {
+                            status = api?.Status ?? 400,
+                            title = api?.Title ?? "Failed",
+                            error = api?.Detail ?? ex.Message
+                        });
+                    }
+                    catch (Exception ex)
+                    {
+                        errors.Add(new
+                        {
+                            status = 500,
+                            title = "Internal Error",
+                            error = ex.Message
+                        });
+                    }
+                }
+
+
+                // ---------------------------------------------------------
+                // 5) Final response
+                // ---------------------------------------------------------
+                if (errors.Count > 0)
+                {
+                    return BadRequest(new
+                    {
+                        status = "error",
+                        title = "Upload Failed",
+                        message = $"{errors.Count} record(s) failed.",
+                        errors
+                    });
+                }
+
+                return Ok(new
+                {
+                    status = "success",
+                    title = "Success",
+                    message = $"{success} record(s) uploaded successfully.",
+                    count = success
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "[UPLOAD ERROR] Employee Upload failed | Error={e}", ex.Message);
 
                 return BadRequest(new
                 {
@@ -395,10 +525,7 @@ namespace YardManagementApplication
                     message = ex.Message
                 });
             }
-
-
         }
-
 
 
     }

@@ -50,11 +50,11 @@ namespace YardManagementApplication.Models
 
         //  Audit - created
         public string? Created_by { get; set; }
-        public DateTimeOffset? Created_at { get; set; }
+        public DateTime? Created_at { get; set; }
 
         //  Audit - updated
         public string? Updated_by { get; set; }
-        public DateTimeOffset? Updated_at { get; set; }
+        public DateTime? Updated_at { get; set; }
 
         //  Version for concurrency
         public int? Version { get; set; }
@@ -92,7 +92,7 @@ namespace YardManagementApplication.Models
 
         //  Audit fields for update
         public string? Updated_by { get; set; }
-        public DateTimeOffset? Updated_at { get; set; }
+        public DateTime? Updated_at { get; set; }
 
         //  Optional version for concurrency
         public int? Version { get; set; }

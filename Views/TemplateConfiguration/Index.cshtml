@@ -477,9 +477,9 @@ $(document).ready(function () {
 
 
     // ================================================================
-    //  Download CSV
-    // ================================================================
-   $("#download-btn").on("click", function () {
+//  Download XLSX
+// ================================================================
+$("#download-btn").on("click", function () {
 
     let rows = templateTable.getData();
 
@@ -492,7 +492,7 @@ $(document).ready(function () {
         return;
     }
 
-    // 🔥 Create clean export copy
+    // Prepare clean data for export
     let exportRows = rows.map(r => ({
         "Template Name": r.Template_name,
         "Assigned Shift(s)": r.Assigned_shifts,
@@ -501,27 +501,16 @@ $(document).ready(function () {
         "Created By": r.Created_by
     }));
 
-    // 🔥 Convert object → CSV
-    let headers = Object.keys(exportRows[0]);
+    // Create worksheet
+    const worksheet = XLSX.utils.json_to_sheet(exportRows);
 
-    let csv = [
-        headers.join(","),
-        ...exportRows.map(r => headers.map(h => `"${r[h] || ""}"`).join(","))
-    ].join("\n");
+    // Create workbook
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "TemplateMaster");
 
-    // 🔥 Download
-    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
-    const url = URL.createObjectURL(blob);
-
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = "TemplateMaster.csv";
-    a.click();
-
-    URL.revokeObjectURL(url);
+    // Download file
+    XLSX.writeFile(workbook, "TemplateMasterData.xlsx");
 });
-
-
 
     // ================================================================
     //  Minimum date restriction

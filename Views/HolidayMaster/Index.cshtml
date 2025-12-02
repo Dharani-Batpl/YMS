@@ -361,29 +361,7 @@ $(document).ready(function () {
 
         if (success) setTimeout(() => location.reload(), 900);
     });
-
-    // ----------------------------------------------------
-    // Download CSV
-    // ----------------------------------------------------
-    $("#download-btn").on("click", function () {
-
-        let count = dataTable.getData().length;
-
-        if (count === 1) {
-            const id = dataTable.getData()[0]?.Holiday_id;
-            if (!id) count = 0;
-        }
-
-        if (count === 0) {
-            return showAppAlert({
-                icon: "warning",
-                title: "No Data",
-                text: "No records found to download."
-            });
-        }
-
-        downloadCsv(dataTable, "HolidayMaster.csv");
-    });
+     
 
     // ----------------------------------------------------
     // Upload button
@@ -412,6 +390,44 @@ $(document).ready(function () {
 
         uploadFile("/HolidayMaster/Upload", file);
     });
+    // ----------------------------------------------------
+    // Download XLSX
+    // ----------------------------------------------------
+  $("#download-btn").on("click", function () {
+
+    let allRows = dataTable.getData();
+
+    if (!allRows || allRows.length === 0) {
+        return showAppAlert({
+            icon: "warning",
+            title: "No Data",
+            text: "No records found to download."
+        });
+    }
+
+   
+    const visibleCols = dataTable.getColumns()
+        .filter(col => col.isVisible())
+        .map(col => ({
+            field: col.getField(),
+            title: col.getDefinition().title
+        }));
+
+
+    const finalRows = allRows.map(row => {
+        let obj = {};
+        visibleCols.forEach(col => {
+            obj[col.title] = row[col.field] ?? "";
+        });
+        return obj;
+    });
+
+
+    downloadXlsx(finalRows, "HolidayMasterData");
+});
+
+
+
 });
 
 
@@ -430,7 +446,7 @@ $("#download-template-btn").on("click", function () {
     downloadTemplate(headers, "HolidayMasterTemplate");
 });
 
-
+ 
 // -------------------------------------------------------------
 // Upload function (global)
 // -------------------------------------------------------------

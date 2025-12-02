@@ -384,4 +384,3 @@ async function deleteRecord(fetchUrl, payload, method = "PUT") {
     }
 }
 
-

@@ -81,7 +81,8 @@
 
     <form id="afForm" style="display:none" method="post">
         @Html.AntiForgeryToken()
-        <input type="file" id="upload-file" style="display:none" accept=".csv,text/csv" />
+        <input type="file" id="upload-file" style="display:none" accept=".xlsx,.xls" />
+
     </form>
 
     <!--  Tabulator grid mount point -->
@@ -180,9 +181,9 @@
 
                         <!-- Email -->
                         <div class="col-md-6" style="width:320px;">
-                            <label class="form-label" for="Email">Email</label>
+                            <label class="form-label" for="Email">Email <span class="text-danger">*</span></label>
 
-                            <input type="email" class="form-control" autocomplete="off" id="Email" name="Email">
+                            <input type="email" class="form-control" autocomplete="off" id="Email" name="Email" required>
                         </div>
 
                         <!-- Skill Type -->
@@ -285,19 +286,6 @@
 $(document).ready(function () {
 
     // -------------------------------
-    // App User toggle (Email required)
-    // -------------------------------
-    $("#IsAppUser").on("change", function () {
-        if ($(this).is(":checked")) {
-            $("#Email").attr("required", true);
-            $("label[for='Email']").html('Email <span class="text-danger">*</span>');
-        } else {
-            $("#Email").removeAttr("required");
-            $("label[for='Email']").text('Email');
-        }
-    });
-
-    // -------------------------------
     // Date validation (Issue → Expiry)
     // -------------------------------
     $("#Certification_date").on("change", function () {
@@ -393,21 +381,48 @@ $(document).ready(function () {
         }
 
         currentMode = "Edit";
+      
+        $("#Employee_code").prop("readonly", true);
+        $("#IsAppUser").prop("disabled", true);
+
         $("#addEditModalLabel").text("Edit Employee Master");
         $("#modalSubmitBtn").text("Update");
 
-        // Fill fields
+        // -------------------------------
+        // Fill fields including phone numbers
+        // -------------------------------
         Object.keys(row).forEach(f => {
             let el = $("#" + f);
             if (!el.length) return;
 
+            // Handle date fields
             if (el.attr("type") === "date" && row[f]) {
                 let d = new Date(row[f]);
                 el.val(d.toISOString().split("T")[0]);
-            } else {
-                el.val(row[f]);
+                return;
             }
+
+            // -------------------------------
+            // PHONE NUMBER SPLIT
+            // -------------------------------
+            if (f === "Contact_number" && row[f]) {
+                let parts = row[f].split("-");
+                $("#Country_code").val(parts[0]);        // +1 / +91 / +52
+                $("#Contact_number").val(parts[1] || ""); // 10-digit number
+                return;
+            }
+
+            if (f === "Emergency_contact_number" && row[f]) {
+                let parts = row[f].split("-");
+                $("#Emergency_country_code").val(parts[0]);               // +1 / +91 / +52
+                $("#Emergency_contact_number").val(parts[1] || "");       // 10-digit number
+                return;
+            }
+
+            // Default set
+            el.val(row[f]);
         });
+
 
         new bootstrap.Modal("#addEditModal").show();
     });
@@ -437,7 +452,170 @@ $(document).ready(function () {
             setTimeout(() => location.reload(), 800);
         }
     });
+    
+        // ================================================================
+        //  Download template
+        // ================================================================
+        $("#download-template-btn").on("click", function () {
 
+            const headers = [
+                "Employee Code",
+                "First Name",
+                "Middle Name",
+                "Last Name",
+                "Department",
+                "Reporting To",
+                "Country code",
+                "Phone Number",
+                 "Emergency Country code",
+                "Emergency Contact Number",
+                "Email",
+                "Skill Type",
+                "Skill Level",
+                "Certificate Type",
+                "Certificate Issue Date",
+                "Certificate Expiry Date",
+                "Blood Group",
+                "Employment Type",
+                "Status",
+                "Address",
+                "Is App User (Y/N)"
+
+            ];
+
+            downloadTemplate(headers, "EmployeeMasterTemplate");
+        });
+     // ================================================================
+    //  Upload button
+    // ================================================================
+    $("#upload-btn").on("click", function () {
+        $("#upload-file").click();
+    });
+    // ================================================================
+//  File input change event
+// ================================================================
+$("#upload-file").on("change", function (event) {
+
+    const file = event.target.files?.[0];
+
+    if (!file) {
+        return showAppAlert({
+            icon: 'warning',
+            title: 'No File',
+            text: 'Please select a file to upload.'
+        });
+    }
+
+    const isExcel = /\.(xlsx|xls)$/i.test(file.name);
+    if (!isExcel) {
+        showAppAlert({
+            icon: 'warning',
+            title: 'Invalid File',
+            text: 'Please select an Excel file (.xlsx or .xls).'
+        });
+        return;
+    }
+
+    uploadFile('/EmployeeConfiguration/Upload', file);
+});
+
+
+// ================================================================
+//  Upload function
+// ================================================================
+async function uploadFile(url, file) {
+
+    const formData = new FormData();
+    formData.append("file", file);
+
+    const csrf = $('#afForm input[name="__RequestVerificationToken"]').val();
+
+    try {
+        const response = await fetch(url, {
+            method: 'POST',
+            headers: { 'RequestVerificationToken': csrf },
+            body: formData
+        });
+
+        await handleUploadResponse(response);
+
+    } catch (err) {
+        showToast({ icon: "error", text: err.message });
+    }
+}
+
+
+// ================================================================
+//  Handle upload response
+// ================================================================
+async function handleUploadResponse(response) {
+
+    const result = await response.json().catch(() => null);
+
+    // SUCCESS
+    if (response.ok) {
+
+        showAppAlert({
+            icon: result.status,
+            title: result.title,
+            text: result.message,
+            timer: 2500,
+            showConfirmButton: false
+        });
+
+        setTimeout(() => location.reload(), 800);
+        $("#upload-file").val("");
+
+        return;
+    }
+
+    // GENERIC API MESSAGE
+    if (result && result.errors) {
+
+        let msg = "";
+        result.errors.forEach(e => {
+            msg += `Error: ${e.error}\n\n`;
+        });
+
+        showAppAlert({
+            icon: "error",
+            title: "Upload Failed",
+            text: msg,
+            timer: 4500,
+            showConfirmButton: false
+        });
+
+        $("#upload-file").val("");
+        return;
+    }
+
+    // GENERIC API MESSAGE
+    if (result && result.message) {
+
+        showAppAlert({
+            icon: "error",
+            title: "Upload Failed",
+            text: result.message,
+            timer: 3500,
+            showConfirmButton: false
+        });
+
+        $("#upload-file").val("");
+        return;
+    }
+
+   // UNKNOWN ERROR
+    showAppAlert({
+        icon: "error",
+        title: "Upload Failed",
+        text: "Unexpected error.",
+        timer: 3500,
+        showConfirmButton: false
+    });
+
+
+    $("#upload-file").val("");
+}
     // -------------------------------
     // Delete Button
     // -------------------------------
