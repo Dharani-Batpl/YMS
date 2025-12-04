@@ -273,13 +273,19 @@
                    <div class="mb-3">
                         <label class="form-label">Holiday Name <span class="text-danger">*</span></label>
                         <input id="holidayName" class="form-control"
-                               required maxlength="150" autocomplete="off" />
+                               required maxlength="150" autocomplete="off"
+                               pattern="[A-Za-z0-9 ]+"
+                               placeholder="Enter Holiday Name"
+                               title="Only letters, numbers, and spaces allowed. Maximum 150 characters.">
                     </div>
 
                     <div class="mb-3">
                         <label class="form-label">Holiday Description <span class="text-danger">*</span></label>
                         <input id="holidayDescription" class="form-control"
-                               required maxlength="500" autocomplete="off" />
+                               required maxlength="500" autocomplete="off"
+                               pattern="[A-Za-z0-9 .,/-]+"
+                           placeholder="Enter Holiday Description"
+                           title="Letters, numbers, spaces, commas, periods, slashes, and hyphens allowed. Maximum 500 characters.">
                     </div>
 
                     <div class="mb-3">

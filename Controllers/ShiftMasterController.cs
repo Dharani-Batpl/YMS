@@ -444,11 +444,16 @@ namespace YardManagementApplication
                 }
 
                 string currentUser = HttpContext.Session.GetString("LoginUser") ?? "System";
-                var allItems = new List<ShiftMasterModel>();
+               
+                List<object> errorList = new();
+                int successCount = 0;
+                int rowIndex = 2;
 
                 // Map Excel rows to ShiftMasterModel
                 foreach (var row in excelRows)
                 {
+                    try 
+                    { 
                     string norm(string x) =>
                         x.Trim().ToLower().Replace(" ", "").Replace("_", "").Replace("-", "");
 
@@ -535,73 +540,59 @@ namespace YardManagementApplication
                         Created_by = currentUser
                     };
 
-                    allItems.Add(model);
-                }
-
-                // Upload each shift via API
-                var apiErrors = new List<object>();
-                int successCount = 0;
-
-                foreach (var item in allItems)
-                {
-                    try
-                    {
-                        await _apiClient.UploadShiftAsync(item);
+                    
+                        await _apiClient.UploadShiftAsync(model);
                         successCount++;
+                    }
+                    catch (ApiException<ResponseModel> ex)
+                    {
+                        errorList.Add(new { Row = rowIndex, Error = ex.Result?.Detail ?? ex.Message });
+                    }
+                    catch (ApiException<ProblemDetails> ex) when (ex.StatusCode == 409 || ex.StatusCode == 400)
+                    {
+                        errorList.Add(new { Row = rowIndex, Error = ex.Result?.Detail ?? "Duplicate / Missing Data" });
                     }
                     catch (Exception ex)
                     {
-                        // Log general exception
-                        _logger.LogError(
-                             ex,
-                             "[ACTION ERROR] {controller}.{action} | Exception={error}",
-                             controller, action, ex.Message
-                         );
-
-                        apiErrors.Add(new
-                        {
-
-                            error = ex.Message
-                        });
+                        errorList.Add(new { Row = rowIndex, Error = ex.Message });
                     }
+
+                    rowIndex++;
+                
                 }
 
 
-                if (apiErrors.Count > 0)
+                // Generate CSV if there are errors
+                string downloadUrl = null;
+                if (errorList.Count > 0)
                 {
-                    // Return errors if any
-                    return BadRequest(new
-                    {
-                        status = "error",
-                        title = "Upload Failed",
-                        message = $"{apiErrors.Count} record(s) failed.",
-                        errors = apiErrors
-                    });
+                    var csvLines = new List<string> { "Row No,Error Message" };
+                    csvLines.AddRange(errorList.Select(e =>
+                        $"\"{e.GetType().GetProperty("Row").GetValue(e)}\",\"{e.GetType().GetProperty("Error").GetValue(e)}\""));
+
+                    string folder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "Uploads", "ErrorReports");
+                    if (!Directory.Exists(folder)) Directory.CreateDirectory(folder);
+
+                    string filename = $"ShiftMaster_ErrorReport_{DateTime.Now:yyyyMMdd_HHmmss}.csv";
+                    string fullPath = Path.Combine(folder, filename);
+                    System.IO.File.WriteAllLines(fullPath, csvLines, Encoding.UTF8);
+
+                    downloadUrl = Url.Content($"~/uploads/ErrorReports/{filename}");
                 }
 
+                // Return JSON response with link
                 return Ok(new
                 {
                     status = "success",
-                    title = "Success",
-                    message = $"{successCount} records added successfully.",
-                    successCount
+                    title = "Upload Completed",
+                    message = $"Success: {successCount}, Failed: {errorList.Count}.",
+                    downloadCsv = downloadUrl
                 });
             }
             catch (Exception ex)
             {
-                // Log error
-                _logger.LogError(
-                     ex,
-                     "[ACTION ERROR] {controller}.{action} | Exception={error}",
-                     controller, action, ex.Message
-                 );
-
-                return BadRequest(new
-                {
-                    status = "error",
-                    title = "Error",
-                    message = ex.Message
-                });
+                _logger.LogError(ex, "[ACTION ERROR] {controller}.{action}", controller, action);
+                return BadRequest(new { status = "error", title = "Exception", message = ex.Message });
             }
         }
 

@@ -25,6 +25,7 @@ using NPOI.HSSF.UserModel;
 using NPOI.SS.UserModel;
 using NPOI.XSSF.UserModel;
 using OfficeOpenXml;
+using System;
 using System.ComponentModel.DataAnnotations;
 using System.Text;
 using System.Text.Json;
@@ -146,13 +147,20 @@ namespace YardManagementApplication
         [HttpPost]
         public async Task<IActionResult> Create([FromBody] EmployeeModel model)
         {
+            // Log action start
+            string controller = nameof(EmployeeConfigurationController);
+            string action = nameof(Index);
+            string user = HttpContext.Session.GetString("LoginUser") ?? "Unknown";
+
             try
             {
+                _logger.LogInformation(
+                    "[ACTION START] {controller}.{action} | User={user}",
+                    controller, action, user
+                );
 
-                 model.Created_by = HttpContext.Session.GetString("LoginUser");
-                var test = model;
 
-                
+                model.Created_by = HttpContext.Session.GetString("LoginUser");    
 
                 // Inserting the new employee record using the API
                 var result = await _apiClient.InsertEmployeeAsync(model);
@@ -183,6 +191,12 @@ namespace YardManagementApplication
             }
             catch (ApiException<ProblemDetails> ex)
             {
+                // Log error
+                _logger.LogError(
+                     ex,
+                     "[ACTION ERROR] {controller}.{action} | Exception={error}",
+                     controller, action, ex.Message
+                 );
                 // This catches structured API errors (with JSON body)
                 var problem = ex.Result;
 
@@ -199,6 +213,11 @@ namespace YardManagementApplication
         [HttpPut()]
         public async Task<IActionResult> Update([FromBody] EmployeeUpdateModel model)
         {
+            // Log action start
+            string controller = nameof(EmployeeConfigurationController);
+            string action = nameof(Index);
+            string user = HttpContext.Session.GetString("LoginUser") ?? "Unknown";
+
             try
             {
                 model.Updated_by = HttpContext.Session.GetString("LoginUser");
@@ -206,6 +225,12 @@ namespace YardManagementApplication
 
                 // Updating the employee record using the API
                 var result = await _apiClient.UpdateEmployeeAsync(model.Employee_id, model);
+
+                _logger.LogInformation(
+                    "[ACTION INFO] {controller}.{action} | Updated={result}",
+                    controller, action, result
+                );
+
 
                 // Returning a success response
                 return Ok(new
@@ -217,6 +242,13 @@ namespace YardManagementApplication
             }
             catch (ApiException<ProblemDetails> ex)
             {
+                // Log error
+                _logger.LogError(
+                     ex,
+                     "[ACTION ERROR] {controller}.{action} | Exception={error}",
+                     controller, action, ex.Message
+                 );
+
                 // This catches structured API errors (with JSON body)
                 var problem = ex.Result;
 
@@ -233,16 +265,25 @@ namespace YardManagementApplication
         [HttpPut()]
         public async Task<IActionResult> Delete([FromBody] EmployeeDeleteModel model)
         {
+            // Log action start
+            string controller = nameof(EmployeeConfigurationController);
+            string action = nameof(Index);
+            string user = HttpContext.Session.GetString("LoginUser") ?? "Unknown";
+
             try
             {
                 model.updated_by = HttpContext.Session.GetString("LoginUser");
 
                 // Deleting the employee record using the API
-                var result = await _apiClient.DeleteEmployeeAsync(model.Employee_id);          
-                
-             
+                var result = await _apiClient.DeleteEmployeeAsync(model.Employee_id);
 
-       
+                _logger.LogInformation(
+                       "[ACTION INFO] {controller}.{action} | Updated={result}",
+                       controller, action, result
+                   );
+
+
+
                 // Returning a success response
                 return Ok(new
                 {
@@ -253,6 +294,13 @@ namespace YardManagementApplication
             }
             catch (ApiException<ProblemDetails> ex)
             {
+                // Log error
+                _logger.LogError(
+                     ex,
+                     "[ACTION ERROR] {controller}.{action} | Exception={error}",
+                     controller, action, ex.Message
+                 );
+
                 // This catches structured API errors (with JSON body)
                 var problem = ex.Result;
 
@@ -265,70 +313,17 @@ namespace YardManagementApplication
             }
         }
 
-        // Action for downloading an Excel template for user configuration
-        public IActionResult DownloadUserConfigurationTemplate()
-        {
-            // Creating an in-memory stream to store the Excel file
-            var stream = new MemoryStream();
-
-            // Using OfficeOpenXml to create the Excel file
-            using (var package = new ExcelPackage(stream))
-            {
-                // Adding a worksheet for the template
-                var worksheet = package.Workbook.Worksheets.Add("EmployeeConfigurationTemplate");
-
-                // Header columns to be added in the first row
-                string[] headers = new string[]
-                {
-                    "Employee_id", "Employee_code", "First_name", "Middle_name",
-                    "Last_name", "Department_id", "Department_name", "Reporting_to_id", "Reporting_to_name",
-                    "Contact_number", "Email", "Employee_type", "User_id",
-                    "User_name", "User_group_id", "User_group_name", "Skill_id", "Skill_type", "Skill_level_id",
-                    "Skill_level_name", "Certification_date", "Expiry_date", "Status_id", "Status_name", "Is_deleted",
-                    "Country_code","Emergency_country_code","Certificate_type_id","Certificate_type_name",
-                    "Created_by", "Created_at", "Updated_by", "Updated_at"
-                };
-
-                // Adding headers to the worksheet and auto-fitting columns
-                for (int i = 0; i < headers.Length; i++)
-                {
-                    worksheet.Cells[1, i + 1].Value = headers[i];
-                    worksheet.Column(i + 1).AutoFit();
-                }
-
-                // Saving the Excel file to the memory stream
-                package.Save();
-            }
-
-            // Resetting the stream position and returning the file as a download
-            stream.Position = 0;
-            string excelName = $"EmployeeConfigurationTemplate-{DateTime.Now:yyyyMMddHHmmss}.xlsx";
-
-            return File(stream,
-                        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-                        excelName);
-        }
-
-        // Utility method to prepare a SelectList from a list of DropdownModel items
-        private List<SelectListItem> PrepareSelectList(IEnumerable<DropdownModel> dropdownModels)
-        {
-            return dropdownModels.Select(item => new SelectListItem
-            {
-                Value = item.Id.ToString(),
-                Text = item.Name
-            }).ToList();
-        }
-
-        // -----------------------------------------------------
+        //-----------------------------------------------
         // UPLOAD TEMPLATE DATA VIA EXCEL
         // -----------------------------------------------------
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Upload(IFormFile file)
         {
+            // Log action start
+            string controller = nameof(EmployeeConfigurationController);
+            string action = nameof(Index);
             string user = HttpContext.Session.GetString("LoginUser") ?? "Unknown";
-
-            _logger.LogInformation("[UPLOAD] Employee Upload started | User={user}", user);
 
             try
             {
@@ -388,11 +383,19 @@ namespace YardManagementApplication
                 string norm(string x) =>
                     x.Trim().ToLower().Replace(" ", "").Replace("_", "").Replace("-", "");
 
-                List<EmployeeModel> employees = new();
+                
                 string currentUser = HttpContext.Session.GetString("LoginUser") ?? "System";
+                List<object> errorList = new();
+                int successCount = 0;
+                int rowIndex = 2;
 
                 foreach (var row in excelRows)
                 {
+
+                    try
+                    {
+
+                    
                     var map = new Dictionary<string, string>();
 
                     foreach (var kv in row)
@@ -452,78 +455,58 @@ namespace YardManagementApplication
                     if (DateTime.TryParse(map.GetValueOrDefault("cert_issue"), out tmp)) model.Certification_date = tmp;
                     if (DateTime.TryParse(map.GetValueOrDefault("cert_expiry"), out tmp)) model.Expiry_date = tmp;
 
-                    employees.Add(model);
-                }
-
-
-                // ---------------------------------------------------------
-                // 4) Send each row to API + collect errors
-                // ---------------------------------------------------------
-                var errors = new List<object>();
-                int success = 0;
-
-                foreach (var emp in employees)
-                {
-                    try
-                    {
-                        await _apiClient.UploadEmployeeAsync(emp);
-                        success++;
+                    
+                        await _apiClient.UploadEmployeeAsync(model);
+                        successCount++;
                     }
                     catch (ApiException<ResponseModel> ex)
                     {
-                        var api = ex.Result;
-
-                        errors.Add(new
-                        {
-                            status = api?.Status ?? 400,
-                            title = api?.Title ?? "Failed",
-                            error = api?.Detail ?? ex.Message
-                        });
+                        errorList.Add(new { Row = rowIndex, Error = ex.Result?.Detail ?? ex.Message });
+                    }
+                    catch (ApiException<ProblemDetails> ex) when (ex.StatusCode == 409 || ex.StatusCode == 400)
+                    {
+                        errorList.Add(new { Row = rowIndex, Error = ex.Result?.Detail ?? "Duplicate / Missing Data" });
                     }
                     catch (Exception ex)
                     {
-                        errors.Add(new
-                        {
-                            status = 500,
-                            title = "Internal Error",
-                            error = ex.Message
-                        });
+                        errorList.Add(new { Row = rowIndex, Error = ex.Message });
                     }
+
+                    rowIndex++;
                 }
 
 
-                // ---------------------------------------------------------
-                // 5) Final response
-                // ---------------------------------------------------------
-                if (errors.Count > 0)
+                // Generate CSV if there are errors
+                string downloadUrl = null;
+                if (errorList.Count > 0)
                 {
-                    return BadRequest(new
-                    {
-                        status = "error",
-                        title = "Upload Failed",
-                        message = $"{errors.Count} record(s) failed.",
-                        errors
-                    });
+                    var csvLines = new List<string> { "Row No,Error Message" };
+                    csvLines.AddRange(errorList.Select(e =>
+                        $"\"{e.GetType().GetProperty("Row").GetValue(e)}\",\"{e.GetType().GetProperty("Error").GetValue(e)}\""));
+
+                    string folder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "Uploads", "ErrorReports");
+                    if (!Directory.Exists(folder)) Directory.CreateDirectory(folder);
+
+                    string filename = $"Employee_ErrorReport_{DateTime.Now:yyyyMMdd_HHmmss}.csv";
+                    string fullPath = Path.Combine(folder, filename);
+                    System.IO.File.WriteAllLines(fullPath, csvLines, Encoding.UTF8);
+
+                    downloadUrl = Url.Content($"~/uploads/ErrorReports/{filename}");
                 }
 
+                // Return JSON response with link
                 return Ok(new
                 {
                     status = "success",
-                    title = "Success",
-                    message = $"{success} record(s) uploaded successfully.",
-                    count = success
+                    title = "Upload Completed",
+                    message = $"Success: {successCount}, Failed: {errorList.Count}.",
+                    downloadCsv = downloadUrl
                 });
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "[UPLOAD ERROR] Employee Upload failed | Error={e}", ex.Message);
-
-                return BadRequest(new
-                {
-                    status = "error",
-                    title = "Error",
-                    message = ex.Message
-                });
+                _logger.LogError(ex, "[ACTION ERROR] {controller}.{action}", controller, action);
+                return BadRequest(new { status = "error", title = "Exception", message = ex.Message });
             }
         }
 

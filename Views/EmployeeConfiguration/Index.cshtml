@@ -7,7 +7,9 @@
 }
 
 <head>
-    <!--  Keep head empty as per request (no changes to assets/includes) -->
+   <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
 </head>
 
 <style>
@@ -18,65 +20,57 @@
 </style>
 <div class="main-container">
     <!--  Page title header -->
-@*     <div id="pageTitle" class="col-12 text-center py-1 mb-3">
-        <h6 class="mb-0 fw-bold text-uppercase tracking-wide">Employee Master</h6>
-    </div> *@
     <div class="col-12 text-center py-1 mb-3" style="background: #242424; color: white;">
         <h6 class="mb-0 fw-bold text-uppercase tracking-wide">Employee Master</h6>
     </div>
     <!--  Toolbar row with search + action buttons -->
     <div class="row align-items-center mb-3">
-        <!--  Spacer on small devices -->
+
+        <!-- Spacer on xs devices -->
         <div class="w-100 d-md-none"></div>
 
-        <!--  Right-aligned tools on md+ -->
+        <!-- Search bar and action buttons -->
         <div class="col-12 col-md d-flex justify-content-md-end align-items-center gap-2 flex-wrap">
-            <!--  Global search input -->
-            <input type="search"
-                   id="searchField"
-                   class="form-control form-control-sm"
-                   placeholder="Search..."
-                   style="max-width: 280px; min-width: 150px;" />
+
+            <div class="input-icon-wrapper">
+                <input type="search"
+                       id="searchField"
+                       class="form-control form-control-sm"
+                       placeholder="Search..."
+                       style="max-width: 280px; min-width: 150px;" />
+                <span class="input-icon material-icons">search</span>
+            </div>
 
             <!--  Action buttons group (Add/Edit/Delete/Download/Upload/Template) -->
             <div class="btn-group flex-wrap" role="group" aria-label="Icon button group" style="flex-wrap: wrap;">
                 <!--  Add row -->
-                <button id="add-btn" type="button" class="btn btn-primary-professional btn-sm px-3"
-                        title="Add" data-bs-toggle="tooltip" data-bs-placement="top" aria-label="Add">
+                <button id="add-btn" type="button" class="btn btn-primary-professional btn-sm px-3" title="Add" data-bs-toggle="tooltip" data-bs-placement="top" aria-label="Add">
                     <span class="material-icons" aria-hidden="true">add</span>
                 </button>
-
                 <!--  Edit selected row -->
-                <button id="edit-btn" type="button" class="btn btn-primary-professional btn-sm px-3"
-                        title="Edit" data-bs-toggle="tooltip" data-bs-placement="top" aria-label="Edit">
+                <button id="edit-btn" type="button" class="btn btn-primary-professional btn-sm px-3" title="Edit" data-bs-toggle="tooltip" data-bs-placement="top" aria-label="Edit">
                     <span class="material-icons" aria-hidden="true">edit</span>
                 </button>
-
                 <!--  Delete selected row -->
-                <button id="delete-btn" type="button" class="btn btn-primary-professional btn-sm px-3"
-                        title="Delete" data-bs-toggle="tooltip" data-bs-placement="top" aria-label="Delete">
+                <button id="delete-btn" type="button" class="btn btn-primary-professional btn-sm px-3" title="Delete" data-bs-toggle="tooltip" data-bs-placement="top" aria-label="Delete">
                     <span class="material-icons" aria-hidden="true">delete</span>
                 </button>
-
                 <!--  Download CSV -->
-                <button id="download-btn" type="button" class="btn btn-primary-professional btn-sm px-3"
-                        title="Download" data-bs-toggle="tooltip" data-bs-placement="top" aria-label="Download">
+                <button id="download-btn" type="button" class="btn btn-primary-professional btn-sm px-3" title="Download" data-bs-toggle="tooltip" data-bs-placement="top" aria-label="Download">
                     <span class="material-icons" aria-hidden="true">download</span>
                 </button>
-
                 <!--  Upload CSV -->
-                <button id="upload-btn" type="button" class="btn btn-primary-professional btn-sm px-3"
-                        title="Upload" data-bs-toggle="tooltip" data-bs-placement="top" aria-label="Upload">
+                <button id="upload-btn" type="button" class="btn btn-primary-professional btn-sm px-3" title="Upload" data-bs-toggle="tooltip" data-bs-placement="top" aria-label="Upload">
                     <span class="material-icons" aria-hidden="true">upload</span>
                 </button>
-
                 <!--  Download CSV template -->
-                <button id="download-template-btn" type="button" class="btn btn-primary-professional btn-sm px-3"
-                        title="Download Template" data-bs-toggle="tooltip" data-bs-placement="top" aria-label="Download Template">
+                <button id="download-template-btn" type="button" class="btn btn-primary-professional btn-sm px-3" title="Download Template" data-bs-toggle="tooltip" data-bs-placement="top" aria-label="Download Template">
                     <span class="material-icons" aria-hidden="true">assignment_returned</span>
                 </button>
             </div>
         </div>
+
+
     </div>
 
     <form id="afForm" style="display:none" method="post">
@@ -87,10 +81,7 @@
 
     <!--  Tabulator grid mount point -->
     <div id="employeeConfigurationTable" class="tabulator-bootstrap5"></div>
-
-    @* <div id="recordCount" class="text-end mt-2 fw-semibold text-secondary"></div> *@
-     <div id="recordCount" class="footer-total-records"></div>
-
+    <div id="recordCount" class="footer-total-records"></div>
 </div>
 
 <!--  Add/Edit modal (wide inline version) -->
@@ -117,25 +108,37 @@
                         <!-- Employee Code -->
                         <div class="col-md-6" style="width:320px;">
                             <label class="form-label">Employee Code <span class="text-danger">*</span></label>
-                            <input type="text" class="form-control" autocomplete="off" id="Employee_code" name="Employee_code" required>
+                            <input type="text" class="form-control" autocomplete="off" id="Employee_code" name="Employee_code" required
+                           pattern="[A-Za-z0-9]+"                            
+                            placeholder="Enter Employee Code"
+                           title="Only letters and numbers allowed. No spaces or special characters.">
                         </div>
 
                         <!-- First Name -->
                         <div class="col-md-6" style="width:320px;">
                             <label class="form-label">First Name <span class="text-danger">*</span></label>
-                            <input type="text" class="form-control" autocomplete="off" id="First_name" name="First_name" required>
+                            <input type="text" class="form-control" autocomplete="off" id="First_name" name="First_name" required
+                            pattern="[A-Za-z ]+"
+                                   placeholder="Enter First Name"
+                                  title="Only letters and spaces allowed.">
                         </div>
 
                         <!-- Middle Name -->
                         <div class="col-md-6" style="width:320px;">
                             <label class="form-label">Middle Name</label>
-                            <input type="text" class="form-control" autocomplete="off" id="Middle_name" name="Middle_name">
+                            <input type="text" class="form-control" autocomplete="off" id="Middle_name" name="Middle_name"
+                            pattern="[A-Za-z ]+"
+                                   placeholder="Enter Middle Name"
+                                   title="Only letters and spaces are allowed.">
                         </div>
 
                         <!-- Last Name -->
                         <div class="col-md-6" style="width:320px;">
                             <label class="form-label">Last Name <span class="text-danger">*</span></label>
-                            <input type="text" class="form-control" autocomplete="off" id="Last_name" name="Last_name" required>
+                            <input type="text" class="form-control" autocomplete="off" id="Last_name" name="Last_name" required
+                            pattern="[A-Za-z ]+"
+                                   placeholder="Enter Last Name"
+                                   title="Only letters and spaces allowed.">
                         </div>
 
                         <!-- Department -->
@@ -150,7 +153,10 @@
                         <!-- Reporting To -->
                         <div class="col-md-6" style="width:320px;">
                             <label class="form-label">Reporting To <span class="text-danger">*</span></label>
-                            <input type="text" class="form-control" autocomplete="off" id="Reporting_to_name" name="Reporting_to_name" required>
+                            <input type="text" class="form-control" autocomplete="off" id="Reporting_to_name" name="Reporting_to_name" required
+                            pattern="[A-Za-z0-9 ]+"
+                                   placeholder="Enter Reporting To"
+                                   title="Only letters and spaces allowed.">
                         </div>
 
                         <!-- Phone Number -->
@@ -158,11 +164,12 @@
                             <label class="form-label">Phone Number <span class="text-danger">*</span></label>
                             <div class="input-group">
                                 <select class="form-select" id="Country_code" name="Country_code" required style="max-width:110px;">
-                                    <option value="+1">+1 (US)</option>
-                                    <option value="+52">+52 (MX)</option>
-                                    <option value="+91">+91 (IND)</option>
                                 </select>
-                                <input type="text" class="form-control" autocomplete="off" id="Contact_number" name="Contact_number" maxlength="10" required>
+
+                                <input type="text" class="form-control" autocomplete="off" id="Contact_number" name="Contact_number" maxlength="10" required
+                                
+                                   placeholder="Enter Phone Number"
+                                   title="Phone number must contain only digits (1 to 20 digits).">
                             </div>
                         </div>
 
@@ -171,11 +178,12 @@
                             <label class="form-label">Emergency Contact Number <span class="text-danger">*</span></label>
                             <div class="input-group">
                                 <select class="form-select" id="Emergency_country_code" name="Emergency_country_code" required style="max-width:110px;">
-                                    <option value="+1">+1 (US)</option>
-                                    <option value="+52">+52 (MX)</option>
-                                    <option value="+91">+91 (IND)</option>
                                 </select>
-                                <input type="text" class="form-control" autocomplete="off" id="Emergency_contact_number" name="Emergency_contact_number" maxlength="10" required>
+
+                                <input type="text" class="form-control" autocomplete="off" id="Emergency_contact_number" name="Emergency_contact_number" maxlength="10" required
+                                
+                                   placeholder="Enter Emergency Contact Number"
+                                title="Phone number must contain only digits (1 to 20 digits).">
                             </div>
                         </div>
 
@@ -183,7 +191,10 @@
                         <div class="col-md-6" style="width:320px;">
                             <label class="form-label" for="Email">Email <span class="text-danger">*</span></label>
 
-                            <input type="email" class="form-control" autocomplete="off" id="Email" name="Email" required>
+                            <input type="email" class="form-control" autocomplete="off" id="Email" name="Email" required
+                            pattern="[A-Za-z0-9 ]+"
+                                   placeholder="Enter Email"
+                                   title="Only letters, numbers, and spaces allowed.">
                         </div>
 
                         <!-- Skill Type -->
@@ -247,18 +258,21 @@
                         </div>
 
                         <!-- Status -->
-                        <div class="col-md-6" style="width:320px;">
+                        @* <div class="col-md-6" style="width:320px;">
                             <label class="form-label">Status <span class="text-danger">*</span></label>
                             <select class="form-select" id="Status_id" name="Status_id" required
                                 asp-items="@(ViewBag.StatusList as IEnumerable<SelectListItem>)">
                                 <option disabled selected value="">Select Status</option>
                             </select>
-                        </div>                        
+                        </div>                         *@
                       
                         <!-- Address -->
                         <div class="col-md-12" style="width:420px;">
                             <label class="form-label">Address <span class="text-danger">*</span></label>
-                            <input type="text" class="form-control" autocomplete="off" id="Address" name="Address" required>
+                            <input type="text" class="form-control" autocomplete="off" id="Address" name="Address" required
+                            pattern="[A-Za-z0-9 ]+"
+                                   placeholder="Enter Address"
+                                   title="Only letters, numbers, and spaces are allowed. No special characters.">
                         </div>
 
                     </div>
@@ -285,6 +299,9 @@
 
 $(document).ready(function () {
 
+     let countryCodesLoaded = false;
+
+     loadCountryCodes();
     // -------------------------------
     // Date validation (Issue → Expiry)
     // -------------------------------
@@ -313,6 +330,64 @@ $(document).ready(function () {
             $("#Emergency_contact_number")[0].setCustomValidity("");
         }
     });
+    // ====================================
+    // Load Country Codes using jQuery
+    // ====================================
+    async function loadCountryCodes() {
+    
+        try {
+        const response = await fetch("/Common/GetCountryCodes");
+
+        if (!response.ok) {
+            throw new Error("Failed to load country codes");
+        }
+
+        const list = await response.json();
+
+        // Clear dropdowns
+        const ddl1 = document.getElementById("Country_code");
+        const ddl2 = document.getElementById("Emergency_country_code");
+
+        ddl1.innerHTML = `<option disabled selected value="">Select</option>`;
+        ddl2.innerHTML = `<option disabled selected value="">Select</option>`;
+
+        // Add options from CSV data
+        list.forEach(item => {
+            const dial = "+" + item.dial;
+
+            ddl1.insertAdjacentHTML("beforeend",
+                `<option value="${dial}">${dial}</option>`);
+
+            ddl2.insertAdjacentHTML("beforeend",
+                `<option value="${dial}">${dial}</option>`);
+        });
+
+        // Apply Select2 (searchable dropdown)
+        $("#Country_code").select2({
+            dropdownParent: $("#addEditModal"),
+            placeholder: "Select Country Code",
+            width: "resolve"
+        });
+
+        $("#Emergency_country_code").select2({
+            dropdownParent: $("#addEditModal"),
+            placeholder: "Select Country Code",
+            width: "resolve"
+        });
+
+    } catch (error) {
+        showToast({
+            icon: "error",
+            text: error.message
+        });
+    }
+
+    countryCodesLoaded = true;
+
+}
+
+
+   
 
     // -------------------------------
     // Email validation
@@ -348,16 +423,70 @@ $(document).ready(function () {
             { title: "Emergency Phone", field: "Emergency_contact_number", headerHozAlign: "center" },
             { title: "Email", field: "Email", headerHozAlign: "center" }
         ],
-        layout: "fitDataStretch",
-        height: "80vh",
+         layout: "fitColumns",
+        height: "70vh",
         selectable: 1,
+
         pagination: "local",
         paginationSize: 10,
+        paginationSizeSelector: [5, 10, 20, 50, 100],
+
+        resizableRows: false,
+        resizableColumnGuide: false,
+        columnDefaults: { resizable: false },
+        movableColumns: false,
+
+        locale: true,
+        langs: {
+            "en": {
+                pagination: {
+                    first: "<<",
+                    first_title: "First",
+                    last: ">>",
+                    last_title: "Last",
+                    prev: "<",
+                    prev_title: "Prev",
+                    next: ">",
+                    next_title: "Next",
+                    page_size: "Page Size"
+                }
+            }
+        },
+
         rowClick: function (e, row) {
             selectedRow = row.getData();
         }
     });
 
+    // ================================================================
+    //  Search functionality
+    // ================================================================
+     $("#searchField").on("input", function () {
+
+        const q = $(this).val().toLowerCase();
+
+        const visibleCols = dataTable
+            .getColumns()
+            .map(c => c.getField());   
+
+        dataTable.setFilter(d =>
+            visibleCols.some(f =>
+                (d?.[f] ?? "")
+                    .toString()
+                    .toLowerCase()
+                    .includes(q)
+            )
+        );
+    });
+
+
+    dataTable.on("dataLoaded", (data) => {
+        $("#recordCount").text("Total Records: " + data.length);
+    });
+
+    dataTable.on("dataFiltered", (_, rows) => {
+        $("#recordCount").text("Total Records: " + rows.length);
+    });
     // -------------------------------
     // Add Button
     // -------------------------------
@@ -375,6 +504,7 @@ $(document).ready(function () {
     // -------------------------------
     $("#edit-btn").click(function () {
         const row = dataTable.getSelectedData()?.[0];
+        console.log("Selected Row Data:", row);
 
         if (!row) {
             return showAppAlert({ icon: "warning", title: "No Selection", text: "Select a row to edit." });
@@ -383,7 +513,7 @@ $(document).ready(function () {
         currentMode = "Edit";
       
         $("#Employee_code").prop("readonly", true);
-        $("#IsAppUser").prop("disabled", true);
+   
 
         $("#addEditModalLabel").text("Edit Employee Master");
         $("#modalSubmitBtn").text("Update");
@@ -405,20 +535,36 @@ $(document).ready(function () {
             // -------------------------------
             // PHONE NUMBER SPLIT
             // -------------------------------
-            if (f === "Contact_number" && row[f]) {
-                let parts = row[f].split("-");
-                $("#Country_code").val(parts[0]);        // +1 / +91 / +52
-                $("#Contact_number").val(parts[1] || ""); // 10-digit number
-                return;
-            }
+           if (f === "Contact_number" && row[f]) {
+                    let parts = row[f].split("-");
 
-            if (f === "Emergency_contact_number" && row[f]) {
-                let parts = row[f].split("-");
-                $("#Emergency_country_code").val(parts[0]);               // +1 / +91 / +52
-                $("#Emergency_contact_number").val(parts[1] || "");       // 10-digit number
-                return;
-            }
+                    let wait1 = setInterval(() => {
+                        if (countryCodesLoaded) {
+                            $("#Country_code").val(parts[0]).trigger("change");
+                            $("#Contact_number").val(parts[1] || "");
+                            clearInterval(wait1);
+                        }
+                    }, 100);
 
+                    return;
+                }
+
+                if (f === "Emergency_contact_number" && row[f]) {
+                    let parts = row[f].split("-");
+
+                    let wait2 = setInterval(() => {
+                        if (countryCodesLoaded) {
+                            $("#Emergency_country_code").val(parts[0]).trigger("change");
+                            $("#Emergency_contact_number").val(parts[1] || "");
+                            clearInterval(wait2);
+                        }
+                    }, 100);
+
+                    return;
+                }
+              $("#IsAppUser").prop("checked",
+                row.App_user === true || row.IsAppUser === true
+            );
             // Default set
             el.val(row[f]);
         });
@@ -440,7 +586,7 @@ $(document).ready(function () {
         formData.Contact_number = `${formData.Country_code}-${formData.Contact_number}`;
         formData.Emergency_contact_number = `${formData.Emergency_country_code}-${formData.Emergency_contact_number}`;
         formData.certificate_name = $("#Certificate_type_id option:selected").text();
-
+        formData.Status_id = 48; // Default value
         const url = currentMode === "Add"
             ? "/EmployeeConfiguration/Create"
             : "/EmployeeConfiguration/Update";
@@ -476,8 +622,7 @@ $(document).ready(function () {
                 "Certificate Issue Date",
                 "Certificate Expiry Date",
                 "Blood Group",
-                "Employment Type",
-                "Status",
+                "Employment Type",              
                 "Address",
                 "Is App User (Y/N)"
 
@@ -544,78 +689,86 @@ async function uploadFile(url, file) {
     }
 }
 
+// ================================================================
+//  Download XLSX
+// ================================================================
+ 
+  $("#download-btn").on("click", function () {
+
+    let allRows = dataTable.getData();
+
+    if (!allRows || allRows.length === 0) {
+        return showAppAlert({
+            icon: "warning",
+            title: "No Data",
+            text: "No records found to download."
+        });
+    }
+
+   
+    const visibleCols = dataTable.getColumns()
+        .filter(col => col.isVisible())
+        .map(col => ({
+            field: col.getField(),
+            title: col.getDefinition().title
+        }));
+
+
+    const finalRows = allRows.map(row => {
+        let obj = {};
+        visibleCols.forEach(col => {
+            obj[col.title] = row[col.field] ?? "";
+        });
+        return obj;
+    });
+
+
+    downloadXlsx(finalRows, "EmployeeMasterData");
+});
+
+
+
 
 // ================================================================
 //  Handle upload response
 // ================================================================
 async function handleUploadResponse(response) {
-
     const result = await response.json().catch(() => null);
 
-    // SUCCESS
-    if (response.ok) {
-
-        showAppAlert({
-            icon: result.status,
-            title: result.title,
-            text: result.message,
-            timer: 2500,
-            showConfirmButton: false
-        });
-
-        setTimeout(() => location.reload(), 800);
-        $("#upload-file").val("");
-
-        return;
-    }
-
-    // GENERIC API MESSAGE
-    if (result && result.errors) {
-
-        let msg = "";
-        result.errors.forEach(e => {
-            msg += `Error: ${e.error}\n\n`;
-        });
-
-        showAppAlert({
-            icon: "error",
-            title: "Upload Failed",
-            text: msg,
-            timer: 4500,
-            showConfirmButton: false
-        });
-
-        $("#upload-file").val("");
-        return;
-    }
-
-    // GENERIC API MESSAGE
-    if (result && result.message) {
-
-        showAppAlert({
-            icon: "error",
-            title: "Upload Failed",
-            text: result.message,
-            timer: 3500,
-            showConfirmButton: false
-        });
-
-        $("#upload-file").val("");
-        return;
-    }
-
-   // UNKNOWN ERROR
-    showAppAlert({
-        icon: "error",
-        title: "Upload Failed",
-        text: "Unexpected error.",
-        timer: 3500,
-        showConfirmButton: false
-    });
-
-
     $("#upload-file").val("");
+
+    if (!result) {
+        return Swal.fire({
+            icon: "error",
+            title: "Upload Failed",
+            text: "Unexpected error."
+        });
+    }
+
+    let successCount = 0, failedCount = 0;
+    const countMatch = result.message.match(/Success:\s*(\d+),\s*Failed:\s*(\d+)/i);
+    if (countMatch) {
+        successCount = parseInt(countMatch[1]);
+        failedCount = parseInt(countMatch[2]);
+    }
+
+    let iconType = failedCount > 0 ? "error" : "success";
+
+    let htmlMsg = result.message;
+    if (failedCount > 0 && result.downloadCsv) {
+        htmlMsg += `<br/><a href='${result.downloadCsv}' target='_blank'>Click here to download CSV</a>`;
+    }
+
+    Swal.fire({
+        icon: iconType,
+        title: failedCount === 0 ? "Upload Completed" : "Upload Completed with some failures",
+        html: htmlMsg,
+        showConfirmButton: true
+    }).then(() => {
+        location.reload(); 
+    });
 }
+
     // -------------------------------
     // Delete Button
     // -------------------------------

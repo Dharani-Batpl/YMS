@@ -395,13 +395,18 @@ namespace YardManagementApplication
                 // Map + Upload
                 string currentUser = HttpContext.Session.GetString("LoginUser") ?? "System";
 
-                List<HolidayModel> allItems = new();
+                List<object> errorList = new();
+                int successCount = 0;
+                int rowIndex = 2;
 
                 string norm(string x) =>
                     x.Trim().ToLower().Replace(" ", "").Replace("_", "").Replace("-", "");
 
                 foreach (var row in excelRows)
                 {
+
+                    try 
+                    { 
                     var mapped = new Dictionary<string, string>();
 
                     foreach (var kv in row)
@@ -428,60 +433,61 @@ namespace YardManagementApplication
                     if (DateTime.TryParse(mapped.GetValueOrDefault("holiday_date"), out var dt))
                         model.Holiday_date = dt;
 
-                    allItems.Add(model);
-                }
-
-                int successCount = 0;
-                var apiErrors = new List<object>();
-
-                foreach (var item in allItems)
-                {
-                    try
-                    {
-                        await _apiClient.UploadHolidayAsync(item);
+                   
+                        await _apiClient.UploadHolidayAsync(model);
                         successCount++;
                     }
                     catch (ApiException<ResponseModel> ex)
                     {
-                        apiErrors.Add(new { error = ex.Result?.Detail ?? ex.Message });
+                        errorList.Add(new { Row = rowIndex, Error = ex.Result?.Detail ?? ex.Message });
+                    }
+                    catch (ApiException<ProblemDetails> ex) when (ex.StatusCode == 409 || ex.StatusCode == 400)
+                    {
+                        errorList.Add(new { Row = rowIndex, Error = ex.Result?.Detail ?? "Duplicate / Missing Data" });
                     }
                     catch (Exception ex)
                     {
-                        apiErrors.Add(new { error = ex.Message });
+                        errorList.Add(new { Row = rowIndex, Error = ex.Message });
                     }
-                }
 
-                if (apiErrors.Count > 0)
+                    rowIndex++;
+                }
+               //Generate CSV if there are errors
+                 string downloadUrl = null;
+                if (errorList.Count > 0)
                 {
-                    return BadRequest(new
-                    {
-                        status = "error",
-                        title = "Upload Failed",
-                        message = $"{apiErrors.Count} record(s) failed.",
-                        errors = apiErrors
-                    });
+                    var csvLines = new List<string> { "Row No,Error Message" };
+                    csvLines.AddRange(errorList.Select(e =>
+                        $"\"{e.GetType().GetProperty("Row").GetValue(e)}\",\"{e.GetType().GetProperty("Error").GetValue(e)}\""));
+                        
+                    string folder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "Uploads", "ErrorReports");
+                    if (!Directory.Exists(folder)) Directory.CreateDirectory(folder);
+
+                    string filename = $"Holiday_ErrorReport_{DateTime.Now:yyyyMMdd_HHmmss}.csv";
+                    string fullPath = Path.Combine(folder, filename);
+                    System.IO.File.WriteAllLines(fullPath, csvLines, Encoding.UTF8);
+
+                    downloadUrl = Url.Content($"~/uploads/ErrorReports/{filename}");
                 }
 
+                // Return JSON response with link
                 return Ok(new
                 {
                     status = "success",
-                    title = "Success",
-                    message = $"{successCount} records added successfully."
+                    title = "Upload Completed",
+                    message = $"Success: {successCount}, Failed: {errorList.Count}.",
+                    downloadCsv = downloadUrl
                 });
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "[ACTION ERROR] {controller}.{action}", controller, action);
-
-                return BadRequest(new
-                {
-                    status = "error",
-                    title = "Exception",
-                    message = ex.Message
-                });
+                return BadRequest(new { status = "error", title = "Exception", message = ex.Message });
             }
         }
-
-
+   
     }
-}
+
+
+ }
+

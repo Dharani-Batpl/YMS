@@ -2,7 +2,7 @@
     font-family: "Segoe UI", system-ui, -apple-system, "Helvetica Neue", Arial;
     font-size: 13px;
 }
-/* === Dialog sizing === */
+    /* === Dialog sizing === */
     .modal-request .modal-dialog {
         max-width: 600px;
         max-height: 90vh;
@@ -11,14 +11,14 @@
     }
 
 
-/* === Modal content === */
-.modal-request .modal-content {
-    max-height: 90vh;
-    border-radius: 8px;
-    border: 0;
-    box-shadow: 0 6px 18px rgba(15, 23, 42, 0.12);
-    overflow-y: auto;
-}
+    /* === Modal content === */
+    .modal-request .modal-content {
+        max-height: 90vh;
+        border-radius: 8px;
+        border: 0;
+        box-shadow: 0 6px 18px rgba(15, 23, 42, 0.12);
+        overflow-y: auto;
+    }
 
     /* === Header === */
     .modal-request .modal-header {
@@ -170,4 +170,30 @@
         padding: 6px 14px 10px 14px;
     }
 }
+/* Added for Search Icon and label formats */
+.input-icon-wrapper {
+    position: relative;
+    display: inline-block;
+}
 
+    .input-icon-wrapper input {
+        padding-left: 28px; /* space for icon */
+    }
+
+    .input-icon-wrapper .input-icon {
+        position: absolute;
+        left: 8px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #6c757d; /* gray color, you can change */
+        pointer-events: none; /* allows clicking through icon to input */
+        font-size: 18px;
+    }
+
+label.form-label {
+    font-weight: 500;
+}
+
+.text-danger {
+    font-weight: 600;
+}

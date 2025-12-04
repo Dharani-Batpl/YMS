@@ -30,10 +30,16 @@
         <div class="w-100 d-md-none"></div>
 
         <!-- ---- Top Button Section ---- -->
-        <div class="col-12 col-md d-flex justify-content-md-end align-items-center gap-2 flex-wrap">
+         <div class="col-12 col-md d-flex justify-content-md-end align-items-center gap-2 flex-wrap">
 
-            <!-- Search Field -->
-            <input type="search" id="searchField" class="form-control form-control-sm" placeholder="Search..." style="max-width: 280px; min-width: 150px;" autocomplete="off"/>
+            <div class="input-icon-wrapper">
+                <input type="search"
+                       id="searchField"
+                       class="form-control form-control-sm"
+                       placeholder="Search..."
+                       style="max-width: 280px; min-width: 150px;" />
+                <span class="input-icon material-icons">search</span>
+            </div>
 
             <!-- ---- Action Buttons ---- -->
             <div class="btn-group flex-wrap" role="group" aria-label="Icon button group" style="flex-wrap: wrap;">
@@ -105,21 +111,27 @@
 
                         <!-- Holiday Name -->
                         <div class="col-md-6">
-                            <label class="form-label">Holiday Name <span class="text-danger">*</span></label>
-                            <input type="text" class="form-control"
-                                   id="Holiday_name" name="Holiday_name"
-                                     style="width: 250px;"
-                                   required maxlength="25"
-                                   pattern="[A-Za-z0-9 ]+"
-                                   title="Only letters, numbers, and spaces allowed">
-                        </div>
+                        <label class="form-label">Holiday Name <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control"
+                               id="Holiday_name" name="Holiday_name"
+                               style="width: 250px;"
+                               required maxlength="150"
+                               pattern="[A-Za-z0-9 ]+"
+                               placeholder="Enter Holiday Name"
+                               title="Only letters, numbers, and spaces allowed. Maximum 150 characters.">
+                    </div>
+
 
                         <!-- Holiday Date -->
                         <div class="col-md-6">
                             <label class="form-label">Date <span class="text-danger">*</span></label>
                             <input type="date" class="form-control"
-                                   id="Holiday_date" style="width: 250px;" name="Holiday_date" required>
+                                   id="Holiday_date"
+                                   style="width: 250px;"
+                                   name="Holiday_date"
+                                   required>
                         </div>
+
 
                     </div>
 
@@ -138,15 +150,16 @@
                         </div>
 
                         <!-- Description -->
-                        <div class="col-md-6">
-                            <label class="form-label">Description</label>
-                            <textarea class="form-control"
-                                  id="Description"
-                                  name="Description"
-                                  rows="2"
-                                  style="width: 250px; resize: vertical;"
-                                  maxlength="100"></textarea>
-                        </div>
+                        <<div class="col-md-6">
+                                <label class="form-label">Description</label>
+                                <textarea class="form-control"
+                                          id="Description"
+                                          name="Description"
+                                          rows="2"
+                                          style="width: 250px; resize: vertical;"
+                                          maxlength="100"
+                                          placeholder="Optional description"></textarea>
+                            </div>
 
                     </div>
 
@@ -476,41 +489,45 @@ async function uploadFile(url, file) {
 }
 
 
+
 // -------------------------------------------------------------
 // Upload response handler
 // -------------------------------------------------------------
 async function handleUploadResponse(response) {
-
     const result = await response.json().catch(() => null);
 
-    if (response.ok) {
-        showAppAlert({
-            icon: "success",
-            title: result.title || "Upload Successful",
-            text: result.message || "Excel uploaded successfully.",
-            timer: 2000,
-            showConfirmButton: false
-        });
-
-        setTimeout(() => location.reload(), 900);
-        $("#upload-file").val("");
-        return;
-    }
-
-    if (result?.errors) {
-        let msg = "";
-        result.errors.forEach(e => msg += `${e.error}\n`);
-        showAppAlert({ icon: "error", title: "Upload Failed", text: msg });
-        $("#upload-file").val("");
-        return;
-    }
-
-    showAppAlert({
-        icon: "error",
-        title: "Upload Failed",
-        text: result?.message || "Unexpected error occurred."
-    });
-
     $("#upload-file").val("");
+
+    if (!result) {
+        return Swal.fire({
+            icon: "error",
+            title: "Upload Failed",
+            text: "Unexpected error."
+        });
+    }
+
+    let successCount = 0, failedCount = 0;
+    const countMatch = result.message.match(/Success:\s*(\d+),\s*Failed:\s*(\d+)/i);
+    if (countMatch) {
+        successCount = parseInt(countMatch[1]);
+        failedCount = parseInt(countMatch[2]);
+    }
+
+    let iconType = failedCount > 0 ? "error" : "success";
+
+    let htmlMsg = result.message;
+    if (failedCount > 0 && result.downloadCsv) {
+        htmlMsg += `<br/><a href='${result.downloadCsv}' target='_blank'>Click here to download CSV</a>`;
+    }
+
+    Swal.fire({
+        icon: iconType,
+        title: failedCount === 0 ? "Upload Completed" : "Upload Completed with some failures",
+        html: htmlMsg,
+        showConfirmButton: true
+    }).then(() => {
+        location.reload(); // 🔥 Refresh table after upload
+    });
 }
+
 </script>

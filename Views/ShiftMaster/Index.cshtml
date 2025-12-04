@@ -31,10 +31,17 @@
          <!-- Spacer on xs devices -->
         <div class="w-100 d-md-none"></div>
 
+        
         <div class="col-12 col-md d-flex justify-content-md-end align-items-center gap-2 flex-wrap">
 
-             <!-- Search input -->
-             <input type="search" id="searchField" class="form-control form-control-sm" placeholder="Search..." style="max-width: 280px; min-width: 150px;" autocomplete="off"/>
+            <div class="input-icon-wrapper">
+                <input type="search"
+                       id="searchField"
+                       class="form-control form-control-sm"
+                       placeholder="Search..."
+                       style="max-width: 280px; min-width: 150px;" />
+                <span class="input-icon material-icons">search</span>
+            </div>
 
              <!-- Action buttons group -->
             <div class="btn-group flex-wrap">
@@ -102,14 +109,22 @@
                         <div>
                             <label class="form-label">Shift Name <span class="text-danger">*</span></label>
                             <input type="text" id="Shift_name" name="Shift_name" class="form-control"
-                                   required maxlength="15"style="width: 150px;" autocomplete="off">
+                           required maxlength="15" style="width:150px;" autocomplete="off"
+                           pattern="[A-Za-z0-9 ]+"
+                           placeholder="Enter Shift Name"
+                           title="Only letters, numbers, and spaces allowed. Maximum 15 characters.">
+
                         </div>
 
                          <!-- Shift Description -->
                         <div>
                             <label class="form-label">Description</label>
-                            <input type="text" id="Shift_description" name="Shift_description"
-                                   class="form-control" maxlength="20" style="width: 300px;"autocomplete="off">
+                           <input type="text" id="Shift_description" name="Shift_description"
+                               class="form-control" maxlength="20" style="width:300px;" autocomplete="off"
+                               pattern="[A-Za-z0-9 ]+"
+                               placeholder="Enter Description"
+                               title="Only letters, numbers, and spaces allowed. Maximum 20 characters.">
+
                         </div>
 
                     </div>
@@ -119,13 +134,17 @@
                          <!-- Start time -->
                         <div>
                             <label class="form-label">From Time <span class="text-danger">*</span></label>
-                           <input type="text" class="form-control" id="start_time" name="start_time" required>
+                           <input type="text" class="form-control" id="start_time" name="start_time" required
+                           placeholder="HH:mm"
+                            title="Enter time in 24-hour format: HH:mm (e.g., 08:30 or 17:45)">
                         </div>
 
                          <!-- End time -->
                         <div>
                             <label class="form-label">To Time <span class="text-danger">*</span></label>
-                            <input type="text" class="form-control" id="end_time" name="end_time" required>
+                            <input type="text" class="form-control" id="end_time" name="end_time" required
+                            placeholder="HH:mm"
+                          title="Enter time in 24-hour format: HH:mm (e.g., 08:30 or 17:45)">
                         </div>
 
                          <!-- Add Break -->
@@ -507,18 +526,22 @@ $("#searchField").on("input", function () {
                             <div class="col-md-3">
                                 <input type="text" class="form-control break-time"
                                        name="Breaks[${breakCount}].In"
-                                       value="${b[`Break${breakCount}In`] || ""}" required>
+                                       value="${b[`Break${breakCount}In`] || ""}" required
+                                       placeholder="HH:mm"
+                                    title="Enter time in 24-hour format: HH:mm (e.g., 08:30 or 17:45)">
                             </div>
                             <div class="col-md-3">
                                 <input type="text" class="form-control  break-time"
                                        name="Breaks[${breakCount}].Out"
-                                       value="${b[`Break${breakCount}Out`] || ""}" required>
+                                       value="${b[`Break${breakCount}Out`] || ""}" required
+                                       placeholder="HH:mm"
+                                      title="Enter time in 24-hour format: HH:mm (e.g., 08:30 or 17:45)">
                             </div>
                             <div class="col-md-4">
                                 <input type="text" class="form-control"
                                        name="Breaks[${breakCount}].Description"
                                        value="${b[`Break${breakCount}Description`] || ""}"
-                                       placeholder="Description">
+                                       placeholder="Enter Description">
                             </div>
                             <div class="col-md-2">
                                 <button type="button" class="btn btn-outline-danger-professional btn-sm removeBreakBtn">
@@ -635,10 +658,6 @@ $("#searchField").on("input", function () {
         if (success) setTimeout(() => location.reload(), 900);
     });
 
-
-    // ================================================================
-    //  Add break
-    // ================================================================
     // ================================================================
 //  Add break
 // ================================================================
@@ -650,16 +669,20 @@ $("#addBreakBtn").on("click", () => {
         <div class="row g-2 align-items-center mb-2" id="breakRow_${breakCount}">
             <div class="col-md-3">
                 <input type="text" class="form-control break-time"
-                       name="Breaks[${breakCount}].In" required>
+                       name="Breaks[${breakCount}].In" required
+                       placeholder="HH:mm"
+       title="Enter time in 24-hour format: HH:mm (e.g., 08:30 or 17:45)">
             </div>
             <div class="col-md-3">
                 <input type="text" class="form-control break-time"
-                       name="Breaks[${breakCount}].Out" required>
+                       name="Breaks[${breakCount}].Out" required
+                       placeholder="HH:mm"
+       title="Enter time in 24-hour format: HH:mm (e.g., 08:30 or 17:45)">
             </div>
             <div class="col-md-4">
                 <input type="text" class="form-control"
                        name="Breaks[${breakCount}].Description"
-                       placeholder="Break Description" required>
+                       placeholder="Enter Description" required>
             </div>
             <div class="col-md-2">
                 <button type="button" class="btn btn-outline-danger-professional btn-sm removeBreakBtn">
@@ -772,131 +795,113 @@ function exportXlsx(rows, fileName) {
         downloadTemplate(headers, "ShiftMasterTemplate");
     });
 
+    
 
-    // ================================================================
-    //  Upload file
-    // ================================================================
-    $("#upload-btn").on("click", function () {
-        $("#upload-file").click();
-    });
-
-    $("#upload-file").on("change", function (event) {
-        const file = event.target.files?.[0];
-
-        if (!file) {
-            return showAppAlert({
-                icon: 'warning',
-                title: 'No File',
-                text: 'Please select a file to upload.'
-            });
-        }
-
-        const isExcel = /\.(xlsx|xls)$/i.test(file.name);
-        if (!isExcel) {
-            showAppAlert({
-                icon: 'warning',
-                title: 'Invalid File',
-                text: 'Please select an Excel file (.xlsx or .xls).'
-            });
-            return;
-        }
-
-        uploadFile('/ShiftMaster/Upload', file);
-    });
+// ================================================================
+//  Upload button
+// ================================================================
+$("#upload-btn").on("click", function () {
+    $("#upload-file").click();
+});
 
 
-    // ================================================================
-    //  Upload function
-    // ================================================================
-    async function uploadFile(url, file) {
-        const formData = new FormData();
-        formData.append("file", file);
+// ================================================================
+//  File input change event
+// ================================================================
+$("#upload-file").on("change", function (event) {
 
-        const csrf = $('#afForm input[name="__RequestVerificationToken"]').val();
+    const file = event.target.files?.[0];
 
-        try {
-            const response = await fetch(url, {
-                method: 'POST',
-                headers: { 'RequestVerificationToken': csrf },
-                body: formData
-            });
-
-            await handleUploadResponse(response);
-
-        } catch (err) {
-            showToast({ icon: "error", text: err.message });
-        }
+    if (!file) {
+        return showAppAlert({
+            icon: 'warning',
+            title: 'No File',
+            text: 'Please select a file to upload.'
+        });
     }
 
-
-    // ================================================================
-    //  Handle upload response
-    // ================================================================
-    async function handleUploadResponse(response) {
-
-        const result = await response.json().catch(() => null);
-
-        // SUCCESS
-        if (response.ok) {
-
-            showAppAlert({
-                icon: result.status,
-                title: result.title,
-                text: result.message,
-                timer: 2500,
-                showConfirmButton: false
-            });
-
-            setTimeout(() => location.reload(), 800);
-            $("#upload-file").val("");
-            return;
-        }
-
-        // VALIDATION API ERRORS
-        if (result && result.errors) {
-
-            let msg = "";
-            result.errors.forEach(e => {
-                msg += `Error: ${e.error}\n\n`;
-            });
-
-            showAppAlert({
-                icon: "error",
-                title: "Upload Failed",
-                text: msg,
-                timer: 4500,
-                showConfirmButton: false
-            });
-
-            $("#upload-file").val("");
-            return;
-        }
-
-      // GENERIC API MESSAGE
-        if (result && result.message) {
-            showAppAlert({
-                icon: "error",
-                title: "Upload Failed",
-                text: result.message,
-                timer: 3500,
-                showConfirmButton: false
-            });
-
-            $("#upload-file").val("");
-            return;
-        }
-
-        // UNKNOWN ERROR
+    const isExcel = /\.(xlsx|xls)$/i.test(file.name);
+    if (!isExcel) {
         showAppAlert({
-            icon: "error",
-            title: "Upload Failed",
-            text: "Unexpected error.",
-            timer: 3500,
-            showConfirmButton: false
+            icon: 'warning',
+            title: 'Invalid File',
+            text: 'Please select an Excel file (.xlsx or .xls).'
+        });
+        return;
+    }
+
+    uploadFile('/ShiftMaster/Upload', file);
+});
+
+
+// ================================================================
+//  Upload function
+// ================================================================
+async function uploadFile(url, file) {
+
+    const formData = new FormData();
+    formData.append("file", file);
+
+    const csrf = $('#afForm input[name="__RequestVerificationToken"]').val();
+
+    try {
+        const response = await fetch(url, {
+            method: 'POST',
+            headers: { 'RequestVerificationToken': csrf },
+            body: formData
         });
 
-        $("#upload-file").val("");
+        await handleUploadResponse(response);
+
+    } catch (err) {
+        showToast({ icon: "error", text: err.message });
     }
+}
+
+
+
+// -------------------------------------------------------------
+// Upload response handler
+// -------------------------------------------------------------
+
+async function handleUploadResponse(response) {
+    const result = await response.json().catch(() => null);
+
+    $("#upload-file").val("");
+
+    if (!result) {
+        return Swal.fire({
+            icon: "error",
+            title: "Upload Failed",
+            text: "Unexpected error."
+        });
+    }
+
+    let successCount = 0, failedCount = 0;
+    const countMatch = result.message.match(/Success:\s*(\d+),\s*Failed:\s*(\d+)/i);
+    if (countMatch) {
+        successCount = parseInt(countMatch[1]);
+        failedCount = parseInt(countMatch[2]);
+    }
+
+    let iconType = failedCount > 0 ? "error" : "success";
+
+    let htmlMsg = result.message;
+    if (failedCount > 0 && result.downloadCsv) {
+        htmlMsg += `<br/><a href='${result.downloadCsv}' target='_blank'>Click here to download CSV</a>`;
+    }
+
+    Swal.fire({
+        icon: iconType,
+        title: failedCount === 0 ? "Upload Completed" : "Upload Completed with some failures",
+        html: htmlMsg,
+        showConfirmButton: true
+    }).then(() => {
+        location.reload(); 
+    });
+}
+
+ 
         
 });
 </script>
