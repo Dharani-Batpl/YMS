@@ -15728,23 +15728,23 @@
             "format": "int64",
             "nullable": true
           },
-          "assignedd_shift1_name": {
+          "assigned_shift1_name": {
             "type": "string",
             "nullable": true
           },
-          "assignedd_shift2_name": {
+          "assigned_shift2_name": {
             "type": "string",
             "nullable": true
           },
-          "assignedd_shift3_name": {
+          "assigned_shift3_name": {
             "type": "string",
             "nullable": true
           },
-          "assignedd_shift4_name": {
+          "assigned_shift4_name": {
             "type": "string",
             "nullable": true
           },
-          "assignedd_shift5_name": {
+          "assigned_shift5_name": {
             "type": "string",
             "nullable": true
           },
@@ -15825,23 +15825,23 @@
             "format": "int64",
             "nullable": true
           },
-          "assignedd_shift1_name": {
+          "assigned_shift1_name": {
             "type": "string",
             "nullable": true
           },
-          "assignedd_shift2_name": {
+          "assigned_shift2_name": {
             "type": "string",
             "nullable": true
           },
-          "assignedd_shift3_name": {
+          "assigned_shift3_name": {
             "type": "string",
             "nullable": true
           },
-          "assignedd_shift4_name": {
+          "assigned_shift4_name": {
             "type": "string",
             "nullable": true
           },
-          "assignedd_shift5_name": {
+          "assigned_shift5_name": {
             "type": "string",
             "nullable": true
           },

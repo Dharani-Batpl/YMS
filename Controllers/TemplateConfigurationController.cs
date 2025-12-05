@@ -398,11 +398,11 @@ namespace YardManagementApplication
                     {
                         Template_name = mapped.GetValueOrDefault("template_name"),
                         Template_description = mapped.GetValueOrDefault("template_description"),
-                        Assignedd_shift1_name = mapped.GetValueOrDefault("assigned_shift1_name"),
-                        Assignedd_shift2_name = mapped.GetValueOrDefault("assigned_shift2_name"),
-                        Assignedd_shift3_name = mapped.GetValueOrDefault("assigned_shift3_name"),
-                        Assignedd_shift4_name = mapped.GetValueOrDefault("assigned_shift4_name"),
-                        Assignedd_shift5_name = mapped.GetValueOrDefault("assigned_shift5_name"),
+                        Assigned_shift1_name = mapped.GetValueOrDefault("assigned_shift1_name"),
+                        Assigned_shift2_name = mapped.GetValueOrDefault("assigned_shift2_name"),
+                        Assigned_shift3_name = mapped.GetValueOrDefault("assigned_shift3_name"),
+                        Assigned_shift4_name = mapped.GetValueOrDefault("assigned_shift4_name"),
+                        Assigned_shift5_name = mapped.GetValueOrDefault("assigned_shift5_name"),
                         Created_by=currentUser,
                         Is_deleted = false,
                         Updated_by = currentUser

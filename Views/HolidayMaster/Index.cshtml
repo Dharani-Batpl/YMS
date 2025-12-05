@@ -196,7 +196,22 @@ $(document).ready(function () {
         data: holidayMasterData,
         columns: [
             { title: "Holiday Name", field: "Holiday_name" },
-            { title: "Holiday Date", field: "Holiday_date" },
+          {
+    title: "Holiday Date",
+    field: "Holiday_date",
+    formatter: function (cell) {
+        const value = cell.getValue();
+        if (!value) return "";
+
+        const date = new Date(value);
+        const mm = String(date.getMonth() + 1).padStart(2, "0");
+        const dd = String(date.getDate()).padStart(2, "0");
+        const yyyy = date.getFullYear();
+
+        return `${dd}-${mm}-${yyyy}`; 
+    }
+},
+
             { title: "Holiday Type Name", field: "Holiday_type_name" },
             { title: "Description", field: "Description"},
             { title: "Created By", field: "Created_by" }
@@ -428,12 +443,24 @@ $(document).ready(function () {
 
 
     const finalRows = allRows.map(row => {
-        let obj = {};
-        visibleCols.forEach(col => {
-            obj[col.title] = row[col.field] ?? "";
-        });
-        return obj;
+    let obj = {};
+
+    visibleCols.forEach(col => {
+        let value = row[col.field];
+
+        if (col.field === "Holiday_date" && value) {
+            let d = new Date(value);
+            let dd = String(d.getDate()).padStart(2, "0");
+            let mm = String(d.getMonth() + 1).padStart(2, "0");
+            let yyyy = d.getFullYear();
+            obj[col.title] = `${dd}/${mm}/${yyyy}`;  
+        } else {
+            obj[col.title] = value ?? "";
+        }
     });
+
+    return obj;
+});
 
 
     downloadXlsx(finalRows, "HolidayMasterData");
@@ -526,7 +553,7 @@ async function handleUploadResponse(response) {
         html: htmlMsg,
         showConfirmButton: true
     }).then(() => {
-        location.reload(); // 🔥 Refresh table after upload
+        location.reload(); 
     });
 }
 

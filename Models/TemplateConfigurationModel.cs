@@ -11,11 +11,11 @@
         public string template_name { get; set; }
         public string? template_description { get; set; }
 
-        public string? assignedd_shift1_name { get; set; }
-        public string? assignedd_shift2_name { get; set; }
-        public string? assignedd_shift3_name { get; set; }
-        public string? assignedd_shift4_name { get; set; }
-        public string? assignedd_shift5_name { get; set; }
+        public string? assigned_shift1_name { get; set; }
+        public string? assigned_shift2_name { get; set; }
+        public string? assigned_shift3_name { get; set; }
+        public string? assigned_shift4_name { get; set; }
+        public string? assigned_shift5_name { get; set; }
         public bool? is_deleted { get; set; }
         public string? created_by { get; set; }
         public DateTimeOffset? created_at { get; set; }
