@@ -150,7 +150,7 @@
                         </div>
 
                         <!-- Description -->
-                        <<div class="col-md-6">
+                        <div class="col-md-6">
                                 <label class="form-label">Description</label>
                                 <textarea class="form-control"
                                           id="Description"
@@ -217,40 +217,39 @@ $(document).ready(function () {
             { title: "Created By", field: "Created_by" }
         ],
         layout: "fitColumns",
-       layout: "fitColumns",
-        height: "70vh",
-        selectable: 1,
-
-        pagination: "local",
-        paginationSize: 10,
-        paginationSizeSelector: [5, 10, 20, 50, 100],
-
-        resizableRows: false,
-        resizableColumnGuide: false,
-        columnDefaults: { resizable: false },
-        movableColumns: false,
-
+    height: "80vh",
+    selectable: 1,
+    pagination: "local",
+    resizableRows:false,
+    resizableRowGuide:false,
+    resizableColumnGuide:false,
+    columnDefaults:{
+        resizable:false,
+    },           
+    movableColumns: false,
+    paginationSize: 10,
+    paginationSizeSelector: [5, 10, 20, 50, 100],
         locale: true,
-        langs: {
-	        "en": {
-		        pagination: {
-			        first: "<<",
-			        first_title: "First",
-			        last: ">>",
-			        last_title: "Last",
-			        prev: "<",
-			        prev_title: "Prev",
-			        next: ">",
-			        next_title: "Next",
-			        page_size: "Page Size"
-		        }
-	        }
-        },
-
-        rowClick: function (e, row) {
-	        selectedRow = row.getData();
+    langs: {
+        "en": {
+    pagination: {
+        first: "<<",
+        first_title: "First",
+        last: ">>", 
+        last_title: "Last", 
+        prev: "<", 
+        prev_title: "Prev",
+        next: ">", 
+        next_title: "Next", 
+        page_size: "Page Size" 
+            }
         }
-        });
+        },
+ 
+    rowClick: function (e, row) {
+        selectedRow = row.getData();
+    }
+});
 
 
     // ----------------------------------------------------
@@ -313,69 +312,84 @@ $(document).ready(function () {
     // Edit
     $("#edit-btn").on("click", function () {
 
-        const row = dataTable.getSelectedData()?.[0];
+    const row = dataTable.getSelectedData()?.[0];
 
-        if (!row) {
-            return showAppAlert({
-                icon: "warning",
-                title: "No Selection",
-                text: "Please select a row to edit."
-            });
-        }
-
-        currentMode = "Edit";
-
-        $("#addEditModalLabel").text("Edit Holiday Master");
-        $("#modalSubmitBtn").text("Update");
-
-        // Fill fields
-        $.each(row, function (field, value) {
-
-            const $el = $("#" + field);
-            if (!$el.length) return;
-
-            if ($el.attr("type") === "date" && value) {
-                let d = new Date(value);
-                $el.val(
-                    `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`
-                );
-            }
-            else {
-                $el.val(value ?? "");
-            }
+    if (!row) {
+        return showAppAlert({
+            icon: "warning",
+            title: "No Selection",
+            text: "Please select a row to edit."
         });
+    }
 
-        addEditModal.show();
+    // Extra protection if empty / invalid row
+    if (!row.Holiday_id || row.Holiday_id === 0) {
+        return showAppAlert({
+            icon: "warning",
+            title: "No Data",
+            text: "No data available to edit."
+        });
+    }
+
+    currentMode = "Edit";
+
+    $("#addEditModalLabel").text("Edit Holiday Master");
+    $("#modalSubmitBtn").text("Update");
+
+    // Fill fields
+    $.each(row, function (field, value) {
+
+        const $el = $("#" + field);
+        if (!$el.length) return;
+
+        if ($el.attr("type") === "date" && value) {
+            let d = new Date(value);
+            $el.val(
+                `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`
+            );
+        } else {
+            $el.val(value ?? "");
+        }
     });
+
+    addEditModal.show();
+});
 
     // Delete
-    $("#delete-btn").on("click", async function () {
+   $("#delete-btn").on("click", async function () {
 
-        const row = dataTable.getSelectedData()?.[0];
+    const row = dataTable.getSelectedData()?.[0];
 
-        if (!row) {
-            return showAppAlert({
-                icon: "warning",
-                title: "No Selection",
-                text: "Please select a row to delete."
-            });
-        }
-
-        const confirm = await showAppAlert({
-            type: "confirm",
-            icon: "question",
-            title: "Delete Confirmation",
-            text: "Are you sure you want to delete this record?"
+    if (!row) {
+        return showAppAlert({
+            icon: "warning",
+            title: "No Selection",
+            text: "Please select a row to delete."
         });
+    }
 
-        if (!confirm.isConfirmed) return;
+    if (!row.Holiday_id || row.Holiday_id === 0) {
+        return showAppAlert({
+            icon: "warning",
+            title: "No Data",
+            text: "No data available to delete."
+        });
+    }
 
-        const success = await deleteRecord("/HolidayMaster/Delete", { Holiday_id: row.Holiday_id });
-
-        if (success) {
-            setTimeout(() => location.reload(), 900);
-        }
+    const confirm = await showAppAlert({
+        type: "confirm",
+        icon: "question",
+        title: "Delete Confirmation",
+        text: "Are you sure you want to delete this record?"
     });
+
+    if (!confirm.isConfirmed) return;
+
+    const success = await deleteRecord("/HolidayMaster/Delete", { Holiday_id: row.Holiday_id });
+
+    if (success)
+        setTimeout(() => location.reload(), 900);
+});
 
     // Save (add/edit)
     form.on("submit", async function (e) {
@@ -548,13 +562,20 @@ async function handleUploadResponse(response) {
     }
 
     Swal.fire({
-        icon: iconType,
-        title: failedCount === 0 ? "Upload Completed" : "Upload Completed with some failures",
-        html: htmlMsg,
-        showConfirmButton: true
-    }).then(() => {
-        location.reload(); 
-    });
+    icon: iconType,
+    title: failedCount === 0 ? "Upload Completed" : "Upload Completed with some failures",
+    html: htmlMsg,
+    showConfirmButton: true,
+    customClass: {
+        confirmButton: 'btn btn-submit',
+    },
+    buttonsStyling: false,
+    timer: false
+}).then(() => {
+    location.reload();
+});
+
+
 }
 
 </script>

@@ -108,41 +108,75 @@
         padding: 8px 18px 12px 18px;
     }
 
-    /* Cancel button */
-    .modal-request .btn-cancel {
-        background: #ffffff;
-        color: #111827;
-        border: 1px solid #e6e7eb;
-        border-radius: 6px;
-        padding: 4px 14px;
-        min-width: 90px;
-        font-weight: 500;
-        font-size: 13px;
-        box-shadow: none;
-        transition: box-shadow 0.2s ease;
-    }
-
-        .modal-request .btn-cancel:hover {
-            box-shadow: 0 3px 8px rgba(0,0,0,0.05);
-        }
-
-    /* Submit (Add) button */
+    /* Submit (Add) button with tick mark */
     .modal-request .btn-submit {
         background: #1f2937;
-        color: #fff;
+        color: #fff; /* button text color */
         border: 0;
         border-radius: 6px;
-        padding: 4px 16px;
+        padding: 6px 16px 6px 40px; /* space for tick */
         min-width: 100px;
         font-weight: 600;
         font-size: 13px;
         box-shadow: 0 3px 8px rgba(31,41,55,0.12);
         transition: box-shadow 0.2s ease;
+        position: relative;
     }
+
+        /* Tick mark default white */
+        .modal-request .btn-submit::before {
+            content: '✔';
+            position: absolute;
+            left: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 22px;
+            font-weight: bold;
+            color: #fff; /* default tick color: white */
+            transition: color 0.2s ease; /* smooth color change on hover */
+        }
+
+        /* Hover effect: tick turns green */
+        .modal-request .btn-submit:hover::before {
+            color: green;
+        }
 
         .modal-request .btn-submit:hover {
             box-shadow: 0 5px 10px rgba(31,41,55,0.18);
         }
+
+
+    /* Cancel button with bold red X */
+    .modal-request .btn-cancel {
+        background: #ffffff;
+        color: #111827;
+        border: 1px solid #e6e7eb;
+        border-radius: 6px;
+        padding: 6px 14px 6px 36px; /* more left padding for larger X */
+        min-width: 90px;
+        font-weight: 500;
+        font-size: 13px;
+        box-shadow: none;
+        transition: box-shadow 0.2s ease;
+        position: relative;
+    }
+
+        /* Bold, larger red X */
+        .modal-request .btn-cancel::before {
+            content: '✖';
+            position: absolute;
+            left: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 22px; /* increased size */
+            font-weight: bold; /* bold */
+            color: red;
+        }
+
+        .modal-request .btn-cancel:hover {
+            box-shadow: 0 3px 8px rgba(0,0,0,0.05);
+        }
+
 
 /* === Responsive adjustments === */
 @media (max-width: 992px) {
@@ -196,4 +230,46 @@ label.form-label {
 
 .text-danger {
     font-weight: 600;
+}
+/*Added for Tabulator agination bg color to match with the layout*/
+.tabulator .tabulator-paginator .tabulator-page.active {
+    background-color: #000 !important; /* black */
+    color: #fff !important; /* white */
+    border-color: #000 !important;
+}
+
+.tabulator .tabulator-paginator .tabulator-page:focus {
+    box-shadow: none !important;
+    outline: none !important;
+}
+
+.tabulator .tabulator-paginator .tabulator-page:hover {
+    background-color: #333;
+    color: #fff;
+}
+/* ===== CSS Added for Confirm Button in Sweet Alert =====*/
+/* Reset Bootstrap .btn styles inside SweetAlert2 */
+.swal2-actions .swal2-confirm.btn {
+    all: unset !important;
+    display: inline-block !important;
+}
+/* Styled SweetAlert confirm button */
+.swal2-actions .swal2-confirm.btn-submit {
+    background: #1f2937 !important;
+    color: #fff !important;
+    border: 0 !important;
+    border-radius: 6px !important;
+    padding: 4px 16px !important;
+    min-width: 100px !important;
+    font-weight: 600 !important;
+    font-size: 13px !important;
+    box-shadow: 0 3px 8px rgba(31,41,55,0.12) !important;
+    transition: box-shadow 0.2s ease !important;
+    /* FIX: Center OK text */
+    text-align: center !important;
+    display: inline-flex !important;
+    justify-content: center !important;
+    align-items: center !important;
+    /* FIX: Hover not firing */
+    cursor: pointer !important;
 }

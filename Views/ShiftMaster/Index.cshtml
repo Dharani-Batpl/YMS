@@ -332,40 +332,40 @@ $(document).ready(function () {
         
             { title: "Created By", field: "Created_by", headerHozAlign: "center"},
         ],
-        layout: "fitColumns",
-        height: "70vh",
-        selectable: 1,
-
-        pagination: "local",
-        paginationSize: 10,
-        paginationSizeSelector: [5, 10, 20, 50, 100],
-
-        resizableRows: false,
-        resizableColumnGuide: false,
-        columnDefaults: { resizable: false },
-        movableColumns: false,
-
+       layout: "fitColumns",
+    height: "80vh",
+    selectable: 1,
+    pagination: "local",
+    resizableRows:false,
+    resizableRowGuide:false,
+    resizableColumnGuide:false,
+    columnDefaults:{
+        resizable:false,
+    },           
+    movableColumns: false,
+    paginationSize: 10,
+    paginationSizeSelector: [5, 10, 20, 50, 100],
         locale: true,
-        langs: {
-	        "en": {
-		        pagination: {
-			        first: "<<",
-			        first_title: "First",
-			        last: ">>",
-			        last_title: "Last",
-			        prev: "<",
-			        prev_title: "Prev",
-			        next: ">",
-			        next_title: "Next",
-			        page_size: "Page Size"
-		        }
-	        }
-        },
-
-        rowClick: function (e, row) {
-	        selectedRow = row.getData();
+    langs: {
+        "en": {
+    pagination: {
+        first: "<<",
+        first_title: "First",
+        last: ">>", 
+        last_title: "Last", 
+        prev: "<", 
+        prev_title: "Prev",
+        next: ">", 
+        next_title: "Next", 
+        page_size: "Page Size" 
+            }
         }
-        });
+        },
+ 
+    rowClick: function (e, row) {
+        selectedRow = row.getData();
+    }
+});
 
     dataTable.on("dataLoaded", data =>
         $("#recordCount").text("Total Records: " + data.length)
@@ -891,14 +891,21 @@ async function handleUploadResponse(response) {
         htmlMsg += `<br/><a href='${result.downloadCsv}' target='_blank'>Click here to download CSV</a>`;
     }
 
-    Swal.fire({
-        icon: iconType,
-        title: failedCount === 0 ? "Upload Completed" : "Upload Completed with some failures",
-        html: htmlMsg,
-        showConfirmButton: true
-    }).then(() => {
-        location.reload(); 
-    });
+   Swal.fire({
+    icon: iconType,
+    title: failedCount === 0 ? "Upload Completed" : "Upload Completed with some failures",
+    html: htmlMsg,
+    showConfirmButton: true,
+    customClass: {
+        confirmButton: 'btn btn-submit',
+    },
+    buttonsStyling: false,
+    timer: false
+}).then(() => {
+    location.reload();
+});
+
+
 }
 
  
