@@ -17,6 +17,7 @@
 // 1.0     | 2025-10-18 | Sujitha B      | Initial creation based on Department model structure.
 // =================================================================================================
 // 1.1     | 2025-11-13 | Dharani T   | Modified the Upload method to handle Excel file uploads for bulk shift creation.
+// 1.2     | 2025-12-05 | Dharani T   | Added comments
 // =================================================================================================
 
 
@@ -151,6 +152,7 @@ namespace YardManagementApplication
             {
                 if (model == null)
                 {
+                    // Return bad request if model is null
                     return BadRequest(new
                     {
                         status = "error",
@@ -413,12 +415,7 @@ namespace YardManagementApplication
                 }
 
 
-                //TimeSpan ParseTime(string t)
-                //{
-                //    if (string.IsNullOrWhiteSpace(t)) return TimeSpan.Zero;
-                //    if (TimeSpan.TryParse(t, out var ts)) return ts;
-                //    return TimeSpan.Zero;
-                //}
+              
                 TimeSpan ParseTime(string t)
                 {
                     if (string.IsNullOrWhiteSpace(t))
